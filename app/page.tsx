@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   curriculumDays,
   phases,
@@ -29,6 +29,12 @@ type TrackerState = {
 
 const taskParts: TaskPart[] = ["learn", "build", "prove"];
 const STORAGE_KEY = "robot-shift-tracker-v1";
+const MAX_TEXT_LENGTH = 5_000;
+const MAX_BACKUP_BYTES = 5_000_000;
+const curriculumDayIds = new Set(curriculumDays.map((day) => day.id));
+const projectChecklistSizes = new Map(
+  projects.map((project) => [project.id, project.proof.split(", ").length]),
+);
 
 function localDate() {
   const now = new Date();
@@ -63,29 +69,117 @@ function formatMinutes(minutes: number) {
   return rest ? `${hours}h ${rest}m` : `${hours}h`;
 }
 
-function scheduledDate(startedOn: string, dayId: number) {
-  if (!startedOn) return null;
+function scheduledDate(startedOn: string, dayId: number, weeklyHours: number) {
+  if (!isValidDateString(startedOn) || !startedOn) return null;
+  const minutesBeforeDay = curriculumDays
+    .slice(0, Math.max(0, dayId - 1))
+    .reduce((sum, day) => sum + day.minutes, 0);
+  const dailyCapacity = (weeklyHours * 60) / 7;
+  const calendarOffset = Math.floor(minutesBeforeDay / dailyCapacity);
   const date = new Date(`${startedOn}T12:00:00`);
-  date.setDate(date.getDate() + dayId - 1);
+  date.setDate(date.getDate() + calendarOffset);
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(date);
 }
 
-function safeParseState(raw: string | null): TrackerState {
-  if (!raw) return defaultState;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isValidDateString(value: unknown): value is string {
+  if (value === "") return true;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T12:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function readCompleted(value: unknown): Record<string, boolean> | null {
+  if (!isRecord(value)) return null;
+  const completed: Record<string, boolean> = {};
+  for (const [key, done] of Object.entries(value)) {
+    const [dayText, part, extra] = key.split(":");
+    const dayId = Number(dayText);
+    if (
+      extra !== undefined ||
+      !curriculumDayIds.has(dayId) ||
+      !taskParts.includes(part as TaskPart) ||
+      typeof done !== "boolean"
+    ) return null;
+    completed[key] = done;
+  }
+  return completed;
+}
+
+function readTextEntries(value: unknown): Record<string, string> | null {
+  if (!isRecord(value)) return null;
+  const entries: Record<string, string> = {};
+  for (const [key, text] of Object.entries(value)) {
+    const dayId = Number(key);
+    if (
+      String(dayId) !== key ||
+      !curriculumDayIds.has(dayId) ||
+      typeof text !== "string" ||
+      text.length > MAX_TEXT_LENGTH
+    ) return null;
+    entries[key] = text;
+  }
+  return entries;
+}
+
+function readProjectChecks(value: unknown): Record<string, boolean[]> | null {
+  if (!isRecord(value)) return null;
+  const checks: Record<string, boolean[]> = {};
+  for (const [projectId, projectChecks] of Object.entries(value)) {
+    const expectedSize = projectChecklistSizes.get(projectId);
+    if (
+      expectedSize === undefined ||
+      !Array.isArray(projectChecks) ||
+      projectChecks.length !== expectedSize ||
+      projectChecks.some((checked) => typeof checked !== "boolean")
+    ) return null;
+    checks[projectId] = [...projectChecks];
+  }
+  return checks;
+}
+
+function parseTrackerState(raw: string): TrackerState | null {
   try {
-    const parsed = JSON.parse(raw) as Partial<TrackerState>;
-    if (parsed.schemaVersion !== 1 || typeof parsed.completed !== "object") return defaultState;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isRecord(parsed) || parsed.schemaVersion !== 1) return null;
+
+    const completed = readCompleted(parsed.completed);
+    const notes = readTextEntries(parsed.notes);
+    const evidence = readTextEntries(parsed.evidence);
+    const projectChecks = readProjectChecks(parsed.projectChecks);
+    const bookmarks = parsed.bookmarks;
+    if (
+      completed === null ||
+      notes === null ||
+      evidence === null ||
+      projectChecks === null ||
+      !Array.isArray(bookmarks) ||
+      bookmarks.some((dayId) => !Number.isInteger(dayId) || !curriculumDayIds.has(dayId)) ||
+      new Set(bookmarks).size !== bookmarks.length ||
+      !isValidDateString(parsed.startedOn) ||
+      !Number.isInteger(parsed.weeklyHours) ||
+      (parsed.weeklyHours as number) < 4 ||
+      (parsed.weeklyHours as number) > 30 ||
+      !Number.isInteger(parsed.selectedDay) ||
+      !curriculumDayIds.has(parsed.selectedDay as number)
+    ) return null;
+
     return {
-      ...defaultState,
-      ...parsed,
-      completed: parsed.completed ?? {},
-      bookmarks: Array.isArray(parsed.bookmarks) ? parsed.bookmarks.filter(Number.isInteger) : [],
-      notes: parsed.notes ?? {},
-      evidence: parsed.evidence ?? {},
-      projectChecks: parsed.projectChecks ?? {},
+      schemaVersion: 1,
+      completed,
+      bookmarks: [...bookmarks] as number[],
+      notes,
+      evidence,
+      projectChecks,
+      startedOn: parsed.startedOn,
+      weeklyHours: parsed.weeklyHours as number,
+      selectedDay: parsed.selectedDay as number,
     };
   } catch {
-    return defaultState;
+    return null;
   }
 }
 
@@ -108,30 +202,111 @@ export default function Home() {
   const [showReset, setShowReset] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [saveStatus, setSaveStatus] = useState("Ready");
+  const [storageError, setStorageError] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
+  const skipNextSaveRef = useRef(false);
+  const resetDialogRef = useRef<HTMLDivElement>(null);
+  const resetCancelRef = useRef<HTMLButtonElement>(null);
+  const resetTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const loaded = safeParseState(window.localStorage.getItem(STORAGE_KEY));
-    setTracker({ ...loaded, startedOn: loaded.startedOn || localDate() });
-    setHydrated(true);
+    const timer = window.setTimeout(() => {
+      let loaded: TrackerState | null = null;
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        loaded = raw ? parseTrackerState(raw) : null;
+        if (raw && !loaded) {
+          skipNextSaveRef.current = true;
+          setStorageError("Stored progress was invalid and was not overwritten. Import a valid backup or reset.");
+        }
+      } catch {
+        skipNextSaveRef.current = true;
+        setStorageError("Local saving is unavailable in this browser. Export backups to protect your work.");
+      }
+      const initial = loaded ?? defaultState;
+      setTracker({ ...initial, startedOn: initial.startedOn || localDate() });
+      setHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    setSaveStatus("Saving…");
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tracker));
-    const timer = window.setTimeout(() => setSaveStatus("Saved on this device"), 250);
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false;
+      return;
+    }
+
+    let timer: number;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tracker));
+      timer = window.setTimeout(() => {
+        setSaveStatus("Saved on this device");
+        setStorageError(null);
+      }, 0);
+    } catch {
+      timer = window.setTimeout(() => {
+        setSaveStatus("Not saved");
+        setStorageError("Not saved: browser storage is unavailable or full. Export a backup now.");
+      }, 0);
+    }
     return () => window.clearTimeout(timer);
   }, [tracker, hydrated]);
 
-  const isPartDone = (dayId: number, part: TaskPart) => Boolean(tracker.completed[taskKey(dayId, part)]);
-  const isDayDone = (dayId: number) => taskParts.every((part) => isPartDone(dayId, part));
+  useEffect(() => {
+    if (!showReset) return;
+    const previousFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : resetTriggerRef.current;
+    const focusTimer = window.setTimeout(() => resetCancelRef.current?.focus(), 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setShowReset(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const dialog = resetDialogRef.current;
+      const focusable = dialog
+        ? Array.from(dialog.querySelectorAll<HTMLElement>("button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"))
+        : [];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !dialog?.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !dialog?.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocus?.focus();
+    };
+  }, [showReset]);
+
+  const isPartDone = useCallback(
+    (dayId: number, part: TaskPart) => Boolean(tracker.completed[taskKey(dayId, part)]),
+    [tracker.completed],
+  );
+  const isDayDone = useCallback(
+    (dayId: number) => taskParts.every((part) => isPartDone(dayId, part)),
+    [isPartDone],
+  );
 
   const completedParts = useMemo(
     () => curriculumDays.reduce((total, day) => total + taskParts.filter((part) => tracker.completed[taskKey(day.id, part)]).length, 0),
     [tracker.completed],
   );
-  const completedDays = useMemo(() => curriculumDays.filter((day) => isDayDone(day.id)).length, [tracker.completed]);
+  const completedDays = useMemo(() => curriculumDays.filter((day) => isDayDone(day.id)).length, [isDayDone]);
   const totalParts = curriculumDays.length * taskParts.length;
   const percent = Math.round((completedParts / totalParts) * 100);
   const earliestIncomplete = curriculumDays.find((day) => !isDayDone(day.id))?.id ?? 180;
@@ -154,7 +329,7 @@ export default function Home() {
       const matchesQuery = !normalized || `${day.title} ${day.focus} ${day.task} ${day.lab} ${note}`.toLowerCase().includes(normalized);
       return matchesPhase && matchesStatus && matchesQuery;
     });
-  }, [query, phaseFilter, statusFilter, tracker.notes, tracker.completed]);
+  }, [query, phaseFilter, statusFilter, tracker.notes, isDayDone]);
 
   const openDay = (dayId: number) => {
     setTracker((previous) => ({ ...previous, selectedDay: dayId }));
@@ -203,12 +378,13 @@ export default function Home() {
   const importProgress = async (file: File | undefined) => {
     if (!file) return;
     try {
-      const parsed = safeParseState(await file.text());
-      if (parsed === defaultState) throw new Error("invalid");
-      setTracker(parsed);
+      if (file.size > MAX_BACKUP_BYTES) throw new Error("too-large");
+      const parsed = parseTrackerState(await file.text());
+      if (!parsed) throw new Error("invalid");
+      setTracker({ ...parsed, startedOn: parsed.startedOn || localDate() });
       setAnnouncement("Progress backup imported.");
     } catch {
-      setAnnouncement("Import rejected. Choose a valid Robot/Shift version 1 backup.");
+      setAnnouncement("Import rejected. Choose a valid Robot/Shift version 1 backup under 5 MB.");
     } finally {
       if (importRef.current) importRef.current.value = "";
     }
@@ -233,7 +409,7 @@ export default function Home() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Skip to curriculum</a>
-      <aside className="side-rail" aria-label="Primary">
+      <aside className="side-rail" aria-label="Primary" aria-hidden={showReset ? true : undefined}>
         <div className="brand-block">
           <span className="eyebrow">FIELD MANUAL // 180</span>
           <div className="brand-line"><span className="brand-slash">/</span> ROBOT<br />SHIFT</div>
@@ -265,7 +441,7 @@ export default function Home() {
         </div>
       </aside>
 
-      <div className="work-area">
+      <div className="work-area" aria-hidden={showReset ? true : undefined}>
         <header className="command-bar">
           <div>
             <span className="eyebrow">CURRENT OPERATING MODE</span>
@@ -295,15 +471,30 @@ export default function Home() {
               <input id="start-date" type="date" value={tracker.startedOn} onChange={(event) => setTracker((p) => ({ ...p, startedOn: event.target.value }))} />
             </div>
             <div>
-              <label htmlFor="weekly-hours">Weekly hours</label>
-              <input id="weekly-hours" type="number" min="4" max="30" value={tracker.weeklyHours} onChange={(event) => setTracker((p) => ({ ...p, weeklyHours: Number(event.target.value) }))} />
+              <label htmlFor="weekly-hours">Weekly learning capacity</label>
+              <input
+                id="weekly-hours"
+                type="number"
+                min="4"
+                max="30"
+                step="1"
+                value={tracker.weeklyHours}
+                aria-describedby="weekly-hours-help"
+                onChange={(event) => {
+                  const value = event.currentTarget.valueAsNumber;
+                  if (Number.isFinite(value)) {
+                    setTracker((previous) => ({ ...previous, weeklyHours: Math.min(30, Math.max(4, Math.round(value))) }));
+                  }
+                }}
+              />
+              <small id="weekly-hours-help">Reflows planned dates at this weekly pace.</small>
             </div>
             <div className="settings-actions">
               <button onClick={exportProgress}>Export backup</button>
               <label className="button-label">Import backup<input ref={importRef} className="sr-only" type="file" accept="application/json" onChange={(event) => importProgress(event.target.files?.[0])} /></label>
-              <button className="danger-link" onClick={() => setShowReset(true)}>Reset</button>
+              <button ref={resetTriggerRef} className="danger-link" onClick={() => setShowReset(true)}>Reset</button>
             </div>
-            <small>{saveStatus}</small>
+            <small className={storageError ? "storage-error" : ""} role="status">{storageError ?? saveStatus}</small>
           </section>
         )}
 
@@ -318,6 +509,8 @@ export default function Home() {
               toggleBookmark={toggleBookmark}
               updateText={updateText}
               openDay={openDay}
+              persistenceMessage={storageError ?? "Auto-saved locally"}
+              persistenceError={Boolean(storageError)}
             />
           )}
 
@@ -359,9 +552,9 @@ export default function Home() {
         </main>
       </div>
 
-      <nav className="mobile-nav" aria-label="Mobile navigation">
+      <nav className="mobile-nav" aria-label="Mobile navigation" aria-hidden={showReset ? true : undefined}>
         {navigation.map((item) => (
-          <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => setView(item.id)}>
+          <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => setView(item.id)} aria-current={view === item.id ? "page" : undefined}>
             <span>{item.mark}</span>{item.label}
           </button>
         ))}
@@ -371,12 +564,12 @@ export default function Home() {
 
       {showReset && (
         <div className="modal-backdrop" role="presentation">
-          <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+          <div ref={resetDialogRef} className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" aria-describedby="reset-description">
             <span className="eyebrow">DESTRUCTIVE LOCAL ACTION</span>
             <h2 id="reset-title">Reset all progress?</h2>
-            <p>This removes completed tasks, notes, evidence, bookmarks, and build checks from this browser. Export first if you may need them.</p>
+            <p id="reset-description">This removes completed tasks, notes, evidence, bookmarks, and build checks from this browser. Export first if you may need them.</p>
             <div>
-              <button onClick={() => setShowReset(false)}>Keep progress</button>
+              <button ref={resetCancelRef} onClick={() => setShowReset(false)}>Keep progress</button>
               <button className="danger-button" onClick={resetProgress}>Reset everything</button>
             </div>
           </div>
@@ -395,6 +588,8 @@ function TodayView({
   toggleBookmark,
   updateText,
   openDay,
+  persistenceMessage,
+  persistenceError,
 }: {
   day: CurriculumDay;
   earliestIncomplete: number;
@@ -404,9 +599,11 @@ function TodayView({
   toggleBookmark: (dayId: number) => void;
   updateText: (field: "notes" | "evidence", dayId: number, value: string) => void;
   openDay: (dayId: number) => void;
+  persistenceMessage: string;
+  persistenceError: boolean;
 }) {
   const phase = phaseFor(day);
-  const date = scheduledDate(tracker.startedOn, day.id);
+  const date = scheduledDate(tracker.startedOn, day.id, tracker.weeklyHours);
   const completeCount = taskParts.filter((part) => isPartDone(day.id, part)).length;
   const taskCopy = [
     { id: "learn" as const, label: "Understand", title: day.title, body: `Build the mental model: ${day.focus}` },
@@ -435,7 +632,7 @@ function TodayView({
           <span>{completeCount}<small>/3</small></span>
           <p>proofs closed</p>
           <div className="gauge-marks" aria-hidden="true"><i /><i /><i /></div>
-          <small>{date ? `Planned ${date}` : "Set a start date"}</small>
+          <small>{date ? `Planned ${date} · ${tracker.weeklyHours}h/week` : "Set a start date"}</small>
         </div>
       </section>
 
@@ -477,18 +674,20 @@ function TodayView({
           <section>
             <span className="eyebrow">PRIMARY REFERENCE</span>
             <a className="resource-link" href={day.resource.url} target="_blank" rel="noreferrer">
-              <span>↗</span><strong>{day.resource.label}</strong><small>Open authoritative source</small>
+              <span>↗</span><strong>{day.resource.label}</strong><small>Use for today’s “{day.title}” work</small>
             </a>
           </section>
           <section>
             <label htmlFor="field-note"><span className="eyebrow">FIELD NOTE</span><small>Key idea, command, diagnosis, or follow-up</small></label>
-            <textarea id="field-note" value={tracker.notes[String(day.id)] ?? ""} onChange={(event) => updateText("notes", day.id, event.target.value)} placeholder="What changed your mental model today?" />
+            <textarea id="field-note" maxLength={MAX_TEXT_LENGTH} value={tracker.notes[String(day.id)] ?? ""} onChange={(event) => updateText("notes", day.id, event.target.value)} placeholder="What changed your mental model today?" />
           </section>
           <section>
             <label htmlFor="evidence-note"><span className="eyebrow">EVIDENCE LOCKER</span><small>Repository, demo, report, or decisive output</small></label>
-            <textarea id="evidence-note" value={tracker.evidence[String(day.id)] ?? ""} onChange={(event) => updateText("evidence", day.id, event.target.value)} placeholder="Paste a link or describe the artifact…" />
+            <textarea id="evidence-note" maxLength={MAX_TEXT_LENGTH} value={tracker.evidence[String(day.id)] ?? ""} onChange={(event) => updateText("evidence", day.id, event.target.value)} placeholder="Paste a link or describe the artifact…" />
           </section>
-          <div className="autosave-line"><span className="status-dot" /> Auto-saved locally</div>
+          <div className={`autosave-line ${persistenceError ? "error" : ""}`} role="status">
+            <span className={`status-dot ${persistenceError ? "error" : ""}`} /> {persistenceMessage}
+          </div>
         </aside>
       </div>
     </div>

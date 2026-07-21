@@ -574,23 +574,37 @@ const weekPlans: WeekPlan[] = [
 ];
 
 const activityModes = [
-  "Learn · Read the focused reference, write a five-point mental model, then explain it aloud without jargon.",
-  "Practice · Implement the smallest executable example. Change one assumption and predict the result before running it.",
-  "Test · Add instrumentation, assertions, and at least one failure input. Record what the system believed versus what happened.",
-  "Integrate · Connect today’s concept to the weekly lab. Preserve a working baseline before changing behavior.",
-  "Apply · Complete a realistic scenario and compare at least two approaches using one explicit metric.",
-  "Prove · Record a short demo, capture decisive logs or plots, and document the most important failure honestly.",
-  "Review · Rebuild the key idea from memory, close one gap, and publish the week’s evidence and next-step note.",
+  (topic: string, lab: string, resource: Resource) =>
+    `Prerequisite: open the last working ${lab} baseline. Use ${resource.label} to isolate “${topic}”; write five operating rules, then implement one minimal executable example that proves the core behavior.`,
+  (topic: string, lab: string) =>
+    `Implement “${topic}” as a small, replaceable part of ${lab}. Define its inputs, outputs, units, and failure result; run one nominal and one boundary case.`,
+  (topic: string, lab: string) =>
+    `Instrument “${topic}” inside ${lab}. Add assertions and one deliberately failing input, then record expected state, observed state, timing, and the exact causal fix.`,
+  (topic: string, lab: string) =>
+    `Integrate “${topic}” into the working ${lab} path. Preserve the previous baseline, expose its state in logs or visualization, and verify both normal execution and safe cancellation.`,
+  (topic: string, lab: string) =>
+    `Apply “${topic}” to a realistic ${lab} scenario. Compare the baseline with today’s approach using one explicit measure such as success rate, pose error, latency, or recovery time.`,
+  (topic: string, lab: string) =>
+    `Run ${lab} with “${topic}” enabled through a repeatable trial set. Capture the command or launch path, decisive trace or plot, a short uncut demo, and the largest remaining failure.`,
+  (topic: string, lab: string) =>
+    `Recreate “${topic}” from memory, rerun the complete ${lab} workflow, repair the highest-impact failure from this week, and write the next concrete experiment.`,
 ];
 
 const evidenceModes = [
-  "A concise field note plus one checked example committed to your learning log.",
-  "Working code with a README command and a screenshot or terminal trace.",
-  "A reproducible test or failure case with expected and actual behavior.",
-  "The weekly lab gains a working, observable increment.",
-  "A small comparison table containing result, metric, and decision.",
-  "A 60–120 second demo plus an honest failure note.",
-  "A weekly ship note: what works, what failed, and what changes next.",
+  (topic: string) =>
+    `DONE when the learning log explains “${topic}” in five precise points and a checked example produces the predicted output.`,
+  (topic: string) =>
+    `DONE when “${topic}” runs from one documented command and the nominal plus boundary outputs are attached.`,
+  (topic: string) =>
+    `DONE when a deterministic “${topic}” failure test reports expected versus actual behavior and passes after the documented fix.`,
+  (topic: string) =>
+    `DONE when the integrated “${topic}” path is observable, cancelable, and leaves the prior baseline reproducible.`,
+  (topic: string) =>
+    `DONE when a comparison table for “${topic}” contains the test condition, metric, result, and justified engineering decision.`,
+  (topic: string) =>
+    `DONE when a 60–120 second uncut “${topic}” demo links to its command, logs or plots, result count, and honest failure note.`,
+  (topic: string) =>
+    `DONE when the weekly ship note explains how “${topic}” changed the build, what still fails, and the first task for next week.`,
 ];
 
 const minutesByDay = [90, 105, 90, 120, 105, 150, 60];
@@ -604,8 +618,8 @@ export const curriculumDays: CurriculumDay[] = weekPlans
       phaseId: week.phaseId,
       title: topic,
       focus: `${week.title} · ${week.focus}`,
-      task: `${activityModes[dayIndex]} Weekly build: ${week.lab}`,
-      evidence: evidenceModes[dayIndex],
+      task: activityModes[dayIndex](topic, week.lab, week.resource),
+      evidence: evidenceModes[dayIndex](topic),
       lab: week.lab,
       minutes: minutesByDay[dayIndex],
       resource: week.resource,

@@ -1,6 +1,7 @@
 {
-  "name": "site-creator-vinext-starter",
+  "name": "robot-shift-field-manual",
   "version": "0.1.0",
+  "description": "A practical 180-day robotics curriculum and local progress tracker.",
   "private": true,
   "engines": {
     "node": ">=22.13.0"

@@ -285,6 +285,11 @@ progress::-moz-progress-bar {
   box-shadow: 0 0 0 3px rgba(75, 201, 140, 0.15);
 }
 
+.status-dot.error {
+  background: var(--fault);
+  box-shadow: 0 0 0 3px rgba(184, 60, 50, 0.16);
+}
+
 .work-area {
   min-width: 0;
 }
@@ -404,6 +409,12 @@ progress::-moz-progress-bar {
 .settings-drawer .danger-link {
   color: var(--fault);
   border-color: var(--fault);
+}
+
+.settings-drawer .storage-error {
+  max-width: 310px;
+  color: var(--fault);
+  line-height: 1.4;
 }
 
 .view-wrap {
@@ -619,6 +630,12 @@ progress::-moz-progress-bar {
   pointer-events: none;
 }
 
+.task-row input:focus-visible + .task-index + .check-box,
+.criteria-list input:focus-visible + span {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+}
+
 .task-index {
   padding-top: 6px;
   color: #8a9191;
@@ -814,6 +831,11 @@ progress::-moz-progress-bar {
   color: var(--steel);
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.62rem;
+}
+
+.autosave-line.error {
+  color: var(--fault);
+  font-weight: 800;
 }
 
 .page-intro,
