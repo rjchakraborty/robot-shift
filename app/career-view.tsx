@@ -81,15 +81,11 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
   return (
     <div className="career-view" aria-labelledby="career-title">
       <section className="career-hero">
-        <p className="career-kicker">Specialization verdict · India evidence set</p>
         <div className="career-hero-grid">
           <div>
-            <h1 id="career-title">Production Robotics Integration &amp; Fleet Systems</h1>
+            <h1 id="career-title">Target roles</h1>
             <p className="career-hero-lede">
-              The shortest credible move is to bring your senior production-software
-              discipline to the robot boundary: operator interfaces, fleet services,
-              ROS 2 integration, deployment, validation, and then physical-AI
-              integration.
+              Primary specialization: Production Robotics Integration &amp; Fleet Systems.
             </p>
           </div>
           <dl className="career-verdict-stats" aria-label="Career strategy summary">
@@ -117,12 +113,7 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
 
       <section className="career-fit" aria-labelledby="career-fit-title">
         <div className="career-section-heading">
-          <p className="career-section-mark">01 · Transfer map</p>
-          <h2 id="career-fit-title">You are changing domain, not restarting your career</h2>
-          <p>
-            Keep your senior engineering identity. Add robotics proof without
-            claiming years of robotics experience you do not yet have.
-          </p>
+          <h2 id="career-fit-title">Current strengths and missing proof</h2>
         </div>
         <div className="career-fit-grid">
           <article className="career-fit-card career-fit-card-strong">
@@ -138,8 +129,8 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
             </ul>
           </article>
         </div>
-        <blockquote className="career-positioning">
-          <p className="career-card-label">Degree-question answer</p>
+        <details className="career-positioning">
+          <summary>Degree-question answer</summary>
           <p>
             “I am a senior production software engineer moving into robotics
             integration. I bring ten years of shipping and operating complete
@@ -151,17 +142,12 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
             enforce degree or prior-robotics filters; equivalent practical
             experience helps, but does not erase every filter.
           </footer>
-        </blockquote>
+        </details>
       </section>
 
       <section className="career-roles" aria-labelledby="career-roles-title">
         <div className="career-section-heading">
-          <p className="career-section-mark">02 · Target ladder</p>
-          <h2 id="career-roles-title">Choose a role, then build only the missing proof</h2>
-          <p>
-            “Apply first” is the bridge. “Primary” is the specialization. The later
-            tiers need progressively more robotics-native evidence.
-          </p>
+          <h2 id="career-roles-title">Role and required proof</h2>
         </div>
 
         <div className="career-role-groups" aria-label="Role targets">
@@ -255,8 +241,7 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
 
       <section className="career-signals" aria-labelledby="career-signals-title">
         <div className="career-section-heading">
-          <p className="career-section-mark">03 · Market signals</p>
-          <h2 id="career-signals-title">What repeated in the curated India sample</h2>
+          <h2 id="career-signals-title">Skills in the India job sample</h2>
           <p>
             Counts below come only from explicit tags on the {jobEvidence.length}
             reviewed postings. They are a directional sample, not a complete census
@@ -280,8 +265,7 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
 
       <section className="career-jd-lab" aria-labelledby="career-jd-title">
         <div className="career-section-heading">
-          <p className="career-section-mark">04 · JD Match Lab</p>
-          <h2 id="career-jd-title">Turn one job description into a study queue</h2>
+          <h2 id="career-jd-title">Job description matcher</h2>
           <p>
             This matcher runs entirely in your browser. It does not upload or save
             the pasted description.
@@ -370,8 +354,7 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
 
       <section className="career-evidence" aria-labelledby="career-evidence-title">
         <div className="career-section-heading">
-          <p className="career-section-mark">05 · Evidence ledger</p>
-          <h2 id="career-evidence-title">Open the postings behind the curriculum</h2>
+          <h2 id="career-evidence-title">Source job postings</h2>
           <p>
             Links can expire or change after {capturedLabel}. The captured summary
             explains why each posting influenced the path; the live page remains
@@ -401,8 +384,7 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
       </section>
 
       <section className="career-claim-rule" aria-labelledby="career-claim-title">
-        <p className="career-section-mark">06 · Resume honesty rule</p>
-        <h2 id="career-claim-title">A keyword becomes a resume skill only after proof</h2>
+        <h2 id="career-claim-title">Resume evidence rule</h2>
         <div className="career-claim-formula" aria-label="Resume evidence formula">
           <span>Problem</span>
           <b aria-hidden="true">→</b>

@@ -574,9 +574,7 @@ export function LessonVisual({
     <section className={`lesson-visual lesson-visual--hard-border lesson-visual--${spec.kind}`} aria-labelledby={`${idBase}-heading`}>
       <header className="lesson-visual__header">
         <div>
-          <span className="eyebrow">Visual field guide · Day {spec.dayId}</span>
-          <h3 id={`${idBase}-heading`}>{spec.title}</h3>
-          <p>{spec.takeaway}</p>
+          <h3 id={`${idBase}-heading`}>Visual explanation</h3>
         </div>
         <div className="lesson-visual__mode-tabs lesson-tabs" role="tablist" aria-label="Visual explanation mode">
           {modes.map((item, index) => (
@@ -634,16 +632,9 @@ export function LessonVisual({
         </figure>
 
         <aside className="lesson-visual__read-rail" aria-label="How to read this visual">
-          <section>
-            <span className="eyebrow">How to read it</span>
-            <ol>
-              {spec.howToRead.map((step) => <li key={step}>{step}</li>)}
-            </ol>
-          </section>
-
           {mode === "math" && (
             <section className="lesson-visual__math">
-              <span className="eyebrow">Small numerical anchor</span>
+              <strong>Math example</strong>
               <strong>{spec.math.formula}</strong>
               <ol>
                 {spec.math.walkthrough.map((step) => <li key={step}>{step}</li>)}
@@ -654,40 +645,45 @@ export function LessonVisual({
 
           {mode === "failure" && (
             <section className="lesson-visual__failure">
-              <span className="eyebrow">Failure check</span>
+              <strong>Failure check</strong>
               <strong>{spec.states.failure.label}</strong>
               <p>{spec.states.failure.description}</p>
               <p>Ask: what detects this, what stops motion, and what evidence proves recovery?</p>
             </section>
           )}
 
-          <section className="lesson-visual__legend" aria-label="Diagram legend">
-            <span className="eyebrow">Legend</span>
-            <ul>
-              {spec.legend.map((item) => (
-                <li key={item.label}>
-                  <span
-                    aria-hidden="true"
-                    className={`lesson-visual__legend-swatch lesson-visual__legend-swatch--${item.tone}`}
-                    style={{ backgroundColor: legendColours[item.tone] }}
-                  />
-                  <strong>{item.label}:</strong> {item.meaning}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="lesson-visual__bridge">
-            <span className="eyebrow">Bridge from your {spec.softwareBridge.skill} experience</span>
-            <p>{spec.softwareBridge.analogy}</p>
-            <p><strong>Dangerous difference:</strong> {spec.softwareBridge.dangerousDifference}</p>
-          </section>
-
-          <section className="lesson-visual__metadata">
-            <span className="eyebrow">Units and frames</span>
-            <p><strong>Units:</strong> {spec.units.join(", ")}</p>
-            <p><strong>Frames:</strong> {spec.frames.join(" → ")}</p>
-          </section>
+          <details className="visual-help">
+            <summary>How to read this diagram</summary>
+            <section>
+              <ol>
+                {spec.howToRead.map((step) => <li key={step}>{step}</li>)}
+              </ol>
+            </section>
+            <section className="lesson-visual__legend" aria-label="Diagram legend">
+              <strong>Legend</strong>
+              <ul>
+                {spec.legend.map((item) => (
+                  <li key={item.label}>
+                    <span
+                      aria-hidden="true"
+                      className={`lesson-visual__legend-swatch lesson-visual__legend-swatch--${item.tone}`}
+                      style={{ backgroundColor: legendColours[item.tone] }}
+                    />
+                    <strong>{item.label}:</strong> {item.meaning}
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <section className="lesson-visual__bridge">
+              <strong>Connection to {spec.softwareBridge.skill}</strong>
+              <p>{spec.softwareBridge.analogy}</p>
+              <p><strong>Important difference:</strong> {spec.softwareBridge.dangerousDifference}</p>
+            </section>
+            <section className="lesson-visual__metadata">
+              <p><strong>Units:</strong> {spec.units.join(", ")}</p>
+              <p><strong>Frames:</strong> {spec.frames.join(" → ")}</p>
+            </section>
+          </details>
         </aside>
       </div>
     </section>

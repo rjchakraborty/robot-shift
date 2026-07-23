@@ -436,24 +436,10 @@ export function LearningStudio({ day }: LearningStudioProps) {
     <section className="learning-studio" aria-labelledby={`learning-studio-title-${day.id}`}>
       <header className="studio-heading">
         <div>
-          <span className="eyebrow">KNOWLEDGE STUDIO // DAY {String(day.id).padStart(3, "0")}</span>
-          <h2 id={`learning-studio-title-${day.id}`}>Learn the idea, then make it physical.</h2>
+          <h2 id={`learning-studio-title-${day.id}`}>Lesson</h2>
           <p>{lesson.bigIdea}</p>
         </div>
-        <span className="studio-level">Beginner · practical · job-focused</span>
       </header>
-
-      <div className="lesson-path-heading">
-        <div>
-          <span className="eyebrow">GUIDED LESSON PATH</span>
-          <p>Follow this order once. Revisit any stage when you need it.</p>
-        </div>
-        <span>
-          {primaryLessonSections.some((item) => item.id === section)
-            ? `Stage ${primaryLessonSections.findIndex((item) => item.id === section) + 1} of ${primaryLessonSections.length}`
-            : "Support mode"}
-        </span>
-      </div>
 
       <div className="lesson-path" role="tablist" aria-label="Guided lesson path">
         {primaryLessonSections.map((item, index) => (
@@ -485,11 +471,8 @@ export function LearningStudio({ day }: LearningStudioProps) {
         ))}
       </div>
 
-      <div className="lesson-support-bar">
-        <div>
-          <span className="eyebrow">NEED ANOTHER ANGLE?</span>
-          <p>Use these only when the guided path is not clicking yet.</p>
-        </div>
+      <details className="lesson-support-bar optional-panel">
+        <summary>Optional help</summary>
         <div className="lesson-support-tabs">
           <div aria-label="Supporting lesson tools">
             {supportLessonSections.map((item) => (
@@ -507,14 +490,8 @@ export function LearningStudio({ day }: LearningStudioProps) {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => document.getElementById(`tutor-panel-${day.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-          >
-            Ask teacher
-          </button>
         </div>
-      </div>
+      </details>
 
       <div
         className="lesson-panel"
@@ -725,14 +702,14 @@ export function LearningStudio({ day }: LearningStudioProps) {
               </>
             ) : section === "quiz" ? (
               <>
-                <span>PATH COMPLETE<strong>Close today’s Understand proof when you can explain it back.</strong></span>
+                <span>LESSON COMPLETE<strong>Mark Understand complete when you can explain it back.</strong></span>
                 <button type="button" onClick={() => document.getElementById(`daily-quest-${day.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}>
-                  Return to mission ↑
+                  Return to checklist ↑
                 </button>
               </>
             ) : (
               <>
-                <span>RETURN TO THE PATH<strong>Supporting tools do not replace active practice.</strong></span>
+                <span>OPTIONAL HELP<strong>Return to the main lesson when ready.</strong></span>
                 <button
                   type="button"
                   onClick={() => {
@@ -747,11 +724,8 @@ export function LearningStudio({ day }: LearningStudioProps) {
         </div>
       </div>
 
-      <div className="studio-source-strip">
-        <div>
-          <span className="eyebrow">SOURCE MAP</span>
-          <p>{lesson.notice}</p>
-        </div>
+      <details className="studio-source-strip optional-panel">
+        <summary>Lesson sources</summary>
         <nav aria-label="Sources for this lesson">
           {lesson.sources.map((source) => (
             <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
@@ -759,14 +733,14 @@ export function LearningStudio({ day }: LearningStudioProps) {
             </a>
           ))}
         </nav>
-      </div>
+      </details>
 
-      <section id={`tutor-panel-${day.id}`} className="tutor-panel" aria-labelledby={`tutor-title-${day.id}`}>
+      <details className="optional-panel tutor-disclosure">
+        <summary>Ask the AI teacher</summary>
+        <section id={`tutor-panel-${day.id}`} className="tutor-panel" aria-labelledby={`tutor-title-${day.id}`}>
         <header className="tutor-heading">
           <div>
-            <span className="eyebrow">INLINE AI TEACHER</span>
-            <h3 id={`tutor-title-${day.id}`}>Ask your patient robotics teacher.</h3>
-            <p>It knows today’s objective, lab, proof target, and approved source map.</p>
+            <h3 id={`tutor-title-${day.id}`}>Ask a question</h3>
           </div>
           <button type="button" className="clear-chat-button" onClick={clearChat} disabled={messages.length === 0 && !draft}>
             Clear chat
@@ -790,8 +764,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
         <div ref={chatRef} className="tutor-chat" role="log" aria-live="polite" aria-relevant="additions text" aria-busy={loading}>
           {messages.length === 0 && (
             <div className="tutor-empty">
-              <span>TEACHER READY</span>
-              <p>Ask the part you are afraid is “too basic.” A good robotics explanation starts with the physical picture, then adds the symbols.</p>
+              <p>Ask about today’s lesson, maths, exercise, or quiz.</p>
             </div>
           )}
           {messages.map((message) => (
@@ -848,7 +821,8 @@ export function LearningStudio({ day }: LearningStudioProps) {
         <p className="tutor-safety-note">
           AI can make mistakes. Check equations against the linked source and never send generated commands directly to powered hardware without limits, an emergency stop, and human review.
         </p>
-      </section>
+        </section>
+      </details>
     </section>
   );
 }

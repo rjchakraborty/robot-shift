@@ -91,14 +91,14 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
   ).join("\n");
 
   const releaseSignals = [
-    ["daily task workflow", "Understand. Build. Prove."],
-    ["guided lesson path", "GUIDED LESSON PATH"],
+    ["daily task workflow", "Learn and explain"],
+    ["guided lesson path", "Guided lesson path"],
     ["evidence-based course points", "Proof XP"],
     ["proof-chain gamification", "day proof chain"],
-    ["180-day roadmap", "180-DAY OPERATING PLAN"],
-    ["roadmap search and filters", "Roadmap explorer"],
-    ["portfolio milestones", "Six builds. Six hiring signals."],
-    ["notes and evidence", "Notebook & evidence locker"],
+    ["180-day roadmap", "Roadmap"],
+    ["roadmap search and filters", "Search topics, labs, or notes"],
+    ["portfolio milestones", "Portfolio projects"],
+    ["notes and evidence", "Notes and evidence"],
     ["progress analytics", "READINESS INSTRUMENT PANEL"],
     ["job-readiness evidence", "JOB-READINESS MATRIX"],
     ["local persistence", "robot-shift-tracker-v1"],
@@ -106,16 +106,16 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     ["progress export", "Export backup"],
     ["progress import", "Import backup"],
     ["guarded reset", "Reset all progress?"],
-    ["daily knowledge studio", "KNOWLEDGE STUDIO"],
-    ["day-linked visual field guides", "Visual field guide"],
+    ["daily knowledge studio", "Lesson"],
+    ["day-linked visual field guides", "Visual explanation"],
     ["concept, math, and failure diagram modes", "Failure case"],
-    ["software-to-robotics analogy warnings", "Dangerous difference:"],
+    ["software-to-robotics analogy warnings", "Important difference:"],
     ["beginner teaching modes", "Explain simply"],
     ["simple math walkthroughs", "Math lab"],
     ["26-week beginner math rescue", "BEGINNER RESCUE"],
     ["real-world application examples", "Real-life examples"],
     ["teach-back and quiz practice", "Quiz / teach-back"],
-    ["inline AI teacher", "Ask your patient robotics teacher"],
+    ["inline AI teacher", "Ask the AI teacher"],
     ["device-local tutor history", "robot-shift-tutor-v1"],
     ["original source synthesis notice", "Original teaching synthesis"],
   ];
@@ -131,4 +131,14 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     bundle,
     /Your site is taking shape|Building your site|react-loading-skeleton/i,
   );
+
+  for (const clutter of [
+    "Learn the idea, then make it physical.",
+    "NEED ANOTHER ANGLE?",
+    "Your first useful failure belongs here.",
+    "You are changing domain, not restarting your career",
+    "Six builds. Six hiring signals.",
+  ]) {
+    assert.ok(!bundle.includes(clutter), `the default course UI should omit repeated or motivational copy: ${clutter}`);
+  }
 });

@@ -48,9 +48,9 @@ test("every concept, math, and failure visual renders accessible deterministic S
       assert.match(html, /<title id=/);
       assert.match(html, /<desc id=/);
       assert.match(html, /<figcaption>/);
-      assert.match(html, /How to read it/);
+      assert.match(html, /How to read this diagram/);
       assert.match(html, /Legend/);
-      assert.match(html, /Dangerous difference:/);
+      assert.match(html, /Important difference:/);
       assert.match(html, new RegExp(`Day ${visual.dayId}`));
       assert.ok(html.includes(visual.topic));
       assert.doesNotMatch(html, /<script\b|<foreignObject\b/i);

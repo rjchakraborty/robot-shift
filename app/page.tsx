@@ -521,42 +521,30 @@ export default function Home() {
         </nav>
 
         <div className="rail-progress">
-          <div className="rail-progress-head"><span>MISSION</span><strong>{percent}%</strong></div>
+          <div className="rail-progress-head"><span>PROGRESS</span><strong>{percent}%</strong></div>
           <progress value={completedParts} max={totalParts}>{percent}%</progress>
-          <p>{completedDays}/180 days · {completedParts}/{totalParts} proofs</p>
-          <div className="rail-game-stats">
-            <span><strong>{missionProgress.totalXp.toLocaleString()}</strong> / {missionProgress.maxXp.toLocaleString()} XP</span>
-            <span><strong>{missionProgress.proofChain}</strong> day proof chain</span>
-            <span><strong>{missionProgress.rank.label}</strong> course rank</span>
-          </div>
-        </div>
-
-        <div className="local-note">
-          <span className="status-dot" /> Local field storage
-          <small>Your progress stays in this browser. Export a backup regularly.</small>
+          <p>{completedDays} of 180 days complete</p>
         </div>
       </aside>
 
       <div className="work-area" aria-hidden={showReset ? true : undefined}>
         <header className="command-bar">
           <div>
-            <span className="eyebrow">CURRENT OPERATING MODE</span>
-            <strong>{currentPhase.number} / {currentPhase.shortTitle}</strong>
+            <strong>{currentPhase.number} · {currentPhase.shortTitle}</strong>
           </div>
           <div className="command-actions">
-            <label className="global-search">
+            {view === "roadmap" && <label className="global-search">
               <span>⌕</span>
               <span className="sr-only">Search curriculum</span>
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                onFocus={() => changeView("roadmap", false)}
                 placeholder="Search 180 days…"
               />
-            </label>
+            </label>}
             <ThemeControl />
             <button className="utility-button" onClick={() => setShowSettings((open) => !open)} aria-expanded={showSettings}>
-              Controls
+              Settings
             </button>
           </div>
         </header>
@@ -720,9 +708,9 @@ function TodayView({
     prove: "evidence",
   };
   const taskCopy = [
-    { id: "learn" as const, label: "Understand", title: "See it and explain it", body: "Complete the guided visual, explanation, and check.", xp: MISSION_TASK_XP.learn },
-    { id: "build" as const, label: "Build", title: "Make it observable", body: "Work today’s practical exercise and record one failure.", xp: MISSION_TASK_XP.build },
-    { id: "prove" as const, label: "Prove", title: "Lock the evidence", body: "Add a repository, demo, report, or decisive output before closing this step.", xp: MISSION_TASK_XP.prove },
+    { id: "learn" as const, label: "Understand", title: "Learn and explain" },
+    { id: "build" as const, label: "Build", title: "Complete the exercise" },
+    { id: "prove" as const, label: "Prove", title: "Save evidence" },
   ];
   const primaryActionCopy = nextAction.status === "course-complete"
     ? "Review completion"
@@ -746,13 +734,7 @@ function TodayView({
       <section id={`mission-hero-${day.id}`} className="mission-hero" tabIndex={-1}>
         <div className="hero-copy">
           <div className={`viewing-state ${isPreviewing ? "previewing" : ""}`}>
-            <span>{isPreviewing ? "PREVIEWING" : "YOU ARE VIEWING"} Day {day.id}</span>
-            <i aria-hidden="true" />
-            <span>
-              {nextAction.status === "active"
-                ? `NEXT MISSION Day ${nextAction.dayId} · ${nextAction.label}`
-                : "COURSE MISSION COMPLETE"}
-            </span>
+            <span>Day {day.id} of 180</span>
             <button className="bookmark-inline" onClick={() => toggleBookmark(day.id)} aria-pressed={tracker.bookmarks.includes(day.id)}>
               <span aria-hidden="true">{tracker.bookmarks.includes(day.id) ? "★" : "☆"}</span>
               <span className="bookmark-label">{tracker.bookmarks.includes(day.id) ? "Important" : "Mark important"}</span>
@@ -760,33 +742,19 @@ function TodayView({
           </div>
           <div className="hero-meta">
             <span style={{ background: phase.color }}>{phase.number}</span>
-            DAY {String(day.id).padStart(3, "0")} · WEEK {String(day.week).padStart(2, "0")} · {formatMinutes(day.minutes)}
+            WEEK {String(day.week).padStart(2, "0")} · {formatMinutes(day.minutes)}
+            {date ? ` · ${date}` : ""}
           </div>
           <h1>{day.title}</h1>
           <p>{day.focus}</p>
-        </div>
-        <div className="mission-glance" aria-label={`${dailyProgress.xp} of 100 XP earned today`}>
-          <div><span>TODAY</span><strong>{dailyProgress.xp}<small>/100 XP</small></strong></div>
-          <div><span>PROOF CHAIN</span><strong>{missionProgress.proofChain}<small> days</small></strong></div>
-          <div><span>COURSE RANK</span><strong>{missionProgress.rank.label}</strong></div>
-          <small>{date ? `Planned ${date} · ${tracker.weeklyHours}h/week` : "Set a start date"}</small>
         </div>
       </section>
 
       <section id={`daily-quest-${day.id}`} className="daily-quest" aria-labelledby={`daily-quest-title-${day.id}`}>
         <header>
           <div>
-            <span className="eyebrow">TODAY’S MISSION</span>
-            <h2 id={`daily-quest-title-${day.id}`}>Understand. Build. Prove.</h2>
-            <p>
-              {nextAction.status === "active"
-                ? `Next: Day ${nextAction.dayId} · ${MISSION_TASK_LABELS[nextAction.part]}`
-                : "All daily missions closed · review the career sprint"}
-            </p>
-          </div>
-          <div className="quest-score">
-            <strong>{dailyProgress.xp}</strong>
-            <span>/ 100 XP</span>
+            <h2 id={`daily-quest-title-${day.id}`}>Today</h2>
+            <p>{completeCount} of 3 complete</p>
           </div>
           <button className="primary-button" onClick={runPrimaryAction}>{primaryActionCopy} →</button>
         </header>
@@ -801,9 +769,7 @@ function TodayView({
                 <span>
                   <small>{task.label}{isNext ? " · NEXT" : ""}</small>
                   <strong>{task.title}</strong>
-                  <em>{task.body}</em>
                 </span>
-                <b>{done ? "EARNED" : "+"}{task.xp} XP</b>
               </label>
             );
           })}
@@ -815,19 +781,16 @@ function TodayView({
       <div className="today-grid">
         <section className="task-board" aria-labelledby="task-title">
           <div className="section-heading">
-            <div><span className="eyebrow">APPLY IT PHYSICALLY</span><h2 id="task-title">Today’s build and proof target</h2></div>
-            <span>{completeCount}/3 mission steps closed</span>
+            <div><h2 id="task-title">Practical task</h2></div>
           </div>
           <article className="lab-card">
-            <span className="eyebrow">WEEKLY LAB // LIVE BUILD</span>
             <h3>{day.lab}</h3>
-            <p>Keep a working baseline. Add one observable improvement today and record the failure that taught you the most.</p>
           </article>
           <article className="proof-target-card">
-            <span className="eyebrow">DEFINITION OF DONE</span>
+            <strong>Complete when</strong>
             <p>{day.evidence}</p>
             <button type="button" onClick={() => document.getElementById("evidence-note")?.focus()}>
-              Open evidence locker →
+              Add evidence →
             </button>
           </article>
           {day.checkpoint && (
@@ -842,17 +805,17 @@ function TodayView({
 
         <aside className="field-panel">
           <section>
-            <span className="eyebrow">PRIMARY REFERENCE</span>
+            <strong>Reference</strong>
             <a className="resource-link" href={day.resource.url} target="_blank" rel="noreferrer">
-              <span>↗</span><strong>{day.resource.label}</strong><small>Use for today’s “{day.title}” work</small>
+              <span>↗</span><strong>{day.resource.label}</strong>
             </a>
           </section>
           <section>
-            <label htmlFor="field-note"><span className="eyebrow">FIELD NOTE</span><small>Key idea, command, diagnosis, or follow-up</small></label>
-            <textarea id="field-note" maxLength={MAX_TEXT_LENGTH} value={tracker.notes[String(day.id)] ?? ""} onChange={(event) => updateText("notes", day.id, event.target.value)} placeholder="What changed your mental model today?" />
+            <label htmlFor="field-note"><strong>Notes</strong></label>
+            <textarea id="field-note" maxLength={MAX_TEXT_LENGTH} value={tracker.notes[String(day.id)] ?? ""} onChange={(event) => updateText("notes", day.id, event.target.value)} placeholder="Key idea, command, or question…" />
           </section>
           <section>
-            <label htmlFor="evidence-note"><span className="eyebrow">EVIDENCE LOCKER</span><small>Repository, demo, report, or decisive output</small></label>
+            <label htmlFor="evidence-note"><strong>Evidence</strong></label>
             <textarea id="evidence-note" maxLength={MAX_TEXT_LENGTH} value={tracker.evidence[String(day.id)] ?? ""} onChange={(event) => updateText("evidence", day.id, event.target.value)} placeholder="Paste a link or describe the artifact…" />
           </section>
           <div className={`autosave-line ${persistenceError ? "error" : ""}`} role="status">
@@ -893,8 +856,7 @@ function RoadmapView({
   return (
     <div className="view-wrap">
       <section className="page-intro">
-        <div><span className="eyebrow">180-DAY OPERATING PLAN</span><h1>Roadmap explorer</h1><p>Every week ends with runnable, measurable, or publishable evidence.</p></div>
-        <div className="intro-stat"><strong>{days.length}</strong><span>days visible</span></div>
+        <div><h1>Roadmap</h1><p>{days.length} of 180 days shown.</p></div>
       </section>
 
       <section className="filter-deck" aria-label="Roadmap filters">
@@ -953,8 +915,7 @@ function BuildsView({ tracker, setTracker, openDay }: { tracker: TrackerState; s
   return (
     <div className="view-wrap">
       <section className="page-intro">
-        <div><span className="eyebrow">PORTFOLIO PRODUCTION LINE</span><h1>Six builds. Six hiring signals.</h1><p>No certificate counts here. Close a gate with runnable behavior, metrics, and an honest failure story.</p></div>
-        <div className="intro-stat"><strong>6</strong><span>proof gates</span></div>
+        <div><h1>Portfolio projects</h1><p>Six projects with measurable completion criteria.</p></div>
       </section>
       <div className="build-grid">
         {projects.map((project, index) => {
@@ -1000,8 +961,7 @@ function NotebookView({ tracker, openDay }: { tracker: TrackerState; openDay: (i
   return (
     <div className="view-wrap">
       <section className="page-intro">
-        <div><span className="eyebrow">FIELD MEMORY</span><h1>Notebook & evidence locker</h1><p>Your important ideas, debugging lessons, artifacts, and follow-ups—attached to the day that created them.</p></div>
-        <div className="intro-stat"><strong>{entries.length}</strong><span>captured days</span></div>
+        <div><h1>Notes and evidence</h1><p>{entries.length} days captured.</p></div>
       </section>
       {entries.length ? (
         <div className="notebook-grid">
@@ -1019,7 +979,7 @@ function NotebookView({ tracker, openDay }: { tracker: TrackerState; openDay: (i
           })}
         </div>
       ) : (
-        <div className="empty-state"><span>FIELD LOG EMPTY</span><h2>Your first useful failure belongs here.</h2><p>Open today’s work order, write a key idea or failure note, and mark important days for fast retrieval.</p><button onClick={() => openDay(tracker.selectedDay)}>Open current day</button></div>
+        <div className="empty-state"><h2>No notes or evidence yet.</h2><button onClick={() => openDay(tracker.selectedDay)}>Open current day</button></div>
       )}
     </div>
   );
