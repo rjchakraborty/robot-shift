@@ -11,9 +11,18 @@ import {
   type Phase,
 } from "./curriculum";
 import { LearningStudio } from "./learning-studio";
+import {
+  deriveMissionProgress,
+  MISSION_TASK_LABELS,
+  MISSION_TASK_PARTS,
+  MISSION_TASK_XP,
+  type MissionProgress,
+  type MissionTaskPart,
+} from "./mission-progress";
 
 type View = "today" | "roadmap" | "builds" | "notebook" | "progress";
-type TaskPart = "learn" | "build" | "prove";
+type TaskPart = MissionTaskPart;
+type FocusTarget = "top" | "visual" | "practice" | "evidence";
 type PhaseStat = Phase & { days: number; complete: number; percent: number };
 
 type TrackerState = {
@@ -28,7 +37,7 @@ type TrackerState = {
   selectedDay: number;
 };
 
-const taskParts: TaskPart[] = ["learn", "build", "prove"];
+const taskParts: readonly TaskPart[] = MISSION_TASK_PARTS;
 const STORAGE_KEY = "robot-shift-tracker-v1";
 const MAX_TEXT_LENGTH = 5_000;
 const MAX_BACKUP_BYTES = 5_000_000;
@@ -204,6 +213,7 @@ export default function Home() {
   const [announcement, setAnnouncement] = useState("");
   const [saveStatus, setSaveStatus] = useState("Ready");
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{ dayId: number; target: FocusTarget; nonce: number } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const skipNextSaveRef = useRef(false);
   const resetDialogRef = useRef<HTMLDivElement>(null);
@@ -307,11 +317,24 @@ export default function Home() {
     () => curriculumDays.reduce((total, day) => total + taskParts.filter((part) => tracker.completed[taskKey(day.id, part)]).length, 0),
     [tracker.completed],
   );
-  const completedDays = useMemo(() => curriculumDays.filter((day) => isDayDone(day.id)).length, [isDayDone]);
+  const missionProgress = useMemo(() => deriveMissionProgress({
+    completed: tracker.completed,
+    evidence: tracker.evidence,
+    projectGates: projects.map((project) => ({
+      id: project.id,
+      label: project.title,
+      expectedCount: projectChecklistSizes.get(project.id) ?? 0,
+      checks: tracker.projectChecks[project.id],
+    })),
+    totalDays: curriculumDays.length,
+  }), [tracker.completed, tracker.evidence, tracker.projectChecks]);
+  const completedDays = useMemo(
+    () => missionProgress.daily.filter((day) => day.complete).length,
+    [missionProgress.daily],
+  );
   const totalParts = curriculumDays.length * taskParts.length;
   const percent = Math.round((completedParts / totalParts) * 100);
-  const earliestIncomplete = curriculumDays.find((day) => !isDayDone(day.id))?.id ?? 180;
-  const selectedDay = curriculumDays.find((day) => day.id === tracker.selectedDay) ?? curriculumDays[earliestIncomplete - 1];
+  const selectedDay = curriculumDays.find((day) => day.id === tracker.selectedDay) ?? curriculumDays[0];
   const currentPhase = phaseFor(selectedDay);
 
   const phaseStats = phases.map((phase) => {
@@ -332,21 +355,65 @@ export default function Home() {
     });
   }, [query, phaseFilter, statusFilter, tracker.notes, isDayDone]);
 
-  const openDay = (dayId: number) => {
+  const changeView = (nextView: View, focusMain = true) => {
+    setView(nextView);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.setTimeout(() => {
+      if (focusMain) document.getElementById("main-content")?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    }, 0);
+  };
+
+  const openDay = (dayId: number, target: FocusTarget = "top") => {
     setTracker((previous) => ({ ...previous, selectedDay: dayId }));
     setView("today");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setFocusRequest({ dayId, target, nonce: Date.now() });
   };
+
+  useEffect(() => {
+    if (!focusRequest || view !== "today" || tracker.selectedDay !== focusRequest.dayId) return;
+
+    const timer = window.setTimeout(() => {
+      const targetId = focusRequest.target === "visual"
+        ? `lesson-tab-${focusRequest.dayId}-visual`
+        : focusRequest.target === "practice"
+          ? `lesson-tab-${focusRequest.dayId}-practice`
+          : focusRequest.target === "evidence"
+            ? "evidence-note"
+            : `mission-hero-${focusRequest.dayId}`;
+      const element = document.getElementById(targetId);
+      if (element instanceof HTMLButtonElement && (focusRequest.target === "visual" || focusRequest.target === "practice")) {
+        element.click();
+      }
+      element?.focus();
+      element?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: focusRequest.target === "top" ? "start" : "center",
+      });
+      setFocusRequest(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [focusRequest, tracker.selectedDay, view]);
 
   const togglePart = (day: CurriculumDay, part: TaskPart) => {
     const key = taskKey(day.id, part);
     const next = !tracker.completed[key];
+    const nextCompleted = { ...tracker.completed, [key]: next };
     setTracker((previous) => ({
       ...previous,
-      completed: { ...previous.completed, [key]: next },
+      completed: nextCompleted,
     }));
-    const label = part === "learn" ? "understand" : part;
-    setAnnouncement(`${day.title}: ${label} ${next ? "complete" : "reopened"}.`);
+    const nextMission = deriveMissionProgress({
+      completed: nextCompleted,
+      evidence: tracker.evidence,
+      totalDays: curriculumDays.length,
+    }).nextAction;
+    const nextCopy = nextMission.status === "active"
+      ? `Next: Day ${nextMission.dayId} ${nextMission.label}.`
+      : "Course mission complete.";
+    setAnnouncement(
+      `${day.title}: ${MISSION_TASK_LABELS[part]} ${next ? "complete" : "reopened"}. ${next ? "Earned" : "Removed"} ${MISSION_TASK_XP[part]} XP. ${nextCopy}`,
+    );
   };
 
   const toggleBookmark = (dayId: number) => {
@@ -422,7 +489,7 @@ export default function Home() {
             <button
               key={item.id}
               className={view === item.id ? "active" : ""}
-              onClick={() => setView(item.id)}
+              onClick={() => changeView(item.id)}
               aria-current={view === item.id ? "page" : undefined}
             >
               <span>{item.mark}</span>{item.label}
@@ -434,6 +501,11 @@ export default function Home() {
           <div className="rail-progress-head"><span>MISSION</span><strong>{percent}%</strong></div>
           <progress value={completedParts} max={totalParts}>{percent}%</progress>
           <p>{completedDays}/180 days · {completedParts}/{totalParts} proofs</p>
+          <div className="rail-game-stats">
+            <span><strong>{missionProgress.totalXp.toLocaleString()}</strong> / {missionProgress.maxXp.toLocaleString()} XP</span>
+            <span><strong>{missionProgress.proofChain}</strong> day proof chain</span>
+            <span><strong>{missionProgress.rank.label}</strong> course rank</span>
+          </div>
         </div>
 
         <div className="local-note">
@@ -455,7 +527,7 @@ export default function Home() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                onFocus={() => setView("roadmap")}
+                onFocus={() => changeView("roadmap", false)}
                 placeholder="Search 180 days…"
               />
             </label>
@@ -503,7 +575,7 @@ export default function Home() {
           {view === "today" && (
             <TodayView
               day={selectedDay}
-              earliestIncomplete={earliestIncomplete}
+              missionProgress={missionProgress}
               tracker={tracker}
               isPartDone={isPartDone}
               togglePart={togglePart}
@@ -512,6 +584,7 @@ export default function Home() {
               openDay={openDay}
               persistenceMessage={storageError ?? "Auto-saved locally"}
               persistenceError={Boolean(storageError)}
+              openProgress={() => changeView("progress")}
             />
           )}
 
@@ -543,11 +616,10 @@ export default function Home() {
             <ProgressView
               percent={percent}
               completedDays={completedDays}
-              completedParts={completedParts}
-              totalParts={totalParts}
               phaseStats={phaseStats}
               tracker={tracker}
               isDayDone={isDayDone}
+              missionProgress={missionProgress}
             />
           )}
         </main>
@@ -555,7 +627,7 @@ export default function Home() {
 
       <nav className="mobile-nav" aria-label="Mobile navigation" aria-hidden={showReset ? true : undefined}>
         {navigation.map((item) => (
-          <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => setView(item.id)} aria-current={view === item.id ? "page" : undefined}>
+          <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => changeView(item.id)} aria-current={view === item.id ? "page" : undefined}>
             <span>{item.mark}</span>{item.label}
           </button>
         ))}
@@ -582,7 +654,7 @@ export default function Home() {
 
 function TodayView({
   day,
-  earliestIncomplete,
+  missionProgress,
   tracker,
   isPartDone,
   togglePart,
@@ -591,49 +663,119 @@ function TodayView({
   openDay,
   persistenceMessage,
   persistenceError,
+  openProgress,
 }: {
   day: CurriculumDay;
-  earliestIncomplete: number;
+  missionProgress: MissionProgress;
   tracker: TrackerState;
   isPartDone: (dayId: number, part: TaskPart) => boolean;
   togglePart: (day: CurriculumDay, part: TaskPart) => void;
   toggleBookmark: (dayId: number) => void;
   updateText: (field: "notes" | "evidence", dayId: number, value: string) => void;
-  openDay: (dayId: number) => void;
+  openDay: (dayId: number, target?: FocusTarget) => void;
   persistenceMessage: string;
   persistenceError: boolean;
+  openProgress: () => void;
 }) {
   const phase = phaseFor(day);
   const date = scheduledDate(tracker.startedOn, day.id, tracker.weeklyHours);
   const completeCount = taskParts.filter((part) => isPartDone(day.id, part)).length;
+  const dailyProgress = missionProgress.daily[day.id - 1];
+  const nextAction = missionProgress.nextAction;
+  const isPreviewing = nextAction.status === "active" && day.id !== nextAction.dayId;
+  const targetForPart: Record<TaskPart, FocusTarget> = {
+    learn: "visual",
+    build: "practice",
+    prove: "evidence",
+  };
   const taskCopy = [
-    { id: "learn" as const, label: "Understand", title: day.title, body: `Build the mental model: ${day.focus}` },
-    { id: "build" as const, label: "Build", title: "Practical application", body: day.task },
-    { id: "prove" as const, label: "Prove", title: "Definition of done", body: day.evidence },
+    { id: "learn" as const, label: "Understand", title: "See it and explain it", body: "Complete the guided visual, explanation, and check.", xp: MISSION_TASK_XP.learn },
+    { id: "build" as const, label: "Build", title: "Make it observable", body: "Work today’s practical exercise and record one failure.", xp: MISSION_TASK_XP.build },
+    { id: "prove" as const, label: "Prove", title: "Lock the evidence", body: "Attach a repository, demo, report, or decisive output.", xp: MISSION_TASK_XP.prove },
   ];
+  const primaryActionCopy = nextAction.status === "course-complete"
+    ? "Review completion"
+    : isPreviewing
+      ? `Resume Day ${nextAction.dayId} · ${nextAction.label}`
+      : nextAction.part === "learn"
+        ? "Start visual lesson"
+        : nextAction.part === "build"
+          ? "Continue to practice"
+          : "Record proof evidence";
+  const runPrimaryAction = () => {
+    if (nextAction.status === "course-complete") {
+      openProgress();
+      return;
+    }
+    openDay(nextAction.dayId, targetForPart[nextAction.part]);
+  };
 
   return (
     <div className="view-wrap">
-      <section className="mission-hero">
+      <section id={`mission-hero-${day.id}`} className="mission-hero" tabIndex={-1}>
         <div className="hero-copy">
+          <div className={`viewing-state ${isPreviewing ? "previewing" : ""}`}>
+            <span>{isPreviewing ? "PREVIEWING" : "YOU ARE VIEWING"} Day {day.id}</span>
+            <i aria-hidden="true" />
+            <span>
+              {nextAction.status === "active"
+                ? `NEXT MISSION Day ${nextAction.dayId} · ${nextAction.label}`
+                : "COURSE MISSION COMPLETE"}
+            </span>
+            <button className="bookmark-inline" onClick={() => toggleBookmark(day.id)} aria-pressed={tracker.bookmarks.includes(day.id)}>
+              <span aria-hidden="true">{tracker.bookmarks.includes(day.id) ? "★" : "☆"}</span>
+              <span className="bookmark-label">{tracker.bookmarks.includes(day.id) ? "Important" : "Mark important"}</span>
+            </button>
+          </div>
           <div className="hero-meta">
             <span style={{ background: phase.color }}>{phase.number}</span>
             DAY {String(day.id).padStart(3, "0")} · WEEK {String(day.week).padStart(2, "0")} · {formatMinutes(day.minutes)}
           </div>
           <h1>{day.title}</h1>
           <p>{day.focus}</p>
-          <div className="hero-actions">
-            {day.id !== earliestIncomplete && <button className="primary-button" onClick={() => openDay(earliestIncomplete)}>Continue day {earliestIncomplete}</button>}
-            <button className="secondary-button" onClick={() => toggleBookmark(day.id)} aria-pressed={tracker.bookmarks.includes(day.id)}>
-              {tracker.bookmarks.includes(day.id) ? "★ Important" : "☆ Mark important"}
-            </button>
-          </div>
         </div>
-        <div className="day-gauge" aria-label={`${completeCount} of 3 tasks complete`}>
-          <span>{completeCount}<small>/3</small></span>
-          <p>proofs closed</p>
-          <div className="gauge-marks" aria-hidden="true"><i /><i /><i /></div>
+        <div className="mission-glance" aria-label={`${dailyProgress.xp} of 100 XP earned today`}>
+          <div><span>TODAY</span><strong>{dailyProgress.xp}<small>/100 XP</small></strong></div>
+          <div><span>PROOF CHAIN</span><strong>{missionProgress.proofChain}<small> days</small></strong></div>
+          <div><span>COURSE RANK</span><strong>{missionProgress.rank.label}</strong></div>
           <small>{date ? `Planned ${date} · ${tracker.weeklyHours}h/week` : "Set a start date"}</small>
+        </div>
+      </section>
+
+      <section id={`daily-quest-${day.id}`} className="daily-quest" aria-labelledby={`daily-quest-title-${day.id}`}>
+        <header>
+          <div>
+            <span className="eyebrow">TODAY’S MISSION</span>
+            <h2 id={`daily-quest-title-${day.id}`}>Understand. Build. Prove.</h2>
+            <p>
+              {nextAction.status === "active"
+                ? `Next: Day ${nextAction.dayId} · ${MISSION_TASK_LABELS[nextAction.part]}`
+                : "All daily missions closed · review the career sprint"}
+            </p>
+          </div>
+          <div className="quest-score">
+            <strong>{dailyProgress.xp}</strong>
+            <span>/ 100 XP</span>
+          </div>
+          <button className="primary-button" onClick={runPrimaryAction}>{primaryActionCopy} →</button>
+        </header>
+        <div className="quest-steps">
+          {taskCopy.map((task, index) => {
+            const done = isPartDone(day.id, task.id);
+            const isNext = dailyProgress.nextPart === task.id;
+            return (
+              <label key={task.id} className={`quest-step ${done ? "done" : ""} ${isNext ? "next" : ""}`}>
+                <input type="checkbox" checked={done} onChange={() => togglePart(day, task.id)} />
+                <span className="quest-number" aria-hidden="true">{done ? "✓" : index + 1}</span>
+                <span>
+                  <small>{task.label}{isNext ? " · NEXT" : ""}</small>
+                  <strong>{task.title}</strong>
+                  <em>{task.body}</em>
+                </span>
+                <b>{done ? "EARNED" : "+"}{task.xp} XP</b>
+              </label>
+            );
+          })}
         </div>
       </section>
 
@@ -642,26 +784,20 @@ function TodayView({
       <div className="today-grid">
         <section className="task-board" aria-labelledby="task-title">
           <div className="section-heading">
-            <div><span className="eyebrow">TODAY’S WORK ORDER</span><h2 id="task-title">Learn it. Build it. Prove it.</h2></div>
-            <span>{completeCount}/3 closed</span>
-          </div>
-          <div className="task-list">
-            {taskCopy.map((task, index) => {
-              const done = isPartDone(day.id, task.id);
-              return (
-                <label key={task.id} className={`task-row ${done ? "done" : ""}`}>
-                  <input type="checkbox" checked={done} onChange={() => togglePart(day, task.id)} />
-                  <span className="task-index">0{index + 1}</span>
-                  <span className="check-box" aria-hidden="true">{done ? "✓" : ""}</span>
-                  <span className="task-copy"><small>{task.label}</small><strong>{task.title}</strong><span>{task.body}</span></span>
-                </label>
-              );
-            })}
+            <div><span className="eyebrow">APPLY IT PHYSICALLY</span><h2 id="task-title">Today’s build and proof target</h2></div>
+            <span>{completeCount}/3 mission steps closed</span>
           </div>
           <article className="lab-card">
             <span className="eyebrow">WEEKLY LAB // LIVE BUILD</span>
             <h3>{day.lab}</h3>
             <p>Keep a working baseline. Add one observable improvement today and record the failure that taught you the most.</p>
+          </article>
+          <article className="proof-target-card">
+            <span className="eyebrow">DEFINITION OF DONE</span>
+            <p>{day.evidence}</p>
+            <button type="button" onClick={() => document.getElementById("evidence-note")?.focus()}>
+              Open evidence locker →
+            </button>
           </article>
           {day.checkpoint && (
             <article className="gate-card"><span>GATE</span><strong>{day.checkpoint}</strong></article>
@@ -861,19 +997,17 @@ function NotebookView({ tracker, openDay }: { tracker: TrackerState; openDay: (i
 function ProgressView({
   percent,
   completedDays,
-  completedParts,
-  totalParts,
   phaseStats,
   tracker,
   isDayDone,
+  missionProgress,
 }: {
   percent: number;
   completedDays: number;
-  completedParts: number;
-  totalParts: number;
   phaseStats: PhaseStat[];
   tracker: TrackerState;
   isDayDone: (dayId: number) => boolean;
+  missionProgress: MissionProgress;
 }) {
   const plannedMinutes = curriculumDays.reduce((sum, day) => sum + day.minutes, 0);
   const closedMinutes = curriculumDays.filter((day) => isDayDone(day.id)).reduce((sum, day) => sum + day.minutes, 0);
@@ -884,12 +1018,60 @@ function ProgressView({
   return (
     <div className="view-wrap">
       <section className="progress-hero">
-        <div><span className="eyebrow">READINESS INSTRUMENT PANEL</span><h1>{percent}% mission complete</h1><p>Progress is derived from closed learning, build, and proof tasks—not an opaque score.</p></div>
+        <div>
+          <span className="eyebrow">READINESS INSTRUMENT PANEL</span>
+          <h1>{percent}% mission complete</h1>
+          <p>
+            Proof XP is derived from closed tasks; job readiness still depends on working builds, failure reports, and reproducible evidence.
+            {" "}{Math.round(closedMinutes / 60)} of {Math.round(plannedMinutes / 60)} planned hours are attached to fully closed days.
+          </p>
+        </div>
         <div className="progress-numbers">
           <div><strong>{completedDays}</strong><span>/ 180 days</span></div>
-          <div><strong>{completedParts}</strong><span>/ {totalParts} proofs</span></div>
-          <div><strong>{Math.round(closedMinutes / 60)}</strong><span>/ {Math.round(plannedMinutes / 60)} hours</span></div>
+          <div><strong>{missionProgress.totalXp.toLocaleString()}</strong><span>/ {missionProgress.maxXp.toLocaleString()} XP</span></div>
+          <div><strong>{missionProgress.proofChain}</strong><span>day proof chain</span></div>
           <div><strong>{completedProjects}</strong><span>/ 6 builds</span></div>
+        </div>
+      </section>
+
+      <section className="mission-achievements" aria-labelledby="mission-rank-title">
+        <div className="rank-card">
+          <span className="eyebrow">COURSE RANK</span>
+          <h2 id="mission-rank-title">{missionProgress.rank.label}</h2>
+          <p>Ranks describe progress through this course. They are not certifications or hiring claims.</p>
+          <progress
+            value={missionProgress.rank.percentToNextRank}
+            max={100}
+            aria-label={`${missionProgress.rank.percentToNextRank}% toward the next course rank`}
+          />
+          <small>
+            {missionProgress.rank.nextMinimumXp === null
+              ? "Maximum course rank reached"
+              : `${missionProgress.rank.xpIntoRank.toLocaleString()} / ${missionProgress.rank.xpForRank.toLocaleString()} XP within this rank`}
+          </small>
+        </div>
+        <div className="badge-rack">
+          <div className="section-heading">
+            <div><span className="eyebrow">EVIDENCE BADGES</span><h2>Earned only from proof</h2></div>
+            <span>{missionProgress.badges.filter((badge) => badge.earned).length}/{missionProgress.badges.length} earned</span>
+          </div>
+          <div>
+            {missionProgress.badges.map((badge) => (
+              <article key={badge.id} className={badge.earned ? "earned" : ""}>
+                <span aria-hidden="true">{badge.earned ? "✓" : "—"}</span>
+                <div>
+                  <strong>{badge.label}</strong>
+                  <small>
+                    {badge.id === "first-proof"
+                      ? "Close Prove and save non-empty evidence"
+                      : badge.id === "seven-day-chain"
+                        ? "Close seven contiguous days from Day 1"
+                        : "Close every checklist item in this build gate"}
+                  </small>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

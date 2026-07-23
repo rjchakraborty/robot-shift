@@ -54,6 +54,15 @@ test("every concept, math, and failure visual renders accessible deterministic S
       assert.match(html, new RegExp(`Day ${visual.dayId}`));
       assert.ok(html.includes(visual.topic));
       assert.doesNotMatch(html, /<script\b|<foreignObject\b/i);
+      assert.equal((html.match(/\brole="tab"/g) ?? []).length, 3);
+      assert.equal((html.match(/\btabindex="0"/g) ?? []).length, 1);
+      assert.equal((html.match(/\btabindex="-1"/g) ?? []).length, 2);
+      assert.match(
+        html,
+        new RegExp(
+          `role="tabpanel" aria-labelledby="lesson-visual-${visual.dayId}-${mode}-tab-${mode}"`,
+        ),
+      );
 
       const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
       assert.equal(ids.length, new Set(ids).size, `day ${visual.dayId} ${mode} has duplicate SVG/DOM IDs`);

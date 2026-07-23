@@ -81,7 +81,10 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
   ).join("\n");
 
   const releaseSignals = [
-    ["daily task workflow", "Learn it. Build it. Prove it."],
+    ["daily task workflow", "Understand. Build. Prove."],
+    ["guided lesson path", "GUIDED LESSON PATH"],
+    ["evidence-based course points", "Proof XP"],
+    ["proof-chain gamification", "day proof chain"],
     ["180-day roadmap", "180-DAY OPERATING PLAN"],
     ["roadmap search and filters", "Roadmap explorer"],
     ["portfolio milestones", "Six builds. Six hiring signals."],

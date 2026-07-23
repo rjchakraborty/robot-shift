@@ -268,7 +268,7 @@ const weekPlans: WeekPlan[] = [
     lab: "Simulate a ros2_control differential-drive robot in Gazebo Harmonic with lidar, RGB-D camera, IMU, noise, bridges, and MCAP replay.",
     topics: [
       "Gazebo Harmonic physics, simulation time, and real-time factor",
-      "ros_gz bridge, spawning, and gz_ros2_control",
+      "ros_gz bridge, spawning, differential-drive kinematics, wheel odometry, and gz_ros2_control",
       "Lidar scans, camera topics, IMU, and encoders",
       "Sensor noise, update rate, and timestamp alignment",
       "rosbag2/MCAP recording, playback, and deterministic replay",
@@ -522,7 +522,7 @@ const weekPlans: WeekPlan[] = [
     topics: [
       "Choose hardware from task, support, and safety constraints",
       "Actuator sizing, motors, encoders, power, and physical limits",
-      "CAN, EtherCAT, UART, I²C, SPI, Ethernet, and clock synchronization",
+      "MCU firmware and RTOS basics; CAN, EtherCAT, UART, I²C, SPI, Ethernet, device manifests, and clock synchronization",
       "Implement a ros2_control hardware plugin and lifecycle bring-up",
       "Calibrate joints, verify frames, and perform low-speed teleoperation",
       "Emergency stop, STO awareness, watchdog, and safe shutdown",
@@ -538,7 +538,7 @@ const weekPlans: WeekPlan[] = [
     topics: [
       "Define the capstone task and measurable success",
       "Design scene, object, lighting, and start-state variation",
-      "Build the teleoperation and recording workflow",
+      "Build a safe Flutter/Web teleoperation console with dead-man control, command limits, latency visibility, cancellation, and synchronized recording",
       "Collect a balanced first demonstration batch",
       "Review failures and repair dataset coverage",
       "Create train, validation, and held-out scene splits",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { DayVisualSpec, VisualKind, VisualMode } from "./lesson-visuals";
 
 export type LessonVisualProps = {
@@ -550,10 +550,24 @@ export function LessonVisual({
   const gridId = `${idBase}-grid`;
   const panelId = `${idBase}-panel`;
   const accent = modeAccent(mode);
+  const modeRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   function selectMode(nextMode: VisualMode) {
     if (controlledMode === undefined) setLocalMode(nextMode);
     onModeChange?.(nextMode);
+  }
+
+  function moveMode(event: KeyboardEvent<HTMLButtonElement>, currentIndex: number) {
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % modes.length;
+    if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + modes.length) % modes.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = modes.length - 1;
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    selectMode(modes[nextIndex].id);
+    modeRefs.current[nextIndex]?.focus();
   }
 
   return (
@@ -565,15 +579,19 @@ export function LessonVisual({
           <p>{spec.takeaway}</p>
         </div>
         <div className="lesson-visual__mode-tabs lesson-tabs" role="tablist" aria-label="Visual explanation mode">
-          {modes.map((item) => (
+          {modes.map((item, index) => (
             <button
               key={item.id}
+              ref={(node) => { modeRefs.current[index] = node; }}
+              id={`${idBase}-tab-${item.id}`}
               type="button"
               role="tab"
               aria-selected={mode === item.id}
               aria-controls={panelId}
+              tabIndex={mode === item.id ? 0 : -1}
               className={mode === item.id ? "active" : undefined}
               onClick={() => selectMode(item.id)}
+              onKeyDown={(event) => moveMode(event, index)}
             >
               {item.label}
             </button>
@@ -581,7 +599,12 @@ export function LessonVisual({
         </div>
       </header>
 
-      <div id={panelId} className="lesson-visual__board" role="tabpanel">
+      <div
+        id={panelId}
+        className="lesson-visual__board"
+        role="tabpanel"
+        aria-labelledby={`${idBase}-tab-${mode}`}
+      >
         <figure className="lesson-visual__figure formula-card">
           <span className="lesson-visual__scroll-hint">Swipe the technical canvas horizontally on a small screen.</span>
           <svg

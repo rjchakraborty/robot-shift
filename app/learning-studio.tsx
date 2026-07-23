@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { type CurriculumDay } from "./curriculum";
+import { InteractiveMathPlayground } from "./interactive-math-playground";
 import { LessonVisual } from "./lesson-visual";
 import { allDayVisuals } from "./lesson-visuals";
 import { lessonForDay } from "./lessons";
@@ -18,7 +19,7 @@ type LearningStudioProps = {
   day: CurriculumDay;
 };
 
-type LessonSection =
+export type LessonSection =
   | "visual"
   | "pareto"
   | "simple"
@@ -57,15 +58,25 @@ const MAX_HISTORY_LENGTH = 10_000;
 const MAX_MESSAGES_PER_DAY = 12;
 const MAX_STORED_DAYS = 14;
 
-const lessonSections: { id: LessonSection; label: string; shortLabel: string }[] = [
-  { id: "visual", label: "Visual guide", shortLabel: "Visual" },
-  { id: "pareto", label: "80/20", shortLabel: "80/20" },
-  { id: "simple", label: "Explain simply", shortLabel: "Simple" },
-  { id: "math", label: "Math lab", shortLabel: "Math" },
-  { id: "examples", label: "Real-life examples", shortLabel: "Examples" },
-  { id: "practice", label: "Practice", shortLabel: "Practice" },
-  { id: "quiz", label: "Quiz / teach-back", shortLabel: "Quiz" },
-  { id: "story", label: "Story/metaphor", shortLabel: "Story" },
+type LessonSectionItem = {
+  id: LessonSection;
+  label: string;
+  shortLabel: string;
+  hint: string;
+};
+
+const primaryLessonSections: LessonSectionItem[] = [
+  { id: "visual", label: "Visual guide", shortLabel: "Visual", hint: "See the system" },
+  { id: "simple", label: "Explain simply", shortLabel: "Explain", hint: "Build intuition" },
+  { id: "math", label: "Math lab", shortLabel: "Math", hint: "Move the numbers" },
+  { id: "examples", label: "Real-life examples", shortLabel: "Examples", hint: "See it at work" },
+  { id: "practice", label: "Practice", shortLabel: "Practise", hint: "Try it yourself" },
+  { id: "quiz", label: "Quiz / teach-back", shortLabel: "Check", hint: "Explain it back" },
+];
+
+const supportLessonSections: LessonSectionItem[] = [
+  { id: "pareto", label: "80/20 summary", shortLabel: "80/20", hint: "Only the vital ideas" },
+  { id: "story", label: "Story and metaphor", shortLabel: "Story", hint: "Make it memorable" },
 ];
 
 const tutorModes: {
@@ -230,7 +241,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const tabRefs = useRef<Partial<Record<LessonSection, HTMLButtonElement | null>>>({});
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<AbortController | null>(null);
@@ -274,6 +285,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
   useEffect(() => {
     requestRef.current?.abort();
     const timer = window.setTimeout(() => {
+      setSection("visual");
       setLoading(false);
       setError(null);
       setMode("ask");
@@ -307,17 +319,22 @@ export function LearningStudio({ day }: LearningStudioProps) {
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }
 
-  function moveTab(event: KeyboardEvent<HTMLButtonElement>, currentIndex: number) {
+  function moveTab(
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+    items: readonly LessonSectionItem[],
+  ) {
     let nextIndex: number | null = null;
-    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % lessonSections.length;
-    if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + lessonSections.length) % lessonSections.length;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % items.length;
+    if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + items.length) % items.length;
     if (event.key === "Home") nextIndex = 0;
-    if (event.key === "End") nextIndex = lessonSections.length - 1;
+    if (event.key === "End") nextIndex = items.length - 1;
     if (nextIndex === null) return;
 
     event.preventDefault();
-    setSection(lessonSections[nextIndex].id);
-    tabRefs.current[nextIndex]?.focus();
+    const nextSection = items[nextIndex].id;
+    setSection(nextSection);
+    tabRefs.current[nextSection]?.focus();
   }
 
   async function submitQuestion(event: FormEvent<HTMLFormElement>) {
@@ -426,11 +443,23 @@ export function LearningStudio({ day }: LearningStudioProps) {
         <span className="studio-level">Beginner · practical · job-focused</span>
       </header>
 
-      <div className="lesson-tabs" role="tablist" aria-label="Lesson sections">
-        {lessonSections.map((item, index) => (
+      <div className="lesson-path-heading">
+        <div>
+          <span className="eyebrow">GUIDED LESSON PATH</span>
+          <p>Follow this order once. Revisit any stage when you need it.</p>
+        </div>
+        <span>
+          {primaryLessonSections.some((item) => item.id === section)
+            ? `Stage ${primaryLessonSections.findIndex((item) => item.id === section) + 1} of ${primaryLessonSections.length}`
+            : "Support mode"}
+        </span>
+      </div>
+
+      <div className="lesson-path" role="tablist" aria-label="Guided lesson path">
+        {primaryLessonSections.map((item, index) => (
           <button
             key={item.id}
-            ref={(node) => { tabRefs.current[index] = node; }}
+            ref={(node) => { tabRefs.current[item.id] = node; }}
             id={`lesson-tab-${day.id}-${item.id}`}
             type="button"
             role="tab"
@@ -440,12 +469,50 @@ export function LearningStudio({ day }: LearningStudioProps) {
             tabIndex={section === item.id ? 0 : -1}
             className={section === item.id ? "active" : ""}
             onClick={() => setSection(item.id)}
-            onKeyDown={(event) => moveTab(event, index)}
+            onKeyDown={(event) => moveTab(event, index, primaryLessonSections)}
           >
-            <span className="tab-full-label">{item.label}</span>
-            <span className="tab-short-label" aria-hidden="true">{item.shortLabel}</span>
+            <span className="lesson-stage-number" aria-hidden="true">{index + 1}</span>
+            <span>
+              <strong>{item.shortLabel}</strong>
+              <small>{item.hint}</small>
+            </span>
           </button>
         ))}
+      </div>
+
+      <div className="lesson-support-bar">
+        <div>
+          <span className="eyebrow">NEED ANOTHER ANGLE?</span>
+          <p>Use these only when the guided path is not clicking yet.</p>
+        </div>
+        <div className="lesson-support-tabs">
+          <div role="tablist" aria-label="Supporting lesson tools">
+            {supportLessonSections.map((item, index) => (
+              <button
+                key={item.id}
+                ref={(node) => { tabRefs.current[item.id] = node; }}
+                id={`lesson-tab-${day.id}-${item.id}`}
+                type="button"
+                role="tab"
+                aria-label={item.label}
+                aria-selected={section === item.id}
+                aria-controls={`lesson-panel-${day.id}`}
+                tabIndex={section === item.id ? 0 : -1}
+                className={section === item.id ? "active" : ""}
+                onClick={() => setSection(item.id)}
+                onKeyDown={(event) => moveTab(event, index, supportLessonSections)}
+              >
+                {item.shortLabel}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => document.getElementById(`tutor-panel-${day.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          >
+            Ask teacher
+          </button>
+        </div>
       </div>
 
       <div
@@ -499,6 +566,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
             <span className="lesson-kicker">NO-SKIPPED-STEPS MATH</span>
             <h3>{lesson.math.title}</h3>
             <p>{lesson.math.meaning}</p>
+            <InteractiveMathPlayground spec={visual} />
             <details className="math-rescue" open>
               <summary>
                 <span>BEGINNER RESCUE // WEEK {String(day.week).padStart(2, "0")}</span>
@@ -631,6 +699,51 @@ export function LearningStudio({ day }: LearningStudioProps) {
             <blockquote>{lesson.story.memoryHook}</blockquote>
           </div>
         )}
+
+        <div className="lesson-next-step">
+          {primaryLessonSections.findIndex((item) => item.id === section) >= 0
+            && primaryLessonSections.findIndex((item) => item.id === section) < primaryLessonSections.length - 1 ? (
+              <>
+                <span>
+                  NEXT LEARNING STEP
+                  <strong>
+                    {primaryLessonSections[primaryLessonSections.findIndex((item) => item.id === section) + 1].label}
+                  </strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentIndex = primaryLessonSections.findIndex((item) => item.id === section);
+                    const nextSection = primaryLessonSections[currentIndex + 1].id;
+                    setSection(nextSection);
+                    window.setTimeout(() => tabRefs.current[nextSection]?.focus(), 0);
+                  }}
+                >
+                  Continue →
+                </button>
+              </>
+            ) : section === "quiz" ? (
+              <>
+                <span>PATH COMPLETE<strong>Close today’s Understand proof when you can explain it back.</strong></span>
+                <button type="button" onClick={() => document.getElementById(`daily-quest-${day.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}>
+                  Return to mission ↑
+                </button>
+              </>
+            ) : (
+              <>
+                <span>RETURN TO THE PATH<strong>Supporting tools do not replace active practice.</strong></span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSection("visual");
+                    window.setTimeout(() => tabRefs.current.visual?.focus(), 0);
+                  }}
+                >
+                  Back to Visual →
+                </button>
+              </>
+            )}
+        </div>
       </div>
 
       <div className="studio-source-strip">
@@ -647,7 +760,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
         </nav>
       </div>
 
-      <section className="tutor-panel" aria-labelledby={`tutor-title-${day.id}`}>
+      <section id={`tutor-panel-${day.id}`} className="tutor-panel" aria-labelledby={`tutor-title-${day.id}`}>
         <header className="tutor-heading">
           <div>
             <span className="eyebrow">INLINE AI TEACHER</span>

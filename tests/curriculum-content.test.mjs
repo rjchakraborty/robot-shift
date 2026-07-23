@@ -64,7 +64,10 @@ test("the revised 180-day plan includes every mandatory practical robotics lane"
     /safety case/i,
     /actuator sizing.*motors.*power/i,
     /edge deployment.*thermals/i,
+    /differential-drive kinematics.*wheel odometry/i,
+    /MCU firmware.*RTOS.*device manifests/i,
     /CAN.*UART.*I²C.*SPI/i,
+    /Flutter\/Web teleoperation.*dead-man control.*latency/i,
     /ONNX.*TensorRT/i,
     /Jetson-class hardware/i,
     /SIL.*HIL/i,
@@ -82,7 +85,7 @@ test("every revised topic has a deep exact-topic override", () => {
     25, 26, 27, 32, 33, 34, 37, 40, 41, 43, 44, 47, 50, 51, 52, 53, 54, 55,
     56, 66, 67, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 100, 110, 111,
     118, 127, 128, 129, 130, 131, 132, 133, 137, 138, 143, 144, 149, 150, 151,
-    152, 153, 164, 165, 168, 169, 170, 171, 172, 178, 179, 180,
+    152, 153, 157, 164, 165, 168, 169, 170, 171, 172, 178, 179, 180,
   ];
   assert.deepEqual(Object.keys(topicDetailOverrides).map(Number), expectedOverrideIds);
 
