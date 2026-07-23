@@ -47,9 +47,16 @@ const estimation: Resource = { label: "CMU 16-833 course", url: "https://www.cs.
 const underactuated: Resource = { label: "MIT Underactuated Robotics", url: "https://underactuated.csail.mit.edu/" };
 const pytorch: Resource = { label: "PyTorch tutorials", url: "https://pytorch.org/tutorials/" };
 const lerobot: Resource = { label: "Hugging Face LeRobot", url: "https://huggingface.co/docs/lerobot/index" };
-const isaacLab: Resource = { label: "NVIDIA Isaac Lab", url: "https://isaac-sim.github.io/IsaacLab/main/index.html" };
 const openVla: Resource = { label: "OpenVLA project", url: "https://openvla.github.io/" };
 const geminiRobotics: Resource = { label: "Google DeepMind Gemini Robotics", url: "https://deepmind.google/models/gemini-robotics/" };
+const rosLyrical: Resource = { label: "ROS 2 Lyrical Luth release", url: "https://docs.ros.org/en/kilted/Releases/Release-Lyrical-Luth.html" };
+const rosTesting: Resource = { label: "ROS 2 launch_testing", url: "https://docs.ros.org/en/jazzy/p/launch_testing/" };
+const openRmf: Resource = { label: "Open-RMF fleet-adapter integration", url: "https://osrf.github.io/ros2multirobotbook/integration_fleets_adapter_tutorial.html" };
+const vda5050: Resource = { label: "Official VDA 5050 specification", url: "https://github.com/VDA5050/VDA5050" };
+const lerobot060: Resource = { label: "LeRobot 0.6 release", url: "https://huggingface.co/blog/lerobot-release-v060" };
+const groot17: Resource = { label: "NVIDIA Isaac GR00T 1.7", url: "https://developer.nvidia.com/blog/develop-humanoid-robot-policies-end-to-end-with-nvidia-isaac-gr00t/" };
+const geminiEr16: Resource = { label: "Gemini Robotics ER 1.6", url: "https://deepmind.google/blog/gemini-robotics-er-1-6/" };
+const pi05: Resource = { label: "Physical Intelligence π0.5", url: "https://www.physicalintelligence.company/download/pi05.pdf" };
 
 export const weekLessonPacks: readonly WeekPack[] = [
   {
@@ -170,7 +177,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       { question: "When should you use an action?", answer: "For long-running work needing feedback, result, timeout, or cancellation." },
       { question: "What is QoS?", answer: "Communication policies such as reliability, history, durability, and deadline." },
     ],
-    sources: [ros2],
+    sources: [ros2, rosLyrical],
   },
   {
     bigIdea: "URDF describes the body; tf2 describes where frames are over time. A correct frame tree makes sensor and tool data comparable.",
@@ -413,52 +420,52 @@ export const weekLessonPacks: readonly WeekPack[] = [
     sources: [lerobot],
   },
   {
-    bigIdea: "Diffusion and flow policies can represent several valid continuous action sequences, then generate one coherent chunk conditioned on observations.",
-    pareto: ["Robot tasks often have multiple valid actions.", "Generation starts from a simple sample and moves toward an action distribution.", "Observation window and action horizon are design choices.", "Evaluate success, smoothness, latency, and responsiveness."],
-    simpleExplanation: ["Condition on recent observations.", "Generate a candidate action chunk through repeated or continuous refinement.", "Execute only a safe portion, observe again, and replan."],
+    bigIdea: "Production robots need explicit contracts from robot to edge to fleet to operator, plus bounded behavior when any network, service, or robot disappears.",
+    pareto: ["Keep fast safety and motion authority local.", "Model missions and allocation as observable state machines.", "Make APIs idempotent and commands expiring.", "Ship telemetry, canaries, rollback, and fault evidence with the feature."],
+    simpleExplanation: ["Draw who owns each decision and what happens on disconnect.", "Move missions through named states with one durable identity.", "Measure age, lag, recovery, and rollback instead of trusting a green dashboard."],
     math: {
-      title: "Simple temporal ensemble",
-      meaning: "a_old and a_new are two predictions for the same moment; w is trust in the newer prediction.",
-      formula: "a = (1-w)a_old + w·a_new",
-      steps: ["Align predictions for the same execution time.", "Choose w between 0 and 1.", "Blend, then clamp to physical limits."],
-      check: "a_old=0.2, a_new=0.6, w=0.75 gives a=0.5.",
+      title: "Backlog growth under overload",
+      meaning: "r_in is incoming events per second, r_out is processed events per second, t is elapsed seconds, and B is queued events.",
+      formula: "B = max(0, r_in − r_out) × t",
+      steps: ["Measure sustained input and processing rates.", "Subtract processing capacity from input rate.", "Multiply by time, then define a bounded overload response."],
+      check: "At 200 incoming and 150 processed events/s, 60 s creates 3,000 queued events unless work is shed or capacity changes.",
     },
     examples: [
-      { title: "Walking around a table", explanation: "Left and right routes are both valid modes.", tryIt: "Draw two valid action paths." },
-      { title: "Clay sculpting", explanation: "Repeated refinement turns rough noise into structured output.", tryIt: "Sketch three refinement stages." },
-      { title: "Throwing motion", explanation: "A coherent sequence matters more than isolated commands.", tryIt: "Break a toss into a short action horizon." },
+      { title: "Two delivery robots", explanation: "An allocator considers capability, battery, traffic, docking, and priority rather than only nearest distance.", tryIt: "Assign three missions, then disconnect the selected robot." },
+      { title: "Restaurant order ticket", explanation: "A repeated numbered request checks the same mission instead of creating duplicates.", tryIt: "Retry one mission before and after acknowledgment." },
+      { title: "Fleet canary", explanation: "One robot receives a pinned update while health gates prevent a bad release reaching the rest.", tryIt: "Define three stop-rollout signals and a complete rollback bundle." },
     ],
-    story: { title: "The fog becoming a path", body: "The policy begins with many fuzzy possibilities and gradually reveals one usable route.", memoryHook: "Many modes, one safe chunk." },
-    mistakes: ["Comparing policies with different test scenes.", "Executing a long chunk without new observations.", "Ignoring generation latency."],
+    story: { title: "The warehouse nervous system", body: "Robots are muscles, edge computers are reflexes, fleet services coordinate movement, and the cloud remembers. A severed connection must not turn memory loss into unsafe motion.", memoryHook: "Own, expire, observe, recover." },
+    mistakes: ["Putting cloud round trips in a safety loop.", "Treating HTTP acceptance as physical completion.", "Using an unbounded queue to hide overload."],
     quiz: [
-      { question: "Why not regress to one mean action?", answer: "For multimodal actions, the mean can fall between valid choices and be unsafe or ineffective." },
-      { question: "What does receding-horizon execution do?", answer: "It executes part of a plan, observes again, and generates an updated plan." },
+      { question: "Why must a mission create call be idempotent?", answer: "A timeout and retry must refer to one mission rather than causing duplicate physical work." },
+      { question: "What state should the HMI show?", answer: "Requested, accepted, and physically observed state with freshness, authority, and failure clearly distinguished." },
     ],
-    sources: [lerobot],
+    sources: [openRmf, vda5050],
   },
   {
-    bigIdea: "Reinforcement learning is justified when interaction and reward define a problem better than demonstrations, but safety and transfer gaps must be budgeted.",
-    pareto: ["An MDP connects state, action, transition, reward, and time.", "Return values future reward.", "A policy can exploit reward wording.", "Sim-to-real needs identification, randomization, limits, and staged tests."],
-    simpleExplanation: ["Define allowed observations/actions and a measurable goal.", "Train in a bounded simulation while watching reward loopholes.", "Compare with classical and imitation baselines before real deployment."],
+    bigIdea: "A deployable robot is proven through risk-linked requirements, layered regression, realistic fault injection, and signed acceptance evidence—not a successful demo.",
+    pareto: ["Trace important requirements and hazards to tests and results.", "Use component, integration, launch, SIL/HIL, and system layers for different risks.", "Inject timing, sensor, network, and recovery failures deliberately.", "FAT, SAT, commissioning, and incident reports keep field truth connected to engineering."],
+    simpleExplanation: ["Turn words like safe and reliable into measurable bounds.", "Rehearse failures in simulation and HIL before restricted-energy hardware tests.", "Keep failed results, corrective action, and go/no-go decisions linked."],
     math: {
-      title: "Discounted return",
-      meaning: "rₜ is reward at step t; γ between 0 and 1 reduces the weight of later rewards; G is total return.",
-      formula: "G = r₀ + γr₁ + γ²r₂ + …",
-      steps: ["List rewards in time order.", "Multiply later rewards by increasing powers of γ.", "Add and inspect whether the reward matches desired behavior."],
-      check: "Rewards [1,2,3], γ=0.5 give G=1+1+0.75=2.75.",
+      title: "Illustrative stopping-distance bound",
+      meaning: "v is speed, t_react is detection plus command latency, a is positive braking deceleration, and d is reaction plus braking distance before margin.",
+      formula: "d = v × t_react + v² / (2a)",
+      steps: ["Measure the worst credible reaction delay.", "Add braking distance at the tested load and surface.", "Add the engineering margin required by the risk assessment and validate physically."],
+      check: "At 1 m/s, 0.15 s reaction, and 1.5 m/s² deceleration, d≈0.15+0.33=0.48 m before margin.",
     },
     examples: [
-      { title: "Game score", explanation: "An agent learns actions that raise score, including loopholes.", tryIt: "Invent one reward-hacking shortcut." },
-      { title: "Dog training", explanation: "Delayed reward makes credit assignment difficult.", tryIt: "Compare immediate and end-of-task rewards." },
-      { title: "Slippery floor", explanation: "Changed friction creates a sim-to-real gap.", tryIt: "Choose a friction randomization range." },
+      { title: "Airport checkpoints", explanation: "A component can pass alone while the integrated traveler journey still fails.", tryIt: "Place one fault at component, integration, launch, and mission level." },
+      { title: "Frozen lidar clock", explanation: "A realistic scan with an old timestamp must trigger a defined stale-data response.", tryIt: "Pause a 50 Hz input for 120 ms and verify the 100 ms freshness bound." },
+      { title: "Customer warehouse", explanation: "SAT exposes Wi-Fi, floor, aisle, PLC, and operator conditions absent from the factory.", tryIt: "Turn one site difference into a predeclared acceptance test." },
     ],
-    story: { title: "The literal genie", body: "RL grants exactly the reward you wrote, not the behavior you intended.", memoryHook: "Reward wording becomes behavior." },
-    mistakes: ["Using RL when a controller solves the task.", "Rewarding speed without safety.", "Moving directly from simulation to full-speed hardware."],
+    story: { title: "The flight-test ladder", body: "Each rung adds realism and risk: component, integration, simulation, HIL, restricted hardware, and site. Skipping rungs turns unknowns into field incidents.", memoryHook: "Trace, inject, measure, accept." },
+    mistakes: ["Counting tests instead of covering risks.", "Moving thresholds after seeing results.", "Calling a guessed cause a root cause."],
     quiz: [
-      { question: "Policy versus value?", answer: "A policy chooses actions; a value estimates expected future return." },
-      { question: "Why domain randomization?", answer: "It exposes the policy to varied simulation parameters so it relies less on one exact simulator." },
+      { question: "Why can HIL not replace a real restricted-energy test?", answer: "It includes real compute and interfaces but not every load, contact, cable, power, actuator, brake, or environmental effect." },
+      { question: "What should a failed FAT safety case do?", answer: "Block shipment until the failure, corrective action, and linked regression evidence meet the agreed acceptance rule." },
     ],
-    sources: [isaacLab, underactuated],
+    sources: [rosTesting, openRmf, vda5050],
   },
   {
     bigIdea: "A vision-language-action system conditions physical action on images and language, but grounding and controllers must connect tokens to the real robot safely.",
@@ -506,7 +513,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       { question: "What does LoRA train?", answer: "Small low-rank matrices that modify selected frozen model layers." },
       { question: "Why test out-of-distribution prompts?", answer: "To learn whether adaptation generalizes beyond wording and scenes seen in training." },
     ],
-    sources: [openVla, lerobot],
+    sources: [openVla, lerobot, lerobot060, groot17, geminiEr16, pi05],
   },
   {
     bigIdea: "An agent should plan with typed, bounded robot skills—not free-form motor commands—and monitor every precondition, result, timeout, and recovery.",

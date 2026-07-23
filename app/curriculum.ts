@@ -59,10 +59,10 @@ export const phases: Phase[] = [
   {
     id: "learning",
     number: "04",
-    title: "Robot learning",
-    shortTitle: "Learning",
+    title: "Production robotics systems",
+    shortTitle: "Production",
     weeks: "Weeks 13–17",
-    outcome: "Collect demonstrations, train policies, evaluate them, and understand sim-to-real gaps.",
+    outcome: "Train one practical policy, then build and validate the fleet, deployment, and operator systems that make robots usable.",
     color: "#9b4dca",
   },
   {
@@ -128,6 +128,21 @@ const moveIt: Resource = {
 const rosSecurity: Resource = {
   label: "Official ROS 2 security tutorials",
   url: "https://docs.ros.org/en/jazzy/Tutorials/Advanced/Security/Introducing-ros2-security.html",
+};
+
+const rosTesting: Resource = {
+  label: "Official ROS 2 launch_testing documentation",
+  url: "https://docs.ros.org/en/jazzy/p/launch_testing/",
+};
+
+const openRmf: Resource = {
+  label: "Open-RMF fleet-adapter integration",
+  url: "https://osrf.github.io/ros2multirobotbook/integration_fleets_adapter_tutorial.html",
+};
+
+const vda5050: Resource = {
+  label: "Official VDA 5050 specification",
+  url: "https://github.com/VDA5050/VDA5050",
 };
 
 const tensorRt: Resource = {
@@ -235,7 +250,7 @@ const weekPlans: WeekPlan[] = [
     focus: "Treat ROS as a concurrent distributed production system.",
     lab: "Build a Python/C++ telemetry, command, and watchdog system; then reproduce QoS, discovery, executor, lifecycle, and cancellation failures.",
     topics: [
-      "Workspaces, packages, nodes, and the ROS graph",
+      "ROS 2 distributions: Jazzy baseline, Lyrical LTS, workspaces, packages, and graph",
       "Topics, message design, publishers, and subscribers",
       "Services versus actions and cancellation semantics",
       "QoS profiles and DDS discovery across networks",
@@ -418,36 +433,36 @@ const weekPlans: WeekPlan[] = [
   },
   {
     phaseId: "learning",
-    title: "Diffusion and flow policies",
-    focus: "Model multimodal continuous robot actions.",
-    lab: "Run or fine-tune a LeRobot policy and inspect how action chunks change smoothness and responsiveness.",
+    title: "Production fleet and robot interfaces",
+    focus: "Connect robots, operators, missions, and backend services without losing safety or observability.",
+    lab: "Build a simulated two-robot FleetOps system with a mission API, WebSocket operator console, task allocation, fault injection, canary update, rollback, and acceptance report.",
     topics: [
-      "Why robot actions can be multimodal",
-      "Diffusion-policy intuition",
-      "Flow matching and continuous action generation",
-      "Observation windows and action horizons",
-      "Compare and fine-tune current LeRobot policy families",
-      "Asynchronous inference, real-time chunking, latency, and backpressure",
-      "Policy comparison with success and smoothness metrics",
+      "Robot–edge–cloud architecture and failure boundaries",
+      "Mission workflows, task allocation, traffic, deadlocks, docking, and battery",
+      "REST, WebSocket, and DDS gateways: schemas, idempotency, and cancellation",
+      "PostgreSQL, Redis, and Kafka event processing: ordering and backpressure",
+      "Safe operator HMI and teleoperation with WebSocket, WebRTC, and 3D state",
+      "Containers, versioned configuration, OTA canaries, and rollback",
+      "Fleet acceptance with logs, metrics, traces, fault injection, and SLOs",
     ],
-    resource: lerobot,
+    resource: openRmf,
   },
   {
     phaseId: "learning",
-    title: "RL and sim-to-real judgment",
-    focus: "Know when reinforcement learning is justified—and when it is not.",
-    lab: "Train one constrained simulation policy, then document transfer risks and a realistic deployment plan.",
+    title: "Deployment and validation",
+    focus: "Prove a robot system works across simulation, interfaces, hardware boundaries, and customer acceptance.",
+    lab: "Create a risk-linked SIL→HIL acceptance ladder for FleetOps, automate regression scenarios, integrate one external fleet or PLC boundary, and publish FAT/SAT evidence plus an incident report.",
     topics: [
-      "MDPs, rewards, returns, value, and policy",
-      "Exploration and credit assignment",
-      "PPO intuition and a small control task",
-      "Reward hacking and unsafe learned behavior",
-      "Domain randomization and system identification",
-      "Isaac Lab parallel simulation, synthetic data, and sim-to-real gaps",
-      "Robot-learning gate: select BC, RL, or classical control",
+      "Requirements, risk, FMEA, traceability, and test planning",
+      "pytest, gtest, launch_testing, and component-to-system regression",
+      "Deterministic Gazebo or Isaac scenario matrices, seeds, and replay",
+      "SIL, HIL, sensor emulators, time faults, and communication faults",
+      "VDA 5050 v3, Open-RMF adapters, WMS/WES, and industrial boundaries",
+      "AMR safety awareness: ISO 3691-4, ISO 13849, E-stop, STO, and zones",
+      "FAT, SAT, customer commissioning, incident reporting, and FleetOps gate",
     ],
-    resource: isaacLab,
-    checkpoint: "Gate 4 · Train, deploy, and compare policies with a fixed dataset and repeatable rollout evaluation.",
+    resource: rosTesting,
+    checkpoint: "Gate 4 · FleetOps passes its risk-linked SIL/HIL acceptance matrix, safe failure tests, rollback drill, and commissioning review.",
   },
   {
     phaseId: "embodied",
@@ -471,7 +486,7 @@ const weekPlans: WeekPlan[] = [
     focus: "Compare current policy families and adapt one without pretending to train a foundation model.",
     lab: "Benchmark a supported LeRobot/OpenVLA policy, trace its processors and normalized actions, then design or run a LoRA adaptation with a frozen baseline.",
     topics: [
-      "Compare OpenVLA, SmolVLA, Pi0-family, and NVIDIA GR00T",
+      "2026 practical VLA map: LeRobot 0.6, GR00T 1.7, Gemini Robotics ER 1.6, π0.5, OpenVLA, and SmolVLA",
       "Cross-embodiment data, language columns, and dataset mixing",
       "Checkpoint loading, processors, and deployment pipeline",
       "Parameter-efficient adaptation with LoRA and frozen baselines",
@@ -675,11 +690,11 @@ export const projects = [
     proof: "Calibrated perception, state estimate, plan, controller, 20-trial report",
   },
   {
-    id: "policy-bench",
+    id: "fleet-ops",
     phaseId: "learning",
-    title: "PolicyBench",
-    subtitle: "Robot-learning comparison",
-    proof: "Versioned demonstrations, two trained policies, fixed rollout suite",
+    title: "FleetOps Lab",
+    subtitle: "Production fleet + validation system",
+    proof: "Two-robot missions, operator HMI, fault matrix, SIL/HIL evidence, canary rollback, FAT/SAT report",
   },
   {
     id: "embodied-operator",
@@ -692,8 +707,8 @@ export const projects = [
     id: "field-capstone",
     phaseId: "ship",
     title: "Field Capstone",
-    subtitle: "Real robot, real evidence",
-    proof: "Real policy deployment, 50 trials, uncut demos, failure analysis",
+    subtitle: "Robot or HIL, real evidence",
+    proof: "Robot or HIL policy deployment, 50 trials, uncut demos, failure analysis",
   },
 ];
 
@@ -704,7 +719,7 @@ export const readinessSkills = [
   { id: "sim", label: "Simulation", gateDay: 56 },
   { id: "perception", label: "Perception", gateDay: 84 },
   { id: "control", label: "Planning & control", gateDay: 84 },
-  { id: "learning", label: "Robot learning", gateDay: 119 },
+  { id: "fleet", label: "Fleet & validation", gateDay: 119 },
   { id: "embodied", label: "Embodied agents", gateDay: 147 },
   { id: "hardware", label: "Real hardware", gateDay: 168 },
   { id: "portfolio", label: "Portfolio evidence", gateDay: 180 },
@@ -718,6 +733,9 @@ export const resources: Resource[] = [
   nav2,
   moveIt,
   rosSecurity,
+  rosTesting,
+  openRmf,
+  vda5050,
   underactuated,
   lerobot,
   isaacLab,

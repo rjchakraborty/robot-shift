@@ -156,26 +156,29 @@ function assertTotalDays(totalDays: number) {
 
 function isPartComplete(
   completed: MissionCompletionMap,
+  evidence: MissionEvidenceMap,
   dayId: number,
   part: MissionTaskPart,
 ) {
-  return completed[missionTaskKey(dayId, part)] === true;
+  if (completed[missionTaskKey(dayId, part)] !== true) return false;
+  return part !== "prove" || (evidence[String(dayId)] ?? "").trim().length > 0;
 }
 
 export function getDailyMissionProgress(
   completed: MissionCompletionMap,
   totalDays = 180,
+  evidence: MissionEvidenceMap = {},
 ): readonly DailyMissionProgress[] {
   assertTotalDays(totalDays);
 
   return Array.from({ length: totalDays }, (_, index) => {
     const dayId = index + 1;
     const completedParts = MISSION_TASK_PARTS.filter((part) =>
-      isPartComplete(completed, dayId, part),
+      isPartComplete(completed, evidence, dayId, part),
     );
     const nextPart =
       MISSION_TASK_PARTS.find(
-        (part) => !isPartComplete(completed, dayId, part),
+        (part) => !isPartComplete(completed, evidence, dayId, part),
       ) ?? null;
     const xp = completedParts.reduce(
       (sum, part) => sum + MISSION_TASK_XP[part],
@@ -196,8 +199,9 @@ export function getDailyMissionProgress(
 export function getProofChain(
   completed: MissionCompletionMap,
   totalDays = 180,
+  evidence: MissionEvidenceMap = {},
 ) {
-  const daily = getDailyMissionProgress(completed, totalDays);
+  const daily = getDailyMissionProgress(completed, totalDays, evidence);
   const firstOpenIndex = daily.findIndex((day) => !day.complete);
   return firstOpenIndex === -1 ? totalDays : firstOpenIndex;
 }
@@ -205,8 +209,9 @@ export function getProofChain(
 export function getNextMissionAction(
   completed: MissionCompletionMap,
   totalDays = 180,
+  evidence: MissionEvidenceMap = {},
 ): NextMissionAction {
-  const daily = getDailyMissionProgress(completed, totalDays);
+  const daily = getDailyMissionProgress(completed, totalDays, evidence);
   const nextDay = daily.find((day) => day.nextPart !== null);
 
   if (!nextDay || nextDay.nextPart === null) {
@@ -261,30 +266,29 @@ export function getMissionRank(
     percentToNextRank:
       nextMinimumXp === null || xpForRank === 0
         ? 100
-        : Math.round((xpIntoRank / xpForRank) * 100),
+        : Math.floor((xpIntoRank / xpForRank) * 100),
   };
 }
 
 export function getMissionBadges({
   completed,
   evidence = {},
-  proofChain = getProofChain(completed),
-  projectGates = [],
   totalDays = 180,
+  proofChain = getProofChain(completed, totalDays, evidence),
+  projectGates = [],
 }: {
   completed: MissionCompletionMap;
   evidence?: MissionEvidenceMap;
+  totalDays?: number;
   proofChain?: number;
   projectGates?: readonly ProjectGateProgress[];
-  totalDays?: number;
 }): readonly MissionBadge[] {
   assertTotalDays(totalDays);
 
   let firstProofDay: number | null = null;
   for (let dayId = 1; dayId <= totalDays; dayId += 1) {
     if (
-      isPartComplete(completed, dayId, "prove") &&
-      (evidence[String(dayId)] ?? "").trim().length > 0
+      isPartComplete(completed, evidence, dayId, "prove")
     ) {
       firstProofDay = dayId;
       break;
@@ -334,10 +338,10 @@ export function deriveMissionProgress({
   projectGates?: readonly ProjectGateProgress[];
   totalDays?: number;
 }): MissionProgress {
-  const daily = getDailyMissionProgress(completed, totalDays);
+  const daily = getDailyMissionProgress(completed, totalDays, evidence);
   const totalXp = daily.reduce((sum, day) => sum + day.xp, 0);
   const maxXp = totalDays * MISSION_XP_PER_DAY;
-  const proofChain = getProofChain(completed, totalDays);
+  const proofChain = getProofChain(completed, totalDays, evidence);
 
   return {
     totalXp,
@@ -345,7 +349,7 @@ export function deriveMissionProgress({
     daily,
     proofChain,
     rank: getMissionRank(totalXp, maxXp),
-    nextAction: getNextMissionAction(completed, totalDays),
+    nextAction: getNextMissionAction(completed, totalDays, evidence),
     badges: getMissionBadges({
       completed,
       evidence,

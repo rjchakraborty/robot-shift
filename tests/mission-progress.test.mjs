@@ -12,10 +12,11 @@ import {
   missionTaskKey,
 } from "../app/mission-progress.ts";
 
-function closeDay(completed, dayId) {
+function closeDay(completed, evidence, dayId) {
   for (const part of ["learn", "build", "prove"]) {
     completed[missionTaskKey(dayId, part)] = true;
   }
+  evidence[String(dayId)] = `day ${dayId} repository and failure report`;
 }
 
 test("daily XP rewards proof without counting false or out-of-range entries", () => {
@@ -27,7 +28,11 @@ test("daily XP rewards proof without counting false or out-of-range entries", ()
     "99:learn": true,
   };
 
-  const progress = deriveMissionProgress({ completed, totalDays: 2 });
+  const progress = deriveMissionProgress({
+    completed,
+    evidence: { "2": "day 2 demo" },
+    totalDays: 2,
+  });
 
   assert.deepEqual(MISSION_TASK_XP, { learn: 20, build: 30, prove: 50 });
   assert.equal(MISSION_XP_PER_DAY, 100);
@@ -44,41 +49,71 @@ test("daily XP rewards proof without counting false or out-of-range entries", ()
 
 test("XP is recomputed from state, decreases on reopen, and cannot be farmed", () => {
   const completed = {};
-  closeDay(completed, 1);
+  const evidence = {};
+  closeDay(completed, evidence, 1);
   assert.equal(
-    deriveMissionProgress({ completed, totalDays: 1 }).totalXp,
+    deriveMissionProgress({ completed, evidence, totalDays: 1 }).totalXp,
     100,
   );
 
   completed["1:prove"] = false;
   assert.equal(
-    deriveMissionProgress({ completed, totalDays: 1 }).totalXp,
+    deriveMissionProgress({ completed, evidence, totalDays: 1 }).totalXp,
     50,
   );
 
   completed["1:prove"] = true;
   assert.equal(
-    deriveMissionProgress({ completed, totalDays: 1 }).totalXp,
+    deriveMissionProgress({ completed, evidence, totalDays: 1 }).totalXp,
     100,
   );
 });
 
+test("Prove XP, proof chain, and completion require non-empty evidence", () => {
+  const completed = {
+    "1:learn": true,
+    "1:build": true,
+    "1:prove": true,
+  };
+
+  let progress = deriveMissionProgress({
+    completed,
+    evidence: { "1": " \n" },
+    totalDays: 1,
+  });
+  assert.equal(progress.totalXp, 50);
+  assert.equal(progress.proofChain, 0);
+  assert.equal(progress.daily[0].complete, false);
+  assert.equal(progress.nextAction.part, "prove");
+
+  progress = deriveMissionProgress({
+    completed,
+    evidence: { "1": "repository, demo, and failure report" },
+    totalDays: 1,
+  });
+  assert.equal(progress.totalXp, 100);
+  assert.equal(progress.proofChain, 1);
+  assert.equal(progress.daily[0].complete, true);
+});
+
 test("proof chain closes only contiguous complete days beginning at Day 1", () => {
   const completed = {};
-  closeDay(completed, 1);
-  closeDay(completed, 3);
+  const evidence = {};
+  closeDay(completed, evidence, 1);
+  closeDay(completed, evidence, 3);
 
-  assert.equal(getProofChain(completed, 3), 1);
+  assert.equal(getProofChain(completed, 3, evidence), 1);
 
-  closeDay(completed, 2);
-  assert.equal(getProofChain(completed, 3), 3);
+  closeDay(completed, evidence, 2);
+  assert.equal(getProofChain(completed, 3, evidence), 3);
 
   completed["1:learn"] = false;
-  assert.equal(getProofChain(completed, 3), 0);
+  assert.equal(getProofChain(completed, 3, evidence), 0);
 });
 
 test("global next action uses earliest incomplete day and learn-build-prove order", () => {
   const completed = {};
+  const evidence = {};
 
   assert.deepEqual(getNextMissionAction(completed, 3), {
     status: "active",
@@ -93,9 +128,10 @@ test("global next action uses earliest incomplete day and learn-build-prove orde
   completed["1:build"] = true;
   assert.equal(getNextMissionAction(completed, 3).part, "prove");
   completed["1:prove"] = true;
+  evidence["1"] = "day 1 repository";
   completed["2:learn"] = true;
 
-  assert.deepEqual(getNextMissionAction(completed, 3), {
+  assert.deepEqual(getNextMissionAction(completed, 3, evidence), {
     status: "active",
     dayId: 2,
     part: "build",
@@ -106,9 +142,12 @@ test("global next action uses earliest incomplete day and learn-build-prove orde
 
 test("all-complete progress returns a terminal state and never Day 181", () => {
   const completed = {};
-  for (let dayId = 1; dayId <= 180; dayId += 1) closeDay(completed, dayId);
+  const evidence = {};
+  for (let dayId = 1; dayId <= 180; dayId += 1) {
+    closeDay(completed, evidence, dayId);
+  }
 
-  const progress = deriveMissionProgress({ completed });
+  const progress = deriveMissionProgress({ completed, evidence });
 
   assert.equal(progress.totalXp, 18_000);
   assert.equal(progress.proofChain, 180);
@@ -153,17 +192,20 @@ test("first-proof badge requires same-day trimmed evidence", () => {
 
 test("seven-day badge follows the proof chain rather than scattered completion", () => {
   const completed = {};
-  for (let dayId = 1; dayId <= 6; dayId += 1) closeDay(completed, dayId);
-  closeDay(completed, 8);
+  const evidence = {};
+  for (let dayId = 1; dayId <= 6; dayId += 1) {
+    closeDay(completed, evidence, dayId);
+  }
+  closeDay(completed, evidence, 8);
 
-  let badges = getMissionBadges({ completed, totalDays: 8 });
+  let badges = getMissionBadges({ completed, evidence, totalDays: 8 });
   assert.equal(
     badges.find((badge) => badge.id === "seven-day-chain")?.earned,
     false,
   );
 
-  closeDay(completed, 7);
-  badges = getMissionBadges({ completed, totalDays: 8 });
+  closeDay(completed, evidence, 7);
+  badges = getMissionBadges({ completed, evidence, totalDays: 8 });
   assert.equal(
     badges.find((badge) => badge.id === "seven-day-chain")?.earned,
     true,
@@ -214,7 +256,9 @@ test("rank thresholds are deterministic and bounded", () => {
   assert.equal(getMissionRank(-20).id, "explorer");
   assert.equal(getMissionRank(2_799).id, "explorer");
   assert.equal(getMissionRank(2_800).id, "foundations-builder");
+  assert.equal(getMissionRank(5_590).percentToNextRank, 99);
   assert.equal(getMissionRank(5_600).id, "ros-integrator");
+  assert.equal(getMissionRank(17_490).percentToNextRank, 99);
   assert.equal(getMissionRank(17_500).id, "deployment-engineer");
   assert.equal(getMissionRank(999_999).id, "mission-complete");
 });

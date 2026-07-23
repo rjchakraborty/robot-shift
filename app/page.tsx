@@ -19,8 +19,9 @@ import {
   type MissionProgress,
   type MissionTaskPart,
 } from "./mission-progress";
+import { CareerView } from "./career-view";
 
-type View = "today" | "roadmap" | "builds" | "notebook" | "progress";
+type View = "today" | "roadmap" | "roles" | "builds" | "notebook" | "progress";
 type TaskPart = MissionTaskPart;
 type FocusTarget = "top" | "visual" | "practice" | "evidence";
 type PhaseStat = Phase & { days: number; complete: number; percent: number };
@@ -196,9 +197,10 @@ function parseTrackerState(raw: string): TrackerState | null {
 const navigation: { id: View; label: string; mark: string }[] = [
   { id: "today", label: "Today", mark: "01" },
   { id: "roadmap", label: "Roadmap", mark: "02" },
-  { id: "builds", label: "Builds", mark: "03" },
-  { id: "notebook", label: "Notebook", mark: "04" },
-  { id: "progress", label: "Progress", mark: "05" },
+  { id: "roles", label: "Roles", mark: "03" },
+  { id: "builds", label: "Builds", mark: "04" },
+  { id: "notebook", label: "Notebook", mark: "05" },
+  { id: "progress", label: "Progress", mark: "06" },
 ];
 
 export default function Home() {
@@ -305,8 +307,11 @@ export default function Home() {
   }, [showReset]);
 
   const isPartDone = useCallback(
-    (dayId: number, part: TaskPart) => Boolean(tracker.completed[taskKey(dayId, part)]),
-    [tracker.completed],
+    (dayId: number, part: TaskPart) => (
+      Boolean(tracker.completed[taskKey(dayId, part)])
+      && (part !== "prove" || Boolean((tracker.evidence[String(dayId)] ?? "").trim()))
+    ),
+    [tracker.completed, tracker.evidence],
   );
   const isDayDone = useCallback(
     (dayId: number) => taskParts.every((part) => isPartDone(dayId, part)),
@@ -314,8 +319,11 @@ export default function Home() {
   );
 
   const completedParts = useMemo(
-    () => curriculumDays.reduce((total, day) => total + taskParts.filter((part) => tracker.completed[taskKey(day.id, part)]).length, 0),
-    [tracker.completed],
+    () => curriculumDays.reduce(
+      (total, day) => total + taskParts.filter((part) => isPartDone(day.id, part)).length,
+      0,
+    ),
+    [isPartDone],
   );
   const missionProgress = useMemo(() => deriveMissionProgress({
     completed: tracker.completed,
@@ -397,7 +405,18 @@ export default function Home() {
 
   const togglePart = (day: CurriculumDay, part: TaskPart) => {
     const key = taskKey(day.id, part);
-    const next = !tracker.completed[key];
+    const isCurrentlyDone = isPartDone(day.id, part);
+    if (part === "prove" && !isCurrentlyDone && !(tracker.evidence[String(day.id)] ?? "").trim()) {
+      setTracker((previous) => ({
+        ...previous,
+        completed: { ...previous.completed, [key]: false },
+      }));
+      setFocusRequest({ dayId: day.id, target: "evidence", nonce: Date.now() });
+      setAnnouncement(`${day.title}: add a repository, demo, report, or decisive output before closing Prove.`);
+      return;
+    }
+
+    const next = !isCurrentlyDone;
     const nextCompleted = { ...tracker.completed, [key]: next };
     setTracker((previous) => ({
       ...previous,
@@ -429,6 +448,9 @@ export default function Home() {
     setTracker((previous) => ({
       ...previous,
       [field]: { ...previous[field], [String(dayId)]: value },
+      completed: field === "evidence" && !value.trim()
+        ? { ...previous.completed, [taskKey(dayId, "prove")]: false }
+        : previous.completed,
     }));
   };
 
@@ -604,6 +626,12 @@ export default function Home() {
             />
           )}
 
+          {view === "roles" && (
+            <CareerView
+              onOpenDay={(dayId) => openDay(dayId)}
+            />
+          )}
+
           {view === "builds" && (
             <BuildsView tracker={tracker} setTracker={setTracker} openDay={openDay} />
           )}
@@ -620,6 +648,7 @@ export default function Home() {
               tracker={tracker}
               isDayDone={isDayDone}
               missionProgress={missionProgress}
+              openCareer={() => changeView("roles")}
             />
           )}
         </main>
@@ -691,7 +720,7 @@ function TodayView({
   const taskCopy = [
     { id: "learn" as const, label: "Understand", title: "See it and explain it", body: "Complete the guided visual, explanation, and check.", xp: MISSION_TASK_XP.learn },
     { id: "build" as const, label: "Build", title: "Make it observable", body: "Work today’s practical exercise and record one failure.", xp: MISSION_TASK_XP.build },
-    { id: "prove" as const, label: "Prove", title: "Lock the evidence", body: "Attach a repository, demo, report, or decisive output.", xp: MISSION_TASK_XP.prove },
+    { id: "prove" as const, label: "Prove", title: "Lock the evidence", body: "Add a repository, demo, report, or decisive output before closing this step.", xp: MISSION_TASK_XP.prove },
   ];
   const primaryActionCopy = nextAction.status === "course-complete"
     ? "Review completion"
@@ -1001,6 +1030,7 @@ function ProgressView({
   tracker,
   isDayDone,
   missionProgress,
+  openCareer,
 }: {
   percent: number;
   completedDays: number;
@@ -1008,6 +1038,7 @@ function ProgressView({
   tracker: TrackerState;
   isDayDone: (dayId: number) => boolean;
   missionProgress: MissionProgress;
+  openCareer: () => void;
 }) {
   const plannedMinutes = curriculumDays.reduce((sum, day) => sum + day.minutes, 0);
   const closedMinutes = curriculumDays.filter((day) => isDayDone(day.id)).reduce((sum, day) => sum + day.minutes, 0);
@@ -1110,10 +1141,10 @@ function ProgressView({
       </div>
 
       <section className="role-ladder">
-        <div><span className="eyebrow">APPLICATION LADDER</span><h2>Apply before day 180.</h2></div>
-        <article><span>NOW → D56</span><h3>Robotics software / ROS 2 integration</h3><p>Lead with ten years of distributed systems, Java/Python, telemetry, observability, mobile tooling, then add C++, ROS 2, simulation, and recovery evidence.</p></article>
-        <article><span>D57 → D119</span><h3>Autonomy integration / simulation</h3><p>Add Nav2, MoveIt 2, perception, state estimation, test infrastructure, field debugging, and reproducible deployment evidence.</p></article>
-        <article><span>D120 → D180</span><h3>Robot-learning / VLA deployment</h3><p>Add demonstrations, policy evaluation, edge optimization, agent recovery, safety cases, and real-robot acceptance results.</p></article>
+        <div><span className="eyebrow">APPLICATION LADDER</span><h2>Apply before day 180.</h2><button type="button" onClick={openCareer}>Open role targets</button></div>
+        <article><span>BRIDGE FIRST</span><h3>Robot HMI or fleet platform</h3><p>Reuse React, Flutter, Python, APIs, event systems, telemetry, and production debugging after one robotics-facing proof.</p></article>
+        <article><span>PRIMARY · D84–119</span><h3>Deployment, validation, and ROS 2 integration</h3><p>Add ROS 2, Nav2, hardware integration, simulation, SIL/HIL, commissioning, rollback, and measurable recovery evidence.</p></article>
+        <article><span>STRETCH · 9–18 MONTHS</span><h3>Physical-AI deployment</h3><p>Add robot datasets, policy evaluation, safe language-to-skill execution, edge inference, and real or HIL rollout evidence—not a research claim.</p></article>
       </section>
 
       <section className="resource-vault">

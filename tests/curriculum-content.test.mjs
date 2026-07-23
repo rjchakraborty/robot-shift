@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { curriculumDays } from "../app/curriculum.ts";
+import {
+  curriculumDays,
+  phases,
+  projects,
+  readinessSkills,
+} from "../app/curriculum.ts";
 import {
   lessonForDay,
   topicDetails,
@@ -52,6 +57,7 @@ test("the revised 180-day plan includes every mandatory practical robotics lane"
     /QoS.*DDS discovery/i,
     /executors.*callback groups.*deadlocks/i,
     /lifecycle nodes.*composition/i,
+    /ROS 2 distributions.*Jazzy.*Lyrical LTS/i,
     /ros2_control.*hardware interfaces/i,
     /Gazebo Harmonic/i,
     /SLAM.*AMCL/i,
@@ -60,6 +66,21 @@ test("the revised 180-day plan includes every mandatory practical robotics lane"
     /loop closure/i,
     /force-torque.*impedance/i,
     /DAgger.*human-in-the-loop/i,
+    /Robot.edge.cloud architecture.*failure boundaries/i,
+    /Mission workflows.*task allocation.*traffic.*deadlocks.*docking.*battery/i,
+    /REST.*WebSocket.*DDS gateways.*idempotency.*cancellation/i,
+    /PostgreSQL.*Redis.*Kafka.*ordering.*backpressure/i,
+    /operator HMI.*teleoperation.*WebSocket.*WebRTC.*3D state/i,
+    /versioned configuration.*OTA canaries.*rollback/i,
+    /Fleet acceptance.*logs.*metrics.*traces.*fault injection.*SLOs/i,
+    /FMEA.*traceability.*test planning/i,
+    /pytest.*gtest.*launch_testing.*component-to-system regression/i,
+    /Gazebo.*Isaac.*scenario matrices.*seeds.*replay/i,
+    /SIL.*HIL.*sensor emulators.*time faults.*communication faults/i,
+    /VDA 5050 v3.*Open-RMF.*WMS\/WES.*industrial boundaries/i,
+    /ISO 3691-4.*ISO 13849.*E-stop.*STO.*zones/i,
+    /FAT.*SAT.*customer commissioning.*incident reporting.*FleetOps gate/i,
+    /LeRobot 0\.6.*GR00T 1\.7.*Gemini Robotics ER 1\.6.*π0\.5.*OpenVLA.*SmolVLA/i,
     /threat modeling.*SROS2/i,
     /safety case/i,
     /actuator sizing.*motors.*power/i,
@@ -80,12 +101,65 @@ test("the revised 180-day plan includes every mandatory practical robotics lane"
   }
 });
 
+test("the specialization culminates in an evidence-backed FleetOps gate", () => {
+  const productionPhase = phases.find((phase) => phase.id === "learning");
+  assert.match(productionPhase?.title ?? "", /production robotics systems/i);
+  assert.match(productionPhase?.outcome ?? "", /fleet.*deployment.*operator systems/i);
+
+  const fleetOps = projects.find((project) => project.id === "fleet-ops");
+  assert.equal(fleetOps?.title, "FleetOps Lab");
+  assert.match(fleetOps?.proof ?? "", /two-robot missions.*operator HMI.*SIL\/HIL.*rollback.*FAT\/SAT/i);
+  assert.equal(projects.some((project) => project.id === "policy-bench"), false);
+
+  assert.match(
+    curriculumDays.find((day) => day.id === 119)?.checkpoint ?? "",
+    /Gate 4.*FleetOps.*SIL\/HIL.*safe failure.*rollback.*commissioning/i,
+  );
+  assert.deepEqual(
+    readinessSkills.find((skill) => skill.gateDay === 119),
+    { id: "fleet", label: "Fleet & validation", gateDay: 119 },
+  );
+});
+
+test("retargeted lessons no longer inherit the removed diffusion and RL teaching packs", () => {
+  const fleetLesson = lessonForDay(curriculumDays[105]);
+  const validationLesson = lessonForDay(curriculumDays[112]);
+  const ecosystemLesson = lessonForDay(curriculumDays[126]);
+
+  assert.match(fleetLesson.bigIdea, /production robot system.*failure boundaries/i);
+  assert.match(fleetLesson.pareto.join(" "), /safety.*local.*missions.*state machines.*idempotent/i);
+  assert.doesNotMatch(
+    [fleetLesson, validationLesson].flatMap((lesson) => [
+      lesson.bigIdea,
+      ...lesson.pareto,
+      ...lesson.simpleExplanation,
+      ...lesson.quiz.map(({ question, answer }) => `${question} ${answer}`),
+    ]).join("\n"),
+    /diffusion and flow policies|discounted return|reward wording becomes behavior/i,
+  );
+
+  assert.match(validationLesson.bigIdea, /FMEA.*traceability.*risk control.*test planning/i);
+  assert.match(
+    validationLesson.pareto.join(" "),
+    /requirements.*hazards.*tests.*results.*component.*integration.*launch.*SIL\/HIL/i,
+  );
+  assert.match(
+    validationLesson.sources.map(({ label }) => label).join("\n"),
+    /launch_testing[\s\S]*Open-RMF[\s\S]*VDA 5050/i,
+  );
+  assert.match(
+    ecosystemLesson.sources.map(({ label }) => label).join("\n"),
+    /LeRobot 0\.6[\s\S]*GR00T 1\.7[\s\S]*Gemini Robotics ER 1\.6[\s\S]*π0\.5/i,
+  );
+});
+
 test("every revised topic has a deep exact-topic override", () => {
   const expectedOverrideIds = [
-    25, 26, 27, 32, 33, 34, 37, 40, 41, 43, 44, 47, 50, 51, 52, 53, 54, 55,
-    56, 66, 67, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 100, 110, 111,
-    118, 127, 128, 129, 130, 131, 132, 133, 137, 138, 143, 144, 149, 150, 151,
-    152, 153, 157, 164, 165, 168, 169, 170, 171, 172, 178, 179, 180,
+    25, 26, 27, 29, 32, 33, 34, 37, 40, 41, 43, 44, 47, 50, 51, 52, 53, 54,
+    55, 56, 66, 67, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 100, 106,
+    107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 127,
+    128, 129, 130, 131, 132, 133, 137, 138, 143, 144, 149, 150, 151, 152,
+    153, 157, 164, 165, 168, 169, 170, 171, 172, 178, 179, 180,
   ];
   assert.deepEqual(Object.keys(topicDetailOverrides).map(Number), expectedOverrideIds);
 

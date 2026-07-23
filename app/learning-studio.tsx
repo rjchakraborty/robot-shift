@@ -466,7 +466,12 @@ export function LearningStudio({ day }: LearningStudioProps) {
             aria-label={item.label}
             aria-selected={section === item.id}
             aria-controls={`lesson-panel-${day.id}`}
-            tabIndex={section === item.id ? 0 : -1}
+            tabIndex={
+              section === item.id
+                || (!primaryLessonSections.some((stage) => stage.id === section) && index === 0)
+                ? 0
+                : -1
+            }
             className={section === item.id ? "active" : ""}
             onClick={() => setSection(item.id)}
             onKeyDown={(event) => moveTab(event, index, primaryLessonSections)}
@@ -486,21 +491,17 @@ export function LearningStudio({ day }: LearningStudioProps) {
           <p>Use these only when the guided path is not clicking yet.</p>
         </div>
         <div className="lesson-support-tabs">
-          <div role="tablist" aria-label="Supporting lesson tools">
-            {supportLessonSections.map((item, index) => (
+          <div aria-label="Supporting lesson tools">
+            {supportLessonSections.map((item) => (
               <button
                 key={item.id}
                 ref={(node) => { tabRefs.current[item.id] = node; }}
                 id={`lesson-tab-${day.id}-${item.id}`}
                 type="button"
-                role="tab"
-                aria-label={item.label}
-                aria-selected={section === item.id}
+                aria-pressed={section === item.id}
                 aria-controls={`lesson-panel-${day.id}`}
-                tabIndex={section === item.id ? 0 : -1}
                 className={section === item.id ? "active" : ""}
                 onClick={() => setSection(item.id)}
-                onKeyDown={(event) => moveTab(event, index, supportLessonSections)}
               >
                 {item.shortLabel}
               </button>
@@ -518,7 +519,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
       <div
         className="lesson-panel"
         id={`lesson-panel-${day.id}`}
-        role="tabpanel"
+        role={primaryLessonSections.some((item) => item.id === section) ? "tabpanel" : "region"}
         aria-labelledby={`lesson-tab-${day.id}-${section}`}
         tabIndex={0}
       >
