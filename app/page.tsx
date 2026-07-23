@@ -10,6 +10,7 @@ import {
   type CurriculumDay,
   type Phase,
 } from "./curriculum";
+import { LearningStudio } from "./learning-studio";
 
 type View = "today" | "roadmap" | "builds" | "notebook" | "progress";
 type TaskPart = "learn" | "build" | "prove";
@@ -635,6 +636,8 @@ function TodayView({
           <small>{date ? `Planned ${date} · ${tracker.weeklyHours}h/week` : "Set a start date"}</small>
         </div>
       </section>
+
+      <LearningStudio day={day} />
 
       <div className="today-grid">
         <section className="task-board" aria-labelledby="task-title">

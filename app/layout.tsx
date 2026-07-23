@@ -19,13 +19,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
   const title = "Robot/Shift — 180-Day Robotics Field Manual";
-  const description = "A practical robotics curriculum and progress tracker for an experienced software engineer moving into embodied AI.";
+  const description = "A practical 180-day robotics course, progress tracker, and AI tutor for a software engineer moving into embodied AI.";
 
   return {
     title,
     description,
     applicationName: "Robot/Shift",
-    keywords: ["robotics curriculum", "ROS 2", "robot learning", "embodied AI", "career roadmap"],
+    keywords: ["robotics course", "robotics curriculum", "ROS 2", "robot learning", "embodied AI", "AI tutor", "career roadmap"],
     openGraph: {
       title,
       description,

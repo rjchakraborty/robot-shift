@@ -40,7 +40,7 @@ test("server-renders the Robot/Shift release shell", async () => {
   );
   assert.match(
     html,
-    /<meta name="description" content="A practical robotics curriculum and progress tracker for an experienced software engineer moving into embodied AI\."\/>/i,
+    /<meta name="description" content="A practical 180-day robotics course, progress tracker, and AI tutor for a software engineer moving into embodied AI\."\/>/i,
   );
   assert.match(
     html,
@@ -92,6 +92,14 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     ["progress export", "Export backup"],
     ["progress import", "Import backup"],
     ["guarded reset", "Reset all progress?"],
+    ["daily knowledge studio", "KNOWLEDGE STUDIO"],
+    ["beginner teaching modes", "Explain simply"],
+    ["simple math walkthroughs", "Math lab"],
+    ["real-world application examples", "Real-life examples"],
+    ["teach-back and quiz practice", "Quiz / teach-back"],
+    ["inline AI teacher", "Ask your patient robotics teacher"],
+    ["device-local tutor history", "robot-shift-tutor-v1"],
+    ["original source synthesis notice", "Original teaching synthesis"],
   ];
 
   for (const [capability, signal] of releaseSignals) {
