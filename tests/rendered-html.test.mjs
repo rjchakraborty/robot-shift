@@ -34,6 +34,16 @@ test("server-renders the Robot/Shift release shell", async () => {
 
   const html = await response.text();
   assert.match(html, /<html lang="en">/i);
+  assert.match(html, /<meta name="color-scheme" content="light dark"\/>/i);
+  assert.match(html, /<meta name="theme-color" content="#f3f0e7"\/>/i);
+  assert.match(html, /<script id="theme-init">/i);
+  assert.match(html, /robot-shift-theme-v1/);
+  assert.match(html, /prefers-color-scheme: dark/);
+  assert.ok(
+    html.indexOf("<body") < html.indexOf('id="theme-init"')
+      && html.indexOf('id="theme-init"') < html.indexOf('<main class="boot-screen"'),
+    "theme initialization must be the first executable body content",
+  );
   assert.match(
     html,
     /<title>Robot\/Shift — 180-Day Robotics Field Manual<\/title>/i,
@@ -92,6 +102,7 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     ["progress analytics", "READINESS INSTRUMENT PANEL"],
     ["job-readiness evidence", "JOB-READINESS MATRIX"],
     ["local persistence", "robot-shift-tracker-v1"],
+    ["persisted system, light, and dark themes", "robot-shift-theme-v1"],
     ["progress export", "Export backup"],
     ["progress import", "Import backup"],
     ["guarded reset", "Reset all progress?"],

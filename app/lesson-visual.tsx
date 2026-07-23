@@ -16,16 +16,16 @@ const modes: readonly { id: VisualMode; label: string }[] = [
 ];
 
 const colours = {
-  ink: "#151b1e",
-  muted: "#697377",
-  paper: "#fbfaf5",
-  white: "#ffffff",
-  grid: "#d7dad4",
-  input: "#3b63f3",
-  process: "#9b4dca",
-  output: "#007f70",
-  warning: "#c43d32",
-  signal: "#ff6b35",
+  ink: "var(--visual-ink)",
+  muted: "var(--visual-muted)",
+  paper: "var(--visual-paper)",
+  white: "var(--visual-white)",
+  grid: "var(--visual-grid)",
+  input: "var(--visual-input)",
+  process: "var(--visual-process)",
+  output: "var(--visual-output)",
+  warning: "var(--visual-warning)",
+  signal: "var(--visual-signal)",
 };
 
 const legendColours = {
@@ -293,7 +293,7 @@ function SensorDiagram({ mode, marker }: DiagramProps) {
     <>
       <rect x="95" y="130" width="105" height="90" fill={colours.paper} stroke={colours.input} strokeWidth="5" />
       <circle cx="200" cy="175" r="18" fill={colours.paper} stroke={colours.input} strokeWidth="5" />
-      <path d="M220 150 L545 75 L545 275 L220 200 Z" fill={failed ? "#f8dedb" : "#e1eeec"} stroke={failed ? colours.warning : colours.output} strokeWidth="3" strokeDasharray={failed ? "10 8" : undefined} />
+      <path d="M220 150 L545 75 L545 275 L220 200 Z" fill={failed ? "var(--visual-fault-fill)" : "var(--visual-safe-fill)"} stroke={failed ? colours.warning : colours.output} strokeWidth="3" strokeDasharray={failed ? "10 8" : undefined} />
       <rect x="520" y="120" width="85" height="110" fill={colours.paper} stroke={failed ? colours.warning : colours.output} strokeWidth="5" />
       <circle cx={failed ? 585 : 558} cy={failed ? 205 : 170} r="14" fill={failed ? colours.warning : colours.signal} />
       <line x1="218" y1="175" x2={failed ? 577 : 550} y2={failed ? 197 : 170} stroke={colours.ink} strokeWidth="3" markerEnd={`url(#${marker})`} />
@@ -342,8 +342,8 @@ function MapDiagram({ mode, marker }: DiagramProps) {
   return (
     <>
       <rect x="70" y="55" width="580" height="315" fill="none" stroke={colours.ink} strokeWidth="4" />
-      <rect x="245" y="90" width="95" height="150" fill="#d4d6d0" stroke={colours.ink} strokeWidth="4" />
-      <rect x="415" y="240" width="105" height="95" fill="#d4d6d0" stroke={colours.ink} strokeWidth="4" />
+      <rect x="245" y="90" width="95" height="150" fill="var(--visual-obstacle-fill)" stroke={colours.ink} strokeWidth="4" />
+      <rect x="415" y="240" width="105" height="95" fill="var(--visual-obstacle-fill)" stroke={colours.ink} strokeWidth="4" />
       <rect x="225" y="70" width="135" height="190" fill="none" stroke={colours.warning} strokeWidth="3" strokeDasharray="8 6" />
       <path d={path} fill="none" stroke={failed ? colours.warning : colours.output} strokeWidth="7" strokeLinejoin="round" markerEnd={`url(#${marker})`} />
       <circle cx="115" cy="315" r="22" fill={colours.input} stroke={colours.ink} strokeWidth="3" />
@@ -367,7 +367,7 @@ function TensorDiagram({ mode, marker }: DiagramProps) {
           y={100 + index * 18}
           width="155"
           height="175"
-          fill={index === 2 ? "#dce4ff" : colours.paper}
+          fill={index === 2 ? "var(--visual-input-fill)" : colours.paper}
           stroke={colours.input}
           strokeWidth="4"
         />
@@ -449,7 +449,7 @@ function SafetyDiagram({ mode, marker }: DiagramProps) {
   return (
     <>
       <circle cx="345" cy="220" r="155" fill="none" stroke={colours.warning} strokeWidth="5" strokeDasharray="12 8" />
-      <circle cx="345" cy="220" r="88" fill="#e1eeec" stroke={colours.output} strokeWidth="4" />
+      <circle cx="345" cy="220" r="88" fill="var(--visual-safe-fill)" stroke={colours.output} strokeWidth="4" />
       <rect x="305" y="180" width="80" height="80" fill={colours.paper} stroke={colours.ink} strokeWidth="5" />
       <line x1="345" y1="180" x2={failed ? 555 : 435} y2={failed ? 110 : 155} stroke={failed ? colours.warning : colours.input} strokeWidth="10" strokeLinecap="square" />
       <circle cx={failed ? 555 : 435} cy={failed ? 110 : 155} r="16" fill={failed ? colours.warning : colours.input} />
@@ -501,7 +501,7 @@ function EvidenceDiagram({ mode }: DiagramProps) {
         const x = 115 + index * 135;
         return (
           <g key={labels[index]}>
-            <rect x={x} y={330 - height} width="75" height={height} fill={failed ? "#f4c7c2" : index === 0 ? colours.output : colours.input} stroke={failed ? colours.warning : colours.ink} strokeWidth="4" />
+            <rect x={x} y={330 - height} width="75" height={height} fill={failed ? "var(--visual-fault-bar)" : index === 0 ? colours.output : colours.input} stroke={failed ? colours.warning : colours.ink} strokeWidth="4" />
             <DiagramLabel x={x + 37.5} y={315 - height} anchor="middle" fill={failed ? colours.warning : colours.ink} strong>{value}%</DiagramLabel>
             <DiagramLabel x={x + 37.5} y={360} anchor="middle">{labels[index]}</DiagramLabel>
           </g>

@@ -26,15 +26,15 @@ export type InteractiveMathPlaygroundProps = {
 };
 
 const colours = {
-  ink: "#151b1e",
-  muted: "#697377",
-  paper: "#fbfaf5",
-  white: "#ffffff",
-  grid: "#d7dad4",
-  input: "#3b63f3",
-  process: "#9b4dca",
-  output: "#007f70",
-  warning: "#c43d32",
+  ink: "var(--visual-ink)",
+  muted: "var(--visual-muted)",
+  paper: "var(--visual-paper)",
+  white: "var(--visual-white)",
+  grid: "var(--visual-grid)",
+  input: "var(--visual-input)",
+  process: "var(--visual-process)",
+  output: "var(--visual-output)",
+  warning: "var(--visual-warning)",
 } as const;
 
 const toneColours: Record<MathTone, string> = {

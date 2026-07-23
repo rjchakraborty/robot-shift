@@ -20,6 +20,7 @@ import {
   type MissionTaskPart,
 } from "./mission-progress";
 import { CareerView } from "./career-view";
+import { ThemeControl } from "./theme-control";
 
 type View = "today" | "roadmap" | "roles" | "builds" | "notebook" | "progress";
 type TaskPart = MissionTaskPart;
@@ -553,6 +554,7 @@ export default function Home() {
                 placeholder="Search 180 days…"
               />
             </label>
+            <ThemeControl />
             <button className="utility-button" onClick={() => setShowSettings((open) => !open)} aria-expanded={showSettings}>
               Controls
             </button>
