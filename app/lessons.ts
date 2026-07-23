@@ -4,6 +4,7 @@ import { topicDetails1b } from "./topic-details-1b";
 import { topicDetails1c } from "./topic-details-1c";
 import { topicDetails1d } from "./topic-details-1d";
 import { topicDetails2 } from "./topic-details-2";
+import { topicDetailOverrides } from "./topic-detail-overrides";
 import type { TopicDetail } from "./topic-detail-types";
 
 export type LessonExample = { title: string; explanation: string; tryIt: string };
@@ -690,6 +691,7 @@ export const topicDetails: Readonly<Record<number, TopicDetail>> = {
   ...topicDetails1b,
   ...topicDetails1c,
   ...topicDetails2,
+  ...topicDetailOverrides,
 };
 
 export function lessonForDay(day: CurriculumDay): DayLesson {

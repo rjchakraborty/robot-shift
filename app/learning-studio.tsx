@@ -9,13 +9,17 @@ import {
   useState,
 } from "react";
 import { type CurriculumDay } from "./curriculum";
+import { LessonVisual } from "./lesson-visual";
+import { allDayVisuals } from "./lesson-visuals";
 import { lessonForDay } from "./lessons";
+import { getMathRescue } from "./math-rescue";
 
 type LearningStudioProps = {
   day: CurriculumDay;
 };
 
 type LessonSection =
+  | "visual"
   | "pareto"
   | "simple"
   | "math"
@@ -54,6 +58,7 @@ const MAX_MESSAGES_PER_DAY = 12;
 const MAX_STORED_DAYS = 14;
 
 const lessonSections: { id: LessonSection; label: string; shortLabel: string }[] = [
+  { id: "visual", label: "Visual guide", shortLabel: "Visual" },
   { id: "pareto", label: "80/20", shortLabel: "80/20" },
   { id: "simple", label: "Explain simply", shortLabel: "Simple" },
   { id: "math", label: "Math lab", shortLabel: "Math" },
@@ -215,7 +220,9 @@ function historyForRequest(messages: TutorMessage[]) {
 
 export function LearningStudio({ day }: LearningStudioProps) {
   const lesson = useMemo(() => lessonForDay(day), [day]);
-  const [section, setSection] = useState<LessonSection>("pareto");
+  const mathRescue = useMemo(() => getMathRescue(day.week), [day.week]);
+  const visual = allDayVisuals[day.id - 1];
+  const [section, setSection] = useState<LessonSection>("visual");
   const [threads, setThreads] = useState<Record<string, TutorThread>>({});
   const [storageReady, setStorageReady] = useState(false);
   const [storageNotice, setStorageNotice] = useState<string | null>(null);
@@ -448,6 +455,8 @@ export function LearningStudio({ day }: LearningStudioProps) {
         aria-labelledby={`lesson-tab-${day.id}-${section}`}
         tabIndex={0}
       >
+        {section === "visual" && <LessonVisual spec={visual} />}
+
         {section === "pareto" && (
           <div className="lesson-section lesson-pareto">
             <div className="lesson-lead">
@@ -490,6 +499,40 @@ export function LearningStudio({ day }: LearningStudioProps) {
             <span className="lesson-kicker">NO-SKIPPED-STEPS MATH</span>
             <h3>{lesson.math.title}</h3>
             <p>{lesson.math.meaning}</p>
+            <details className="math-rescue" open>
+              <summary>
+                <span>BEGINNER RESCUE // WEEK {String(day.week).padStart(2, "0")}</span>
+                {mathRescue.title}
+              </summary>
+              <div className="math-rescue-body">
+                <p>{mathRescue.whyItMatters}</p>
+                <div className="math-symbols" aria-label="Symbols used this week">
+                  {mathRescue.symbols.map((item) => (
+                    <article key={item.symbol}>
+                      <strong>{item.symbol}</strong>
+                      <span>{item.meaning}</span>
+                      <small>Unit: {item.unit}</small>
+                    </article>
+                  ))}
+                </div>
+                <ol className="math-steps">
+                  {mathRescue.workedSteps.map((step, index) => (
+                    <li key={step}>
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <p>{step}</p>
+                    </li>
+                  ))}
+                </ol>
+                <aside className="math-analogy">
+                  <strong>Connect to software you already know</strong>
+                  <p>{mathRescue.analogy}</p>
+                </aside>
+                <details className="math-quick-check">
+                  <summary>Quick check: {mathRescue.quickCheck}</summary>
+                  <p><strong>Answer:</strong> {mathRescue.answer}</p>
+                </details>
+              </div>
+            </details>
             {lesson.math.connection && (
               <div className="math-topic-connection">
                 <strong>Today’s exact-topic connection</strong>

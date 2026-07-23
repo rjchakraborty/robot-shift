@@ -929,9 +929,9 @@ function ProgressView({
 
       <section className="role-ladder">
         <div><span className="eyebrow">APPLICATION LADDER</span><h2>Apply before day 180.</h2></div>
-        <article><span>NOW → D30</span><h3>Robotics platform / backend</h3><p>Lead with distributed systems, telemetry, real-time data, edge/cloud, observability, mobile tooling.</p></article>
-        <article><span>D60 → D120</span><h3>Robotics application / integration</h3><p>Add ROS 2, C++, simulation, sensor integration, field debugging, deployment evidence.</p></article>
-        <article><span>D120 → D180</span><h3>Embodied AI / robot learning</h3><p>Add demonstrations, policy evaluation, agent recovery, and real-robot acceptance results.</p></article>
+        <article><span>NOW → D56</span><h3>Robotics software / ROS 2 integration</h3><p>Lead with ten years of distributed systems, Java/Python, telemetry, observability, mobile tooling, then add C++, ROS 2, simulation, and recovery evidence.</p></article>
+        <article><span>D57 → D119</span><h3>Autonomy integration / simulation</h3><p>Add Nav2, MoveIt 2, perception, state estimation, test infrastructure, field debugging, and reproducible deployment evidence.</p></article>
+        <article><span>D120 → D180</span><h3>Robot-learning / VLA deployment</h3><p>Add demonstrations, policy evaluation, edge optimization, agent recovery, safety cases, and real-robot acceptance results.</p></article>
       </section>
 
       <section className="resource-vault">

@@ -2070,7 +2070,7 @@ progress::-moz-progress-bar {
 
 .lesson-tabs {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   overflow-x: auto;
   background: #e4e3db;
   border-bottom: 1px solid var(--ink);
@@ -2116,6 +2116,187 @@ progress::-moz-progress-bar {
 
 .lesson-section {
   max-width: 1120px;
+}
+
+.lesson-visual {
+  width: 100%;
+}
+
+.lesson-visual--hard-border {
+  border: 1px solid var(--ink);
+  box-shadow: 3px 3px 0 rgba(21, 27, 30, 0.14);
+}
+
+.lesson-visual__header {
+  min-height: 132px;
+  padding: 22px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 22px;
+  background:
+    linear-gradient(90deg, rgba(8, 127, 140, 0.1) 1px, transparent 1px),
+    linear-gradient(rgba(8, 127, 140, 0.1) 1px, transparent 1px),
+    #edf4f2;
+  background-size: 24px 24px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.lesson-visual__header h3 {
+  max-width: 760px;
+  margin: 7px 0 5px;
+  font-size: clamp(1.3rem, 2.2vw, 2rem);
+  letter-spacing: -0.04em;
+}
+
+.lesson-visual__header p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--steel);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.lesson-visual__mode-tabs.lesson-tabs {
+  width: 330px;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: visible;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+}
+
+.lesson-visual__mode-tabs.lesson-tabs button {
+  min-height: 46px;
+  padding: 7px;
+  font-size: 0.62rem;
+}
+
+.lesson-visual__board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(290px, 0.7fr);
+}
+
+.lesson-visual__figure.formula-card {
+  max-width: none;
+  margin: 0;
+  padding: 18px;
+  display: block;
+  background: #f6f4ed;
+  color: var(--ink);
+  border-right: 1px solid var(--ink);
+}
+
+.lesson-visual__svg {
+  width: 100%;
+  height: auto;
+  min-height: 360px;
+  display: block;
+  background: #fbfaf5;
+}
+
+.lesson-visual__scroll-hint {
+  display: none;
+}
+
+.lesson-visual__figure figcaption {
+  padding: 14px 2px 0;
+  color: var(--steel);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.lesson-visual__read-rail {
+  min-width: 0;
+  background: var(--paper);
+}
+
+.lesson-visual__read-rail > section {
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.lesson-visual__read-rail > section:last-child {
+  border-bottom: 0;
+}
+
+.lesson-visual__read-rail ol,
+.lesson-visual__read-rail ul {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--steel);
+}
+
+.lesson-visual__read-rail li,
+.lesson-visual__read-rail p {
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.lesson-visual__math > strong {
+  display: block;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+  color: var(--cyan);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8rem;
+}
+
+.lesson-visual__math > p,
+.lesson-visual__failure > p,
+.lesson-visual__bridge > p,
+.lesson-visual__metadata > p {
+  margin: 9px 0 0;
+  color: var(--steel);
+}
+
+.lesson-visual__failure {
+  background: #fff0e9;
+  border-left: 6px solid var(--fault);
+}
+
+.lesson-visual__legend ul {
+  display: grid;
+  gap: 7px;
+  list-style: none;
+  padding-left: 0;
+}
+
+.lesson-visual__legend li {
+  display: grid;
+  grid-template-columns: 16px auto 1fr;
+  gap: 7px;
+  align-items: center;
+}
+
+.lesson-visual__legend-swatch {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  border: 1px solid var(--ink);
+}
+
+.lesson-visual__legend-swatch--process {
+  border-radius: 50%;
+}
+
+.lesson-visual__legend-swatch--output {
+  transform: rotate(45deg);
+}
+
+.lesson-visual__legend-swatch--warning {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    rgba(255, 255, 255, 0.85) 3px,
+    rgba(255, 255, 255, 0.85) 5px
+  );
+}
+
+.lesson-visual__bridge {
+  background: #e7f1ef;
+  border-left: 6px solid var(--cyan);
 }
 
 .lesson-kicker,
@@ -2230,6 +2411,117 @@ progress::-moz-progress-bar {
   max-width: 850px;
   color: var(--steel);
   line-height: 1.6;
+}
+
+.math-rescue {
+  max-width: 960px;
+  margin: 22px 0;
+  border: 1px solid var(--ink);
+  background: #eef6f4;
+}
+
+.math-rescue > summary {
+  min-height: 58px;
+  padding: 12px 18px;
+  display: grid;
+  grid-template-columns: minmax(160px, 0.42fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 850;
+  list-style-position: inside;
+}
+
+.math-rescue > summary span {
+  color: var(--cyan);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+}
+
+.math-rescue-body {
+  padding: 20px;
+  border-top: 1px solid var(--ink);
+}
+
+.math-rescue-body > p {
+  margin: 0 0 18px;
+  color: var(--steel);
+  line-height: 1.6;
+}
+
+.math-symbols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+}
+
+.math-symbols article {
+  min-height: 116px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-right: 1px solid var(--line);
+}
+
+.math-symbols article:last-child {
+  border-right: 0;
+}
+
+.math-symbols strong {
+  color: var(--cyan);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 1rem;
+}
+
+.math-symbols span {
+  color: var(--steel);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.math-symbols small {
+  margin-top: auto;
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.math-rescue .math-steps {
+  margin-top: 18px;
+}
+
+.math-analogy {
+  margin-top: 18px;
+  padding: 15px 18px;
+  background: white;
+  border-left: 6px solid var(--cyan);
+}
+
+.math-analogy p {
+  margin: 6px 0 0;
+  color: var(--steel);
+  line-height: 1.5;
+}
+
+.math-quick-check {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: #fff0b8;
+  border: 1px solid var(--ink);
+}
+
+.math-quick-check summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.math-quick-check p {
+  margin: 12px 0 0;
+  color: var(--steel);
+  line-height: 1.5;
 }
 
 .math-topic-connection {
@@ -2793,7 +3085,7 @@ progress::-moz-progress-bar {
 
 @media (max-width: 1100px) {
   .lesson-tabs {
-    grid-template-columns: repeat(7, minmax(112px, 1fr));
+    grid-template-columns: repeat(8, minmax(112px, 1fr));
   }
 
   .example-grid {
@@ -2818,6 +3110,24 @@ progress::-moz-progress-bar {
   .lesson-two-column,
   .studio-source-strip {
     grid-template-columns: 1fr;
+  }
+
+  .lesson-visual__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .lesson-visual__mode-tabs.lesson-tabs {
+    width: 100%;
+  }
+
+  .lesson-visual__board {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-visual__figure.formula-card {
+    border-right: 0;
+    border-bottom: 1px solid var(--ink);
   }
 
   .studio-source-strip nav {
@@ -2846,7 +3156,7 @@ progress::-moz-progress-bar {
   }
 
   .lesson-tabs {
-    grid-template-columns: repeat(7, minmax(78px, 1fr));
+    grid-template-columns: repeat(8, minmax(78px, 1fr));
   }
 
   .lesson-tabs button {
@@ -2867,12 +3177,60 @@ progress::-moz-progress-bar {
     min-height: 360px;
   }
 
+  .lesson-visual__header {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .lesson-visual__header h3 {
+    font-size: 1.35rem;
+  }
+
+  .lesson-visual__figure.formula-card {
+    padding: 10px;
+    overflow-x: auto;
+  }
+
+  .lesson-visual__svg {
+    width: 720px;
+    min-width: 720px;
+    min-height: 0;
+  }
+
+  .lesson-visual__scroll-hint {
+    display: block;
+    width: 720px;
+    padding: 0 0 9px;
+    color: var(--steel);
+    font-family: var(--font-geist-mono), monospace;
+    font-size: 0.68rem;
+  }
+
+  .lesson-visual__read-rail > section {
+    padding: 16px;
+  }
+
   .lesson-two-column {
     gap: 22px;
   }
 
   .formula-card {
     grid-template-columns: 1fr;
+  }
+
+  .math-rescue > summary,
+  .math-symbols {
+    grid-template-columns: 1fr;
+  }
+
+  .math-symbols article {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .math-symbols article:last-child {
+    border-bottom: 0;
   }
 
   .practice-list article {

@@ -105,6 +105,36 @@ const rosTutorials: Resource = {
   url: "https://github.com/ros2/ros2_documentation/tree/jazzy/source/Tutorials",
 };
 
+const ros2Control: Resource = {
+  label: "Official ros2_control documentation",
+  url: "https://control.ros.org/jazzy/index.html",
+};
+
+const gazebo: Resource = {
+  label: "Gazebo Harmonic ROS 2 integration",
+  url: "https://gazebosim.org/docs/harmonic/ros2_integration/",
+};
+
+const nav2: Resource = {
+  label: "Official Nav2 documentation",
+  url: "https://docs.nav2.org/",
+};
+
+const moveIt: Resource = {
+  label: "Official MoveIt 2 tutorials",
+  url: "https://moveit.picknik.ai/main/doc/tutorials/tutorials.html",
+};
+
+const rosSecurity: Resource = {
+  label: "Official ROS 2 security tutorials",
+  url: "https://docs.ros.org/en/jazzy/Tutorials/Advanced/Security/Introducing-ros2-security.html",
+};
+
+const tensorRt: Resource = {
+  label: "NVIDIA TensorRT documentation",
+  url: "https://docs.nvidia.com/deeplearning/tensorrt/latest/index.html",
+};
+
 const underactuated: Resource = {
   label: "MIT Underactuated Robotics",
   url: "https://underactuated.csail.mit.edu/",
@@ -181,16 +211,16 @@ const weekPlans: WeekPlan[] = [
   },
   {
     phaseId: "foundations",
-    title: "Modern C++ for robot processes",
-    focus: "Deterministic, testable C++ at the hardware boundary.",
-    lab: "Create a small C++ sensor→filter→controller pipeline with tests, structured logs, and deterministic replay.",
+    title: "Modern C++, Linux, and real-time habits",
+    focus: "Deterministic, observable software at the hardware boundary.",
+    lab: "Create a Linux C++ sensor→filter→controller pipeline with device permissions, bounded timing, tests, CI, structured logs, and deterministic replay.",
     topics: [
       "RAII, ownership, references, and smart pointers",
       "Value types, interfaces, and dependency boundaries",
       "CMake targets, libraries, and reproducible builds",
-      "Threads, queues, timing, and cancellation",
-      "Binary data, serialization, and bounded buffers",
-      "Unit tests, sanitizers, profiling, and failure injection",
+      "Linux processes, device permissions, udev, and robot networking",
+      "Threads, real-time scheduling, jitter, and priority inversion",
+      "Sanitizers, profiling, deterministic replay, and CI",
       "Ship the deterministic control-pipeline repository",
     ],
     resource: {
@@ -201,67 +231,67 @@ const weekPlans: WeekPlan[] = [
   },
   {
     phaseId: "ros",
-    title: "ROS 2 graph and communication",
-    focus: "Treat ROS as a distributed production system.",
-    lab: "Build a three-node telemetry, command, and watchdog system in both Python and C++.",
+    title: "ROS 2 graph, runtime, and communication",
+    focus: "Treat ROS as a concurrent distributed production system.",
+    lab: "Build a Python/C++ telemetry, command, and watchdog system; then reproduce QoS, discovery, executor, lifecycle, and cancellation failures.",
     topics: [
       "Workspaces, packages, nodes, and the ROS graph",
       "Topics, message design, publishers, and subscribers",
       "Services versus actions and cancellation semantics",
-      "Parameters, configuration, and launch files",
-      "QoS profiles, reliability, durability, and deadlines",
-      "Introspection with ros2 CLI, logs, and rqt",
+      "QoS profiles and DDS discovery across networks",
+      "Executors, callback groups, concurrency, and deadlocks",
+      "Lifecycle nodes, composition, namespaces, launch, and introspection",
       "Multi-node watchdog demo and architecture note",
     ],
     resource: rosTutorials,
   },
   {
     phaseId: "ros",
-    title: "Robot models and transforms",
-    focus: "Make every pose explicit and inspectable.",
-    lab: "Model a mobile manipulator in URDF/Xacro and verify its complete transform tree in RViz.",
+    title: "Robot models, transforms, and ros2_control",
+    focus: "Make every pose and hardware command interface explicit and inspectable.",
+    lab: "Model a mobile manipulator in URDF/Xacro/SRDF, wire it to ros2_control, and verify frames, controllers, state, and lifecycle in RViz.",
     topics: [
       "URDF links, joints, inertial, visual, and collision models",
-      "Xacro parameters and reusable robot descriptions",
+      "Xacro, SRDF, and reusable robot descriptions",
       "Static and dynamic transforms with tf2",
       "Timestamped data and transform lookup failures",
-      "RViz displays, markers, and debugging overlays",
-      "Joint states and robot_state_publisher",
+      "ros2_control architecture, hardware interfaces, and lifecycle",
+      "Controller manager, trajectory/diff-drive controllers, and joint states",
       "Transform audit: detect and repair three planted faults",
     ],
-    resource: rosTutorials,
+    resource: ros2Control,
   },
   {
     phaseId: "ros",
-    title: "Simulation and sensor plumbing",
+    title: "Gazebo Harmonic and sensor plumbing",
     focus: "Build repeatable worlds before touching costly hardware.",
-    lab: "Simulate a differential-drive robot with lidar, RGB-D camera, IMU, noise, and rosbag replay.",
+    lab: "Simulate a ros2_control differential-drive robot in Gazebo Harmonic with lidar, RGB-D camera, IMU, noise, bridges, and MCAP replay.",
     topics: [
-      "Simulation loop, physics timestep, and real-time factor",
-      "Differential-drive kinematics and wheel odometry",
+      "Gazebo Harmonic physics, simulation time, and real-time factor",
+      "ros_gz bridge, spawning, and gz_ros2_control",
       "Lidar scans, camera topics, IMU, and encoders",
       "Sensor noise, update rate, and timestamp alignment",
-      "rosbag2 recording, playback, and deterministic replay",
+      "rosbag2/MCAP recording, playback, and deterministic replay",
       "Health checks and degraded-sensor behavior",
       "Reproducible simulation scenario and fault-injection demo",
     ],
-    resource: rosTutorials,
+    resource: gazebo,
   },
   {
     phaseId: "ros",
-    title: "Navigation or manipulation stack",
-    focus: "Use a production stack, then learn where it breaks.",
-    lab: "Choose Nav2 or MoveIt 2 and complete one goal with cancellation, timeout, obstruction, and recovery.",
+    title: "Mandatory Nav2 and SLAM",
+    focus: "Build the complete map→localize→plan→control→recover loop.",
+    lab: "Map a Gazebo world, localize with AMCL, navigate with Nav2, and survive cancellation, obstruction, stale localization, and recovery.",
     topics: [
-      "Choose a track: mobile navigation or arm manipulation",
-      "Maps and costmaps—or planning scenes and collision objects",
-      "Goals, planners, controllers, and execution pipelines",
-      "Behavior trees—or grasp and motion planning stages",
-      "Timeout, cancellation, obstruction, and replanning",
-      "Metrics: success, path length, time, and recovery count",
-      "Phase demo: one resilient simulated robot task",
+      "map→odom→base frames, occupancy grids, SLAM, and AMCL",
+      "Layered costmaps, robot footprint, inflation, and keepout zones",
+      "Nav2 planners, controllers, smoothers, and goal execution",
+      "Nav2 behavior trees, recovery, and lifecycle management",
+      "Cancellation, obstruction, collision monitoring, and replanning",
+      "Navigation metrics: success, path, time, localization error, and recovery",
+      "Mandatory resilient Nav2/SLAM phase demo",
     ],
-    resource: rosTutorials,
+    resource: nav2,
     checkpoint: "Gate 2 · Ship a ROS 2 simulated task with bags, logs, metrics, and recovery—not only a success video.",
   },
   {
@@ -291,8 +321,8 @@ const weekPlans: WeekPlan[] = [
     topics: [
       "Depth cameras, stereo, structured light, and failure modes",
       "Point clouds, voxel filters, and coordinate transforms",
-      "Plane segmentation and tabletop extraction",
-      "3D bounding boxes and pose estimation",
+      "Plane segmentation, ICP registration, and tabletop extraction",
+      "3D bounding boxes, 6D pose, and grasp approach frames",
       "Sensor extrinsic calibration",
       "Occlusion, reflective surfaces, and missing depth",
       "3D target pipeline with visual overlays and bad cases",
@@ -304,38 +334,35 @@ const weekPlans: WeekPlan[] = [
   },
   {
     phaseId: "autonomy",
-    title: "State estimation and localization",
-    focus: "Know what the robot believes and why.",
-    lab: "Fuse noisy odometry and IMU measurements, visualize uncertainty, and recover from a sensor dropout.",
+    title: "State estimation, SLAM, and localization",
+    focus: "Know what the robot believes, how its map changes, and why.",
+    lab: "Fuse odometry and IMU, build an occupancy map, close a loop, localize with AMCL, visualize uncertainty, and recover from sensor dropout.",
     topics: [
       "State, observation, process model, and uncertainty",
       "Probability distributions and covariance intuition",
       "Bayes filters and the predict/update cycle",
-      "Kalman and extended Kalman filter intuition",
-      "Odometry and IMU fusion",
-      "Localization drift, outliers, and sensor dropout",
-      "Estimator report: error, uncertainty, and recovery behavior",
+      "Kalman/EKF intuition and odometry-IMU fusion",
+      "Scan matching, occupancy mapping, and localization drift",
+      "Pose graphs, loop closure, AMCL, and map→odom correction",
+      "SLAM/localization report with uncertainty and dropout recovery",
     ],
-    resource: {
-      label: "Probabilistic Robotics course notes",
-      url: "https://www.cs.cmu.edu/~16833/",
-    },
+    resource: nav2,
   },
   {
     phaseId: "autonomy",
-    title: "Planning, control, and autonomy loop",
-    focus: "Close perception→state→plan→control→observe.",
-    lab: "Deliver a perception-guided navigation or pick-and-place task with a state machine and safe stop.",
+    title: "Mandatory MoveIt 2 manipulation",
+    focus: "Build the complete perceive→scene→plan→execute→contact loop.",
+    lab: "Use MoveIt 2 to plan around collision objects, servo toward a target, execute a Task Constructor pick-and-place, and stop safely on contact or invalid state.",
     topics: [
-      "Configuration-space obstacles and collision checking",
-      "Graph search: Dijkstra and A*",
-      "Sampling-based planning: RRT intuition",
-      "Trajectory generation and tracking",
-      "Finite-state machines and behavior trees",
-      "Safety envelopes, emergency stop, and bounded commands",
-      "Autonomy-loop acceptance test across varied scenes",
+      "Configuration-space obstacles and MoveIt collision checking",
+      "SRDF, planning groups, IK, and planning scenes",
+      "Sampling-based motion planning with RRT/OMPL intuition",
+      "Trajectory generation, time parameterization, and execution",
+      "MoveIt Servo and Task Constructor pick-and-place",
+      "Grasp/contact basics, force-torque sensing, and impedance/admittance",
+      "Mandatory MoveIt manipulation acceptance test",
     ],
-    resource: underactuated,
+    resource: moveIt,
     checkpoint: "Gate 3 · Demonstrate perception-driven autonomy over 20 trials and publish failure categories.",
   },
   {
@@ -380,7 +407,7 @@ const weekPlans: WeekPlan[] = [
     lab: "Train behavior-cloning and ACT-style policies on the same task and compare rollout behavior.",
     topics: [
       "Behavior cloning and supervised policy learning",
-      "Covariate shift and compounding errors",
+      "Covariate shift, DAgger, and human-in-the-loop corrections",
       "Temporal context and action chunking",
       "ACT architecture and sequence prediction",
       "Offline validation versus rollout success",
@@ -399,8 +426,8 @@ const weekPlans: WeekPlan[] = [
       "Diffusion-policy intuition",
       "Flow matching and continuous action generation",
       "Observation windows and action horizons",
-      "Fine-tuning an existing LeRobot policy",
-      "Runtime chunking, temporal ensembling, and latency",
+      "Compare and fine-tune current LeRobot policy families",
+      "Asynchronous inference, real-time chunking, latency, and backpressure",
       "Policy comparison with success and smoothness metrics",
     ],
     resource: lerobot,
@@ -416,7 +443,7 @@ const weekPlans: WeekPlan[] = [
       "PPO intuition and a small control task",
       "Reward hacking and unsafe learned behavior",
       "Domain randomization and system identification",
-      "Simulation fidelity, transfer gaps, and hybrid approaches",
+      "Isaac Lab parallel simulation, synthetic data, and sim-to-real gaps",
       "Robot-learning gate: select BC, RL, or classical control",
     ],
     resource: isaacLab,
@@ -440,19 +467,19 @@ const weekPlans: WeekPlan[] = [
   },
   {
     phaseId: "embodied",
-    title: "OpenVLA adaptation",
-    focus: "Use an open model rather than pretending to train one from scratch.",
-    lab: "Run an OpenVLA/LeRobot example or a reduced simulation analogue and design a LoRA adaptation experiment.",
+    title: "Current VLA ecosystem and adaptation",
+    focus: "Compare current policy families and adapt one without pretending to train a foundation model.",
+    lab: "Benchmark a supported LeRobot/OpenVLA policy, trace its processors and normalized actions, then design or run a LoRA adaptation with a frozen baseline.",
     topics: [
-      "OpenVLA architecture and tokenized actions",
-      "Open X-Embodiment data and dataset mixing",
-      "Checkpoint loading and inference pipeline",
-      "Parameter-efficient fine-tuning with LoRA",
-      "Robot-specific normalization and action decoding",
-      "Generalization tests and out-of-distribution prompts",
-      "Adaptation report with compute, data, and risk budget",
+      "Compare OpenVLA, SmolVLA, Pi0-family, and NVIDIA GR00T",
+      "Cross-embodiment data, language columns, and dataset mixing",
+      "Checkpoint loading, processors, and deployment pipeline",
+      "Parameter-efficient adaptation with LoRA and frozen baselines",
+      "Observation/action normalization and safe action decoding",
+      "Generalization tests across objects, scenes, prompts, and embodiments",
+      "Adaptation report with compute, data, latency, and risk budget",
     ],
-    resource: openVla,
+    resource: lerobot,
   },
   {
     phaseId: "embodied",
@@ -463,8 +490,8 @@ const weekPlans: WeekPlan[] = [
       "Task decomposition and hierarchical planning",
       "Robot skills as typed tools with preconditions",
       "World state, episodic memory, and retrieval",
-      "Grounding planner outputs in perceived entities",
-      "Plan execution, monitoring, and replanning",
+      "Ground planner outputs in perceived entities and re-observe before action",
+      "Execute, monitor, re-observe, and replan long-horizon tasks",
       "Timeouts, idempotency, rollback, and human handoff",
       "Long-horizon task demo with complete execution trace",
     ],
@@ -478,13 +505,13 @@ const weekPlans: WeekPlan[] = [
     topics: [
       "Separate semantic planning from safety-critical control",
       "Action validation, workspace, force, and velocity limits",
-      "Prompt injection and untrusted environmental text",
-      "Scenario design and acceptance criteria",
+      "Threat modeling, SROS2, prompt injection, and untrusted environmental text",
+      "Hazard analysis, safety cases, scenario design, and acceptance criteria",
       "Success, partial success, intervention, and safety metrics",
       "Adversarial scenes and recovery testing",
       "Embodied-agent evaluation report over 30 scenarios",
     ],
-    resource: geminiRobotics,
+    resource: rosSecurity,
     checkpoint: "Gate 5 · Show a planner→skill→controller system with guardrails, recovery, and 30-scenario evidence.",
   },
   {
@@ -494,14 +521,14 @@ const weekPlans: WeekPlan[] = [
     lab: "Bring up a LeRobot-supported arm or mobile robot with calibration, limits, teleoperation, and emergency stop.",
     topics: [
       "Choose hardware from task, support, and safety constraints",
-      "Motors, encoders, buses, power, and physical limits",
-      "Firmware, device discovery, and deterministic startup",
-      "Joint calibration and coordinate-frame verification",
-      "Teleoperation and low-speed first motion",
-      "Emergency stop, watchdog, and safe shutdown",
+      "Actuator sizing, motors, encoders, power, and physical limits",
+      "CAN, EtherCAT, UART, I²C, SPI, Ethernet, and clock synchronization",
+      "Implement a ros2_control hardware plugin and lifecycle bring-up",
+      "Calibrate joints, verify frames, and perform low-speed teleoperation",
+      "Emergency stop, STO awareness, watchdog, and safe shutdown",
       "Hardware acceptance checklist and repeatable bring-up video",
     ],
-    resource: lerobot,
+    resource: ros2Control,
   },
   {
     phaseId: "ship",
@@ -522,29 +549,29 @@ const weekPlans: WeekPlan[] = [
   {
     phaseId: "ship",
     title: "Train and deploy the capstone policy",
-    focus: "Close the complete data→training→robot loop.",
-    lab: "Fine-tune one policy, deploy it behind a safe ROS 2 action, and evaluate it on held-out scenes.",
+    focus: "Close the data→training→optimized edge deployment→robot loop.",
+    lab: "Fine-tune one policy, export and profile it on Jetson-class hardware or an equivalent constrained target, deploy behind a safe ROS 2 action, and evaluate held-out scenes.",
     topics: [
       "Select a baseline and write the experiment hypothesis",
       "Train the first policy and inspect learning curves",
-      "Integrate inference with the robot process",
-      "Bound commands, latency, and watchdog behavior",
+      "Export to ONNX/TensorRT, quantize, and verify numerical drift",
+      "Edge deployment on Jetson-class hardware: latency, thermals, and fallback",
       "Run held-out evaluation without tuning on failures",
       "Improve data or policy based on failure categories",
-      "Freeze model v1 and publish the evaluation table",
+      "Freeze deployable model v1 with evaluation and latency report",
     ],
-    resource: lerobot,
+    resource: tensorRt,
   },
   {
     phaseId: "ship",
-    title: "Harden the embodied capstone",
-    focus: "Turn a demo into an engineering case study.",
-    lab: "Add language goals, skill orchestration, recovery, observability, and a 50-trial acceptance suite.",
+    title: "Production robotics operations",
+    focus: "Turn a demo into a deployable, diagnosable, recoverable robot service.",
+    lab: "Build a SIL→HIL→hardware CI ladder with containers, diagnostics, fleet telemetry, rollback, failure replay, and a frozen 50-trial acceptance suite.",
     topics: [
-      "Connect natural-language goals to typed robot skills",
-      "Add perception grounding and world-state inspection",
-      "Implement retry, replan, abort, and human handoff",
-      "Add traces, videos, metrics, and replay tooling",
+      "Build a SIL→HIL→hardware CI acceptance ladder",
+      "Docker, provisioning, versioned configuration, and reproducible deployment",
+      "Diagnostics, tracing, core dumps, and incident replay",
+      "Fleet telemetry, mission APIs, secure OTA, and rollback",
       "Test unseen object positions, lighting, and distractors",
       "Run the frozen 50-trial acceptance suite",
       "Publish uncut demos plus honest failure analysis",
@@ -560,11 +587,9 @@ const weekPlans: WeekPlan[] = [
     topics: [
       "Portfolio homepage and three evidence-backed project stories",
       "Capstone architecture, tradeoffs, and incident case study",
-      "Résumé rewrite for robotics platform and application roles",
-      "Interview drills: C++, ROS 2, systems, controls, and ML",
-      "Final readiness audit and next 30-day application sprint",
-      "Target-company matrix and warm outreach",
-      "Program retrospective and next-quarter specialization",
+      "Résumé, target-company matrix, and role-matched evidence",
+      "Interview drills, warm outreach, and open-source contribution",
+      "Final readiness audit, program retrospective, specialization, and 30-day sprint",
     ],
     resource: {
       label: "Current Figure AI careers",
@@ -575,19 +600,19 @@ const weekPlans: WeekPlan[] = [
 
 const activityModes = [
   (topic: string, lab: string, resource: Resource) =>
-    `Prerequisite: open the last working ${lab} baseline. Use ${resource.label} to isolate “${topic}”; write five operating rules, then implement one minimal executable example that proves the core behavior.`,
+    `Prerequisite: open the last working project baseline for this weekly lab. Use ${resource.label} to isolate “${topic}”; write five operating rules, then implement one minimal executable example that proves the core behavior. Today’s lab target: ${lab}`,
   (topic: string, lab: string) =>
-    `Implement “${topic}” as a small, replaceable part of ${lab}. Define its inputs, outputs, units, and failure result; run one nominal and one boundary case.`,
+    `Implement “${topic}” as a small, replaceable part of the current weekly lab. Define its inputs, outputs, units, and failure result; run one nominal and one boundary case. Lab target: ${lab}`,
   (topic: string, lab: string) =>
-    `Instrument “${topic}” inside ${lab}. Add assertions and one deliberately failing input, then record expected state, observed state, timing, and the exact causal fix.`,
+    `Instrument “${topic}” inside the current weekly lab. Add assertions and one deliberately failing input, then record expected state, observed state, timing, and the exact causal fix. Lab target: ${lab}`,
   (topic: string, lab: string) =>
-    `Integrate “${topic}” into the working ${lab} path. Preserve the previous baseline, expose its state in logs or visualization, and verify both normal execution and safe cancellation.`,
+    `Integrate “${topic}” into the working weekly-lab path. Preserve the previous baseline, expose its state in logs or visualization, and verify both normal execution and safe cancellation. Lab target: ${lab}`,
   (topic: string, lab: string) =>
-    `Apply “${topic}” to a realistic ${lab} scenario. Compare the baseline with today’s approach using one explicit measure such as success rate, pose error, latency, or recovery time.`,
+    `Apply “${topic}” to a realistic version of the weekly lab. Compare the baseline with today’s approach using one explicit measure such as success rate, pose error, latency, or recovery time. Lab target: ${lab}`,
   (topic: string, lab: string) =>
-    `Run ${lab} with “${topic}” enabled through a repeatable trial set. Capture the command or launch path, decisive trace or plot, a short uncut demo, and the largest remaining failure.`,
+    `Run the weekly lab with “${topic}” enabled through a repeatable trial set. Capture the command or launch path, decisive trace or plot, a short uncut demo, and the largest remaining failure. Lab target: ${lab}`,
   (topic: string, lab: string) =>
-    `Recreate “${topic}” from memory, rerun the complete ${lab} workflow, repair the highest-impact failure from this week, and write the next concrete experiment.`,
+    `Recreate “${topic}” from memory, rerun the complete weekly-lab workflow, repair the highest-impact failure from this week, and write the next concrete experiment. Lab target: ${lab}`,
 ];
 
 const evidenceModes = [
@@ -625,8 +650,7 @@ export const curriculumDays: CurriculumDay[] = weekPlans
       resource: week.resource,
       checkpoint: dayIndex === 6 ? week.checkpoint : undefined,
     })),
-  )
-  .slice(0, 180);
+  );
 
 export const projects = [
   {
@@ -689,10 +713,16 @@ export const readinessSkills = [
 export const resources: Resource[] = [
   modernRobotics,
   rosTutorials,
+  ros2Control,
+  gazebo,
+  nav2,
+  moveIt,
+  rosSecurity,
   underactuated,
   lerobot,
   isaacLab,
   openVla,
   geminiRobotics,
+  tensorRt,
   { label: "Physical Intelligence π₀", url: "https://www.physicalintelligence.company/blog/pi0" },
 ];
