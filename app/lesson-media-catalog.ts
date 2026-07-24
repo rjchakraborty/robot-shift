@@ -58,7 +58,7 @@ const weekMedia: Readonly<Record<number, WeekMedia>> = {
         "Degrees of freedom of a rigid body",
         "z29hYlagOYM",
         "https://modernrobotics.northwestern.edu/nu-gm-book-resource/2-1-degrees-of-freedom-of-a-rigid-body/",
-        "Connect independent motion to the coordinates used in the first frame exercises.",
+        "See links, joints, configuration, and independent motion before any advanced spatial maths.",
       ),
       northwesternVideo(
         "Configuration-space topology",
@@ -81,16 +81,16 @@ const weekMedia: Readonly<Record<number, WeekMedia>> = {
     ],
     explore: [
       officialLink(
-        "Modern Robotics software library",
-        "Northwestern Robotics and Biosystems Lab",
-        "https://github.com/NxRLab/ModernRobotics",
-        "Compare the lesson equations with small reference implementations.",
+        "Introduction to robotic arms",
+        "VEX Education",
+        "https://education.vex.com/stemlabs/cte/introduction-to-the-6-axis-arm/introduction-to-robotic-arms/lesson-1-introduction-to-factory-automation",
+        "Start with a visual tour of connected arm segments, joints, axes, tools, and real factory tasks.",
       ),
       officialLink(
-        "Linear Algebra",
-        "MIT OpenCourseWare",
-        "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/",
-        "Use selected vector, matrix, projection, and least-squares lessons when the math needs a slower foundation.",
+        "Essence of linear algebra",
+        "3Blue1Brown",
+        "https://www.3blue1brown.com/topics/linear-algebra",
+        "Use animated arrows and moving grids to build vector and matrix intuition before symbolic calculation.",
       ),
     ],
   },
@@ -515,7 +515,96 @@ const weekMedia: Readonly<Record<number, WeekMedia>> = {
   },
 };
 
+function requiredVideo(week: number, title: string): LessonVideo {
+  const video = weekMedia[week]?.videos?.find((item) => item.title === title);
+  if (!video) throw new Error(`Missing authored lesson video: week ${week}, ${title}`);
+  return video;
+}
+
+function requiredExplore(week: number, title: string): LessonExploreLink {
+  const link = weekMedia[week]?.explore?.find((item) => item.title === title);
+  if (!link) throw new Error(`Missing authored lesson link: week ${week}, ${title}`);
+  return link;
+}
+
+const foundationMediaByDay: Readonly<Record<number, ResolvedLessonMedia>> = {
+  1: {
+    explore: [requiredExplore(1, "Introduction to robotic arms")],
+  },
+  2: {
+    video: requiredVideo(1, "Degrees of freedom of a rigid body"),
+    explore: [requiredExplore(1, "Introduction to robotic arms")],
+  },
+  3: {
+    video: requiredVideo(1, "Configuration-space topology"),
+    explore: [],
+  },
+  4: {
+    explore: [
+      officialLink(
+        "Use the rectangular coordinate system",
+        "OpenStax",
+        "https://openstax.org/books/prealgebra-2e/pages/11-1-use-the-rectangular-coordinate-system",
+        "Practise origins, positive and negative coordinates, ordered pairs, and graph-paper checks before robot vectors.",
+      ),
+      officialLink(
+        "SI units",
+        "NIST",
+        "https://www.nist.gov/pml/owm/metric-si/si-units",
+        "Keep measured robot quantities and centimetre-to-metre conversions tied to official SI definitions.",
+      ),
+    ],
+  },
+  5: {
+    explore: [
+      officialLink(
+        "Triangles and the Pythagorean theorem",
+        "OpenStax",
+        "https://openstax.org/books/prealgebra-2e/pages/9-3-use-properties-of-angles-triangles-and-the-pythagorean-theorem",
+        "Learn squares, square roots, right triangles, and the distance rule before applying vector norms.",
+      ),
+      requiredExplore(1, "Essence of linear algebra"),
+    ],
+  },
+  6: {
+    explore: [],
+  },
+  7: {
+    explore: [requiredExplore(1, "Essence of linear algebra")],
+  },
+  8: {
+    video: requiredVideo(1, "Rotation matrices"),
+    explore: [requiredExplore(1, "Essence of linear algebra")],
+  },
+  9: {
+    video: requiredVideo(1, "Homogeneous transformation matrices"),
+    explore: [],
+  },
+  10: {
+    video: requiredVideo(1, "Rotation matrices"),
+    explore: [],
+  },
+  11: {
+    explore: [],
+  },
+  12: {
+    video: requiredVideo(1, "Homogeneous transformation matrices"),
+    explore: [],
+  },
+  13: {
+    video: requiredVideo(2, "Forward kinematics example"),
+    explore: [requiredExplore(2, "Robotics Toolbox for Python")],
+  },
+  14: {
+    video: requiredVideo(2, "The space Jacobian"),
+    explore: [requiredExplore(2, "Robotics Toolbox for Python")],
+  },
+};
+
 export function resolveLessonMedia(week: number, dayId: number): ResolvedLessonMedia {
+  if (dayId >= 1 && dayId <= 14) {
+    return foundationMediaByDay[dayId] ?? { explore: [] };
+  }
   const media = weekMedia[week];
   const videos = media?.videos ?? [];
   const dayInWeek = Math.max(0, dayId - 1) % 7;

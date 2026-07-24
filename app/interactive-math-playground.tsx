@@ -507,8 +507,8 @@ function InteractiveMathSession({ spec }: InteractiveMathPlaygroundProps) {
       </header>
 
       <p className="interactive-math__scope">
-        This is the interactive foundation for today&apos;s visual family. Use the
-        exact-topic connection below it for the lesson-specific extension.
+        Move one value at a time, predict the result, then compare your prediction
+        with the visual and calculated answer.
       </p>
 
       <div className="interactive-math__workspace">

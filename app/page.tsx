@@ -20,6 +20,17 @@ import {
   type MissionTaskPart,
 } from "./mission-progress";
 import { CareerView } from "./career-view";
+import {
+  archiveLegacyPayload,
+  CURRICULUM_REVISION,
+  LEGACY_TRACKER_ARCHIVE_KEY,
+  LEGACY_TRACKER_STORAGE_KEY,
+  migrateLegacyTrackerState,
+  parseTrackerBackup,
+  parseTrackerStateV2,
+  TRACKER_STORAGE_KEY,
+  type TrackerStateV2,
+} from "./storage-migrations";
 import { ThemeControl } from "./theme-control";
 
 type View = "today" | "roadmap" | "roles" | "builds" | "notebook" | "progress";
@@ -27,23 +38,11 @@ type TaskPart = MissionTaskPart;
 type FocusTarget = "top" | "visual" | "practice" | "evidence";
 type PhaseStat = Phase & { days: number; complete: number; percent: number };
 
-type TrackerState = {
-  schemaVersion: 1;
-  completed: Record<string, boolean>;
-  bookmarks: number[];
-  notes: Record<string, string>;
-  evidence: Record<string, string>;
-  projectChecks: Record<string, boolean[]>;
-  startedOn: string;
-  weeklyHours: number;
-  selectedDay: number;
-};
+type TrackerState = TrackerStateV2;
 
 const taskParts: readonly TaskPart[] = MISSION_TASK_PARTS;
-const STORAGE_KEY = "robot-shift-tracker-v1";
 const MAX_TEXT_LENGTH = 5_000;
 const MAX_BACKUP_BYTES = 5_000_000;
-const curriculumDayIds = new Set(curriculumDays.map((day) => day.id));
 const projectChecklistSizes = new Map(
   projects.map((project) => [project.id, project.proof.split(", ").length]),
 );
@@ -55,7 +54,8 @@ function localDate() {
 }
 
 const defaultState: TrackerState = {
-  schemaVersion: 1,
+  schemaVersion: 2,
+  curriculumRevision: CURRICULUM_REVISION,
   completed: {},
   bookmarks: [],
   notes: {},
@@ -93,106 +93,11 @@ function scheduledDate(startedOn: string, dayId: number, weeklyHours: number) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(date);
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
 function isValidDateString(value: unknown): value is string {
   if (value === "") return true;
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T12:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
-}
-
-function readCompleted(value: unknown): Record<string, boolean> | null {
-  if (!isRecord(value)) return null;
-  const completed: Record<string, boolean> = {};
-  for (const [key, done] of Object.entries(value)) {
-    const [dayText, part, extra] = key.split(":");
-    const dayId = Number(dayText);
-    if (
-      extra !== undefined ||
-      !curriculumDayIds.has(dayId) ||
-      !taskParts.includes(part as TaskPart) ||
-      typeof done !== "boolean"
-    ) return null;
-    completed[key] = done;
-  }
-  return completed;
-}
-
-function readTextEntries(value: unknown): Record<string, string> | null {
-  if (!isRecord(value)) return null;
-  const entries: Record<string, string> = {};
-  for (const [key, text] of Object.entries(value)) {
-    const dayId = Number(key);
-    if (
-      String(dayId) !== key ||
-      !curriculumDayIds.has(dayId) ||
-      typeof text !== "string" ||
-      text.length > MAX_TEXT_LENGTH
-    ) return null;
-    entries[key] = text;
-  }
-  return entries;
-}
-
-function readProjectChecks(value: unknown): Record<string, boolean[]> | null {
-  if (!isRecord(value)) return null;
-  const checks: Record<string, boolean[]> = {};
-  for (const [projectId, projectChecks] of Object.entries(value)) {
-    const expectedSize = projectChecklistSizes.get(projectId);
-    if (
-      expectedSize === undefined ||
-      !Array.isArray(projectChecks) ||
-      projectChecks.length !== expectedSize ||
-      projectChecks.some((checked) => typeof checked !== "boolean")
-    ) return null;
-    checks[projectId] = [...projectChecks];
-  }
-  return checks;
-}
-
-function parseTrackerState(raw: string): TrackerState | null {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed) || parsed.schemaVersion !== 1) return null;
-
-    const completed = readCompleted(parsed.completed);
-    const notes = readTextEntries(parsed.notes);
-    const evidence = readTextEntries(parsed.evidence);
-    const projectChecks = readProjectChecks(parsed.projectChecks);
-    const bookmarks = parsed.bookmarks;
-    if (
-      completed === null ||
-      notes === null ||
-      evidence === null ||
-      projectChecks === null ||
-      !Array.isArray(bookmarks) ||
-      bookmarks.some((dayId) => !Number.isInteger(dayId) || !curriculumDayIds.has(dayId)) ||
-      new Set(bookmarks).size !== bookmarks.length ||
-      !isValidDateString(parsed.startedOn) ||
-      !Number.isInteger(parsed.weeklyHours) ||
-      (parsed.weeklyHours as number) < 4 ||
-      (parsed.weeklyHours as number) > 30 ||
-      !Number.isInteger(parsed.selectedDay) ||
-      !curriculumDayIds.has(parsed.selectedDay as number)
-    ) return null;
-
-    return {
-      schemaVersion: 1,
-      completed,
-      bookmarks: [...bookmarks] as number[],
-      notes,
-      evidence,
-      projectChecks,
-      startedOn: parsed.startedOn,
-      weeklyHours: parsed.weeklyHours as number,
-      selectedDay: parsed.selectedDay as number,
-    };
-  } catch {
-    return null;
-  }
 }
 
 const navigation: { id: View; label: string; mark: string }[] = [
@@ -215,6 +120,7 @@ export default function Home() {
   const [showReset, setShowReset] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [saveStatus, setSaveStatus] = useState("Ready");
+  const [storageNotice, setStorageNotice] = useState<string | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ dayId: number; target: FocusTarget; nonce: number } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
@@ -227,11 +133,36 @@ export default function Home() {
     const timer = window.setTimeout(() => {
       let loaded: TrackerState | null = null;
       try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
-        loaded = raw ? parseTrackerState(raw) : null;
-        if (raw && !loaded) {
+        const currentRaw = window.localStorage.getItem(TRACKER_STORAGE_KEY);
+        loaded = currentRaw ? parseTrackerStateV2(currentRaw) : null;
+        if (currentRaw && !loaded) {
           skipNextSaveRef.current = true;
-          setStorageError("Stored progress was invalid and was not overwritten. Import a valid backup or reset.");
+          setStorageError("Stored version 2 progress was invalid and was not overwritten. Import a valid backup or reset.");
+        } else if (!currentRaw) {
+          const legacyRaw = window.localStorage.getItem(LEGACY_TRACKER_STORAGE_KEY);
+          if (legacyRaw) {
+            archiveLegacyPayload(
+              window.localStorage,
+              LEGACY_TRACKER_ARCHIVE_KEY,
+              legacyRaw,
+            );
+            const migration = migrateLegacyTrackerState(legacyRaw);
+            if (migration) {
+              loaded = migration.state;
+              const archived = [
+                migration.archivedFoundationDays.length > 0 ? "revised Days 1–14" : "",
+                migration.archivedFrameLab ? "the old FrameLab checklist" : "",
+              ].filter(Boolean).join(" and ");
+              setStorageNotice(
+                archived
+                  ? `Version 1 records for ${archived} were archived in this browser. Unchanged later-course work was migrated to version 2.`
+                  : "Version 1 progress was archived and migrated to version 2.",
+              );
+            } else {
+              skipNextSaveRef.current = true;
+              setStorageError("Stored version 1 progress was archived but could not be migrated. Import a valid backup or reset.");
+            }
+          }
         }
       } catch {
         skipNextSaveRef.current = true;
@@ -253,7 +184,7 @@ export default function Home() {
 
     let timer: number;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tracker));
+      window.localStorage.setItem(TRACKER_STORAGE_KEY, JSON.stringify(tracker));
       timer = window.setTimeout(() => {
         setSaveStatus("Saved on this device");
         setStorageError(null);
@@ -456,7 +387,19 @@ export default function Home() {
   };
 
   const exportProgress = () => {
-    const payload = JSON.stringify({ ...tracker, exportedAt: new Date().toISOString() }, null, 2);
+    let archivedVersion1: unknown;
+    try {
+      const legacyRaw = window.localStorage.getItem(LEGACY_TRACKER_ARCHIVE_KEY)
+        ?? window.localStorage.getItem(LEGACY_TRACKER_STORAGE_KEY);
+      archivedVersion1 = legacyRaw ? JSON.parse(legacyRaw) as unknown : undefined;
+    } catch {
+      archivedVersion1 = undefined;
+    }
+    const payload = JSON.stringify({
+      ...tracker,
+      exportedAt: new Date().toISOString(),
+      ...(archivedVersion1 === undefined ? {} : { archivedVersion1 }),
+    }, null, 2);
     const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -470,12 +413,34 @@ export default function Home() {
     if (!file) return;
     try {
       if (file.size > MAX_BACKUP_BYTES) throw new Error("too-large");
-      const parsed = parseTrackerState(await file.text());
+      const raw = await file.text();
+      const parsed = parseTrackerBackup(raw);
       if (!parsed) throw new Error("invalid");
-      setTracker({ ...parsed, startedOn: parsed.startedOn || localDate() });
-      setAnnouncement("Progress backup imported.");
+      if (parsed.migrated) {
+        try {
+          archiveLegacyPayload(
+            window.localStorage,
+            LEGACY_TRACKER_ARCHIVE_KEY,
+            raw,
+          );
+        } catch {
+          // The selected version 1 file remains the source archive if browser storage is full.
+        }
+        setStorageNotice(
+          "Imported version 1 backup was archived. Revised Days 1–14 and the old FrameLab checklist restart cleanly; unchanged later-course work was migrated.",
+        );
+      }
+      setTracker({
+        ...parsed.state,
+        startedOn: parsed.state.startedOn || localDate(),
+      });
+      setAnnouncement(
+        parsed.migrated
+          ? "Version 1 backup safely migrated to version 2."
+          : "Progress backup imported.",
+      );
     } catch {
-      setAnnouncement("Import rejected. Choose a valid Robot/Shift version 1 backup under 5 MB.");
+      setAnnouncement("Import rejected. Choose a valid Robot/Shift version 1 or 2 backup under 5 MB.");
     } finally {
       if (importRef.current) importRef.current.value = "";
     }
@@ -579,7 +544,9 @@ export default function Home() {
               <label className="button-label">Import backup<input ref={importRef} className="sr-only" type="file" accept="application/json" onChange={(event) => importProgress(event.target.files?.[0])} /></label>
               <button ref={resetTriggerRef} className="danger-link" onClick={() => setShowReset(true)}>Reset</button>
             </div>
-            <small className={storageError ? "storage-error" : ""} role="status">{storageError ?? saveStatus}</small>
+            <small className={storageError ? "storage-error" : ""} role="status">
+              {storageError ?? storageNotice ?? saveStatus}
+            </small>
           </section>
         )}
 
@@ -594,7 +561,7 @@ export default function Home() {
               toggleBookmark={toggleBookmark}
               updateText={updateText}
               openDay={openDay}
-              persistenceMessage={storageError ?? "Auto-saved locally"}
+              persistenceMessage={storageError ?? storageNotice ?? "Auto-saved locally"}
               persistenceError={Boolean(storageError)}
               openProgress={() => changeView("progress")}
             />

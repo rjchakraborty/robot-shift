@@ -178,33 +178,33 @@ const geminiRobotics: Resource = {
 const weekPlans: WeekPlan[] = [
   {
     phaseId: "foundations",
-    title: "Frames before frameworks",
-    focus: "Linear algebra and spatial thinking for working engineers.",
-    lab: "Build a browser-based 2D pose visualizer that composes coordinate transforms and exposes bad frame assumptions.",
+    title: "Meet the robot, then meet the maths",
+    focus: "Start with a physical robot and build every maths idea from counting, measuring, arrows, and grids.",
+    lab: "Build a paper two-link robot and a browser notebook that shows its parts, allowed motion, coordinates, vectors, frames, and matrices.",
     topics: [
-      "Vectors, dot products, norms, and physical units",
-      "Matrices as transformations—not spreadsheets",
-      "Coordinate frames and change of basis",
-      "2D rotations and homogeneous transforms",
-      "Compose transforms through a frame tree",
-      "Diagnose left-handed and right-handed frame bugs",
-      "Frame visualizer demo and knowledge check",
+      "Robot anatomy: sense, think, act, links, and actuators",
+      "Joints, allowed motion, and degrees of freedom",
+      "Configuration, C-space, workspace, limits, and topology",
+      "Number lines, coordinates, scalars, variables, and physical units",
+      "Vectors from arrows: components, add, subtract, norm, and dot product",
+      "Coordinate frames, axes, origins, and handedness",
+      "Matrices from grids: inputs, outputs, and simple actions",
     ],
     resource: modernRobotics,
   },
   {
     phaseId: "foundations",
-    title: "Rigid motion and kinematics",
-    focus: "SE(3), joints, forward kinematics, and reachable workspaces.",
-    lab: "Model a two-link arm and implement forward and numerical inverse kinematics with visible convergence traces.",
+    title: "Turn the maths into robot motion",
+    focus: "Use angles, transforms, and kinematics to predict where a robot part will move.",
+    lab: "Extend the browser notebook into a two-link arm visualizer with frame composition, forward kinematics, and a bounded numerical IK trace.",
     topics: [
-      "SO(3), rotation matrices, and orientation representations",
-      "Quaternions, Euler angles, and singularities",
-      "SE(3) homogeneous transforms",
-      "Joint types, degrees of freedom, and configuration space",
+      "2D rotation, translation, transforms, degrees, radians, sine, and cosine",
+      "Compose and invert transforms through a frame tree",
+      "SO(3): safe 3D rotation matrices",
+      "Euler angles, quaternions, and representation singularities",
+      "SE(3): one 3D pose matrix",
       "Forward kinematics for a serial arm",
-      "Jacobian intuition and numerical inverse kinematics",
-      "Two-link arm solver: demo, limits, and failure notes",
+      "Jacobian intuition and bounded numerical inverse kinematics",
     ],
     resource: modernRobotics,
   },
@@ -649,6 +649,23 @@ const evidenceModes = [
 
 const minutesByDay = [90, 105, 90, 120, 105, 150, 60];
 
+const zeroPrerequisiteFoundationTasks = [
+  "Draw a sense→think→act loop for a toy rover. Label its sensor, controller, actuator, links, power source, information flow, and physical action; then add the same diagram to the browser notebook.",
+  "Find one hinge, one drawer slide, and one fixed connection. Name their links, allowed and forbidden motion, and DOF; then build a safe two-link cardboard arm.",
+  "Record six cardboard-arm shapes as ordered joint-angle lists. Trace the tip workspace, mark joint limits, find two shapes with one tip location, and sketch how a full-turn angle wraps around.",
+  "Build a paper number line and x-y grid. Practise negative coordinates, variables, equality, centimetre-to-metre conversion, and predict five measured moves before checking them.",
+  "Draw and calculate vector components, addition, subtraction, norm, and dot product on graph paper. Check each result by counting squares or measuring a scaled drawing.",
+  "Attach one coordinate frame to a book and one to the table. Describe the same coin in both frames, verify right-handed axes, and document one deliberately reflected frame.",
+  "Treat four 2×2 matrices as action cards: identity, scale, reflection, and quarter-turn. Calculate each output one row at a time, draw it, and explain the input/output meaning.",
+  "Convert degrees to radians, use sine and cosine to split a paper link into x-y parts, then apply one 2D rotation and translation in the browser notebook.",
+  "Create a room→car→camera frame tree. Compose the forward path, calculate its inverse, and verify that a forward-then-back round trip returns to the start.",
+  "Make a rigid cardboard x-y-z triad. Test length, right-angle, transpose-inverse, determinant, and handedness rules for one proper SO(3) rotation and one reflection.",
+  "Compare Euler angles and a unit quaternion for one phone or paper-frame orientation. Demonstrate the Euler gimbal-lock description without moving powered hardware.",
+  "Build one SE(3) matrix from a 3D rotation and translation. Transform three box-attached points and verify their pairwise distances remain unchanged.",
+  "Measure a two-link cardboard arm. Predict three tool positions with forward kinematics, compare them with measurements, and record position error with units and frame.",
+  "Estimate a finite-difference Jacobian in the browser arm, run bounded numerical IK on one reachable and one unreachable target, and report residual, limits, iterations, and failure status.",
+] as const;
+
 export const curriculumDays: CurriculumDay[] = weekPlans
   .flatMap((week, weekIndex) =>
     week.topics.map((topic, dayIndex) => ({
@@ -658,7 +675,9 @@ export const curriculumDays: CurriculumDay[] = weekPlans
       phaseId: week.phaseId,
       title: topic,
       focus: `${week.title} · ${week.focus}`,
-      task: activityModes[dayIndex](topic, week.lab, week.resource),
+      task: weekIndex < 2
+        ? zeroPrerequisiteFoundationTasks[weekIndex * 7 + dayIndex]
+        : activityModes[dayIndex](topic, week.lab, week.resource),
       evidence: evidenceModes[dayIndex](topic),
       lab: week.lab,
       minutes: minutesByDay[dayIndex],
@@ -672,8 +691,8 @@ export const projects = [
     id: "frame-lab",
     phaseId: "foundations",
     title: "FrameLab",
-    subtitle: "Transforms + control mini-system",
-    proof: "Interactive frame visualizer, IK solver, PID plot, tested C++ loop",
+    subtitle: "Paper robot → visual maths → motion",
+    proof: "Robot anatomy notebook, coordinate and matrix playground, frame visualizer, IK solver, PID plot, tested C++ loop",
   },
   {
     id: "ros-rescue",

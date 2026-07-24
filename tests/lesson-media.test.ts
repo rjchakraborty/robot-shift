@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { curriculumDays } from "../app/curriculum";
 import { resolveLessonMedia } from "../app/lesson-media-catalog";
 
 test("official optional media covers all 26 weeks within the quiet UI limit", () => {
@@ -35,4 +36,36 @@ test("media resolver is stable and never generates an autoplay URL", () => {
 
   assert.deepEqual(first, second);
   assert.doesNotMatch(JSON.stringify(first), /autoplay/i);
+});
+
+test("the first 14 topic titles resolve only to explicitly reviewed videos", () => {
+  const expectedVideoByTitle = new Map<string, string | undefined>([
+    ["Robot anatomy: sense, think, act, links, and actuators", undefined],
+    ["Joints, allowed motion, and degrees of freedom", "Degrees of freedom of a rigid body"],
+    ["Configuration, C-space, workspace, limits, and topology", "Configuration-space topology"],
+    ["Number lines, coordinates, scalars, variables, and physical units", undefined],
+    ["Vectors from arrows: components, add, subtract, norm, and dot product", undefined],
+    ["Coordinate frames, axes, origins, and handedness", undefined],
+    ["Matrices from grids: inputs, outputs, and simple actions", undefined],
+    ["2D rotation, translation, transforms, degrees, radians, sine, and cosine", "Rotation matrices"],
+    ["Compose and invert transforms through a frame tree", "Homogeneous transformation matrices"],
+    ["SO(3): safe 3D rotation matrices", "Rotation matrices"],
+    ["Euler angles, quaternions, and representation singularities", undefined],
+    ["SE(3): one 3D pose matrix", "Homogeneous transformation matrices"],
+    ["Forward kinematics for a serial arm", "Forward kinematics example"],
+    ["Jacobian intuition and bounded numerical inverse kinematics", "The space Jacobian"],
+  ]);
+
+  const foundationDays = curriculumDays.slice(0, 14);
+  assert.equal(foundationDays.length, expectedVideoByTitle.size);
+
+  for (const day of foundationDays) {
+    assert.ok(expectedVideoByTitle.has(day.title), `unreviewed foundation title: ${day.title}`);
+    const media = resolveLessonMedia(day.week, day.id);
+    assert.equal(
+      media.video?.title,
+      expectedVideoByTitle.get(day.title),
+      `day ${day.id} media does not match “${day.title}”`,
+    );
+  }
 });

@@ -75,25 +75,66 @@ test("every concept, math, and failure visual renders accessible deterministic S
   }
 });
 
-test("the two anchor diagrams agree with their verified numeric fixtures", () => {
+test("the beginner anchor diagrams agree with their verified numeric fixtures", () => {
   const day1 = allDayVisuals[0];
-  assert.equal(day1.fixture.parameters.dot, 23);
-  assert.equal(day1.fixture.parameters.normA, 5);
-  assert.ok(Math.abs(day1.fixture.parameters.normB - Math.sqrt(29)) < 1e-12);
-  assert.ok(Math.abs(day1.fixture.parameters.cosine - 23 / (5 * Math.sqrt(29))) < 1e-12);
+  assert.equal(day1.kind, "system");
+  assert.equal(day1.fixture.parameters.totalParts, 5);
   const day1Math = renderToStaticMarkup(createElement(LessonVisual, { spec: day1, mode: "math" }));
-  assert.match(day1Math, /A=\(3,4\)/);
-  assert.match(day1Math, /B=\(5,2\)/);
-  assert.match(day1Math, /dot=23/);
-  assert.match(day1Math, /31\.4°/);
+  assert.match(day1Math, /SENSE/);
+  assert.match(day1Math, /THINK/);
+  assert.match(day1Math, /ACT/);
+  assert.match(day1Math, /2 sensing \+ 1 thinking \+ 2 acting = 5 parts/);
 
   const day2 = allDayVisuals[1];
-  assert.equal(day2.fixture.parameters.outputX, 0);
-  assert.equal(day2.fixture.parameters.outputY, 2);
+  assert.equal(day2.fixture.parameters.degreesOfFreedom, 3);
   const day2Concept = renderToStaticMarkup(createElement(LessonVisual, { spec: day2, mode: "concept" }));
-  assert.match(day2Concept, /v=\(2,0\)/);
-  assert.match(day2Concept, /R₉₀v=\(0,2\)/);
-  assert.match(day2Concept, /x2="314" y2="320"/, "the input vector must be drawn horizontally at y=0");
+  assert.match(day2Concept, /ROTATE/);
+  assert.match(day2Concept, /SLIDE/);
+  assert.match(day2Concept, /FIXED/);
+  assert.match(day2Concept, /3 DOF/);
+
+  const day3 = allDayVisuals[2];
+  assert.equal(day3.fixture.parameters.configurationCoordinates, 3);
+  const day3Math = renderToStaticMarkup(createElement(LessonVisual, { spec: day3, mode: "math" }));
+  assert.match(day3Math, /q = \[30°, −20°, 8 cm\]/);
+  assert.doesNotMatch(day3.math.latex, /mathsf\{T\}|transpose/i);
+
+  const day5 = allDayVisuals[4];
+  assert.equal(day5.fixture.parameters.dot, 23);
+  assert.equal(day5.fixture.parameters.normA, 5);
+  assert.ok(Math.abs(day5.fixture.parameters.normB - Math.sqrt(29)) < 1e-12);
+  const day5Math = renderToStaticMarkup(createElement(LessonVisual, { spec: day5, mode: "math" }));
+  assert.match(day5Math, /A=\(3,4\)/);
+  assert.match(day5Math, /B=\(5,2\)/);
+  assert.match(day5Math, /A·B=23/);
+  assert.doesNotMatch(day5Math, /31\.4°|arccos/);
+
+  const day7 = allDayVisuals[6];
+  assert.equal(day7.fixture.parameters.outputX, 0);
+  assert.equal(day7.fixture.parameters.outputY, 2);
+  const day7Concept = renderToStaticMarkup(createElement(LessonVisual, { spec: day7, mode: "concept" }));
+  assert.match(day7Concept, /v=\(2,0\)/);
+  assert.match(day7Concept, /R₉₀v=\(0,2\)/);
+  assert.match(day7Concept, /x2="314" y2="320"/, "the input vector must be drawn horizontally at y=0");
+
+  const expectedFoundationLabels = new Map([
+    [4, ["(150, −40) cm", "(1.5, −0.4) m", "Clear address"]],
+    [6, ["local x=1 m", "world x=3 m", "Frames labelled"]],
+    [8, ["local (1,0)", "world (2,2)", "Order declared"]],
+    [9, ["tool point 0.5 m", "world point 4 m", "Round trip works"]],
+    [10, ["before (1,0)", "after (0,1)", "Length preserved"]],
+    [11, ["yaw 0°", "yaw 90°", "Same orientation"]],
+    [12, ["local (1,0)", "world (2,2)", "Rigid pose"]],
+  ]);
+  for (const [dayId, labels] of expectedFoundationLabels) {
+    const html = renderToStaticMarkup(
+      createElement(LessonVisual, { spec: allDayVisuals[dayId - 1], mode: "concept" }),
+    );
+    for (const label of labels) {
+      assert.ok(html.includes(label), `day ${dayId} visual must contain ${label}`);
+    }
+    assert.doesNotMatch(html, /mobile manipulator|This visual applies that grammar/);
+  }
 });
 
 test("navigation, evidence, and emergency-stop diagrams encode physically meaningful states", () => {

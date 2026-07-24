@@ -17,6 +17,19 @@ import { LessonVisual } from "./lesson-visual";
 import { allDayVisuals } from "./lesson-visuals";
 import { lessonForDay } from "./lessons";
 import { getMathRescue } from "./math-rescue";
+import {
+  archiveLegacyPayload,
+  CURRICULUM_REVISION,
+  LEGACY_TUTOR_ARCHIVE_KEY,
+  LEGACY_TUTOR_STORAGE_KEY,
+  migrateLegacyTutorStore,
+  parseTutorStoreV2,
+  TUTOR_STORAGE_KEY,
+  type StoredTutorMessage,
+  type StoredTutorMode,
+  type StoredTutorThread,
+  type TutorStoreV2,
+} from "./storage-migrations";
 
 const RichText = lazy(() => import("./rich-text").then((module) => ({
   default: module.RichText,
@@ -36,28 +49,11 @@ export type LessonSection =
   | "quiz"
   | "story";
 
-type TutorMode = "ask" | "pareto" | "simple" | "math" | "solve" | "quiz" | "story";
+type TutorMode = StoredTutorMode;
 type TutorRole = "user" | "assistant";
-
-type TutorMessage = {
-  id: string;
-  role: TutorRole;
-  content: string;
-  mode?: TutorMode;
-  model?: string;
-};
-
-type TutorThread = {
-  updatedAt: number;
-  messages: TutorMessage[];
-};
-
-type TutorStore = {
-  version: 1;
-  threads: Record<string, TutorThread>;
-};
-
-const TUTOR_STORAGE_KEY = "robot-shift-tutor-v1";
+type TutorMessage = StoredTutorMessage;
+type TutorThread = StoredTutorThread;
+type TutorStore = TutorStoreV2;
 const MAX_INPUT_LENGTH = 2_000;
 const MAX_MESSAGE_LENGTH = 7_000;
 const MAX_HISTORY_ITEM_LENGTH = 2_500;
@@ -134,68 +130,6 @@ const modeLabels: Record<TutorMode, string> = {
   story: "Story & metaphor",
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function parseTutorStore(raw: string): TutorStore | null {
-  try {
-    const candidate: unknown = JSON.parse(raw);
-    if (!isRecord(candidate) || candidate.version !== 1 || !isRecord(candidate.threads)) return null;
-
-    const threads: Record<string, TutorThread> = {};
-    const entries = Object.entries(candidate.threads)
-      .filter(([, value]) => isRecord(value) && typeof value.updatedAt === "number")
-      .sort((a, b) => (b[1] as { updatedAt: number }).updatedAt - (a[1] as { updatedAt: number }).updatedAt)
-      .slice(0, MAX_STORED_DAYS);
-
-    for (const [dayKey, value] of entries) {
-      if (!/^(?:[1-9]|[1-9]\d|1[0-7]\d|180)$/.test(dayKey) || !isRecord(value) || !Array.isArray(value.messages)) {
-        continue;
-      }
-      const updatedAt = value.updatedAt;
-      if (typeof updatedAt !== "number" || !Number.isFinite(updatedAt)) continue;
-
-      const messages: TutorMessage[] = [];
-      for (const item of value.messages.slice(-MAX_MESSAGES_PER_DAY)) {
-        if (
-          !isRecord(item) ||
-          typeof item.id !== "string" ||
-          (item.role !== "user" && item.role !== "assistant") ||
-          typeof item.content !== "string" ||
-          item.content.length === 0 ||
-          item.content.length > MAX_MESSAGE_LENGTH
-        ) {
-          continue;
-        }
-
-        const mode = typeof item.mode === "string" && item.mode in modeLabels
-          ? item.mode as TutorMode
-          : undefined;
-        const model = typeof item.model === "string" && item.model.length <= 100
-          ? item.model
-          : undefined;
-        messages.push({
-          id: item.id.slice(0, 100),
-          role: item.role,
-          content: item.content,
-          mode,
-          model,
-        });
-      }
-
-      threads[dayKey] = {
-        updatedAt,
-        messages,
-      };
-    }
-
-    return { version: 1, threads };
-  } catch {
-    return null;
-  }
-}
-
 function createMessageId() {
   if (typeof window !== "undefined" && typeof window.crypto?.randomUUID === "function") {
     return window.crypto.randomUUID();
@@ -256,19 +190,42 @@ export function LearningStudio({ day }: LearningStudioProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<AbortController | null>(null);
+  const skipNextTutorSaveRef = useRef(false);
   const dayKey = String(day.id);
   const messages = threads[dayKey]?.messages ?? [];
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
-        const raw = window.localStorage.getItem(TUTOR_STORAGE_KEY);
-        if (raw) {
-          const parsed = parseTutorStore(raw);
+        const currentRaw = window.localStorage.getItem(TUTOR_STORAGE_KEY);
+        if (currentRaw) {
+          const parsed = parseTutorStoreV2(currentRaw);
           if (parsed) {
             setThreads(parsed.threads);
           } else {
-            setStorageNotice("Saved tutor history was unreadable and has been reset.");
+            skipNextTutorSaveRef.current = true;
+            setStorageNotice("Saved version 2 tutor history was unreadable and was not overwritten.");
+          }
+        } else {
+          const legacyRaw = window.localStorage.getItem(LEGACY_TUTOR_STORAGE_KEY);
+          if (legacyRaw) {
+            archiveLegacyPayload(
+              window.localStorage,
+              LEGACY_TUTOR_ARCHIVE_KEY,
+              legacyRaw,
+            );
+            const migration = migrateLegacyTutorStore(legacyRaw);
+            if (migration) {
+              setThreads(migration.store.threads);
+              setStorageNotice(
+                migration.archivedFoundationDays.length > 0
+                  ? "Tutor chats for revised Days 1–14 were archived; unchanged later-day chats were migrated to version 2."
+                  : "Version 1 tutor history was archived and migrated to version 2.",
+              );
+            } else {
+              skipNextTutorSaveRef.current = true;
+              setStorageNotice("Version 1 tutor history was archived but could not be migrated.");
+            }
           }
         }
       } catch {
@@ -282,8 +239,16 @@ export function LearningStudio({ day }: LearningStudioProps) {
 
   useEffect(() => {
     if (!storageReady) return;
+    if (skipNextTutorSaveRef.current) {
+      skipNextTutorSaveRef.current = false;
+      return;
+    }
     try {
-      const store: TutorStore = { version: 1, threads };
+      const store: TutorStore = {
+        version: 2,
+        curriculumRevision: CURRICULUM_REVISION,
+        threads,
+      };
       window.localStorage.setItem(TUTOR_STORAGE_KEY, JSON.stringify(store));
     } catch {
       const timer = window.setTimeout(() => {
@@ -538,7 +503,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
 
         {section === "simple" && (
           <div className="lesson-section">
-            <span className="lesson-kicker">EXPLAIN IT LIKE I’M 15</span>
+            <span className="lesson-kicker">EXPLAIN IT LIKE I’M 12</span>
             <h3>{day.title}, without the fog</h3>
             <div className="lesson-prose">
               {lesson.simpleExplanation.map((paragraph, index) => <p key={`${index}-${paragraph}`}>{paragraph}</p>)}
@@ -555,10 +520,9 @@ export function LearningStudio({ day }: LearningStudioProps) {
             <span className="lesson-kicker">NO-SKIPPED-STEPS MATH</span>
             <h3>{lesson.math.title}</h3>
             <p>{lesson.math.meaning}</p>
-            <InteractiveMathPlayground spec={visual} />
             <details className="math-rescue" open>
               <summary>
-                <span>BEGINNER RESCUE // WEEK {String(day.week).padStart(2, "0")}</span>
+                <span>START FROM ZERO // WEEK {String(day.week).padStart(2, "0")}</span>
                 {mathRescue.title}
               </summary>
               <div className="math-rescue-body">
@@ -603,7 +567,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
               </div>
             )}
             <div className="formula-card" aria-label={`Formula: ${lesson.math.formula}`}>
-              <span>WEEKLY CORE FORMULA</span>
+              <span>{day.id <= 14 ? "TODAY’S CHECKED RELATIONSHIP" : "WEEKLY CORE FORMULA"}</span>
               <Suspense fallback={<strong>{lesson.math.formula}</strong>}>
                 <RichText
                   content={`$$\n${lesson.math.latex}\n$$`}
@@ -623,6 +587,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
               <strong>Sanity check</strong>
               <p>{lesson.math.check}</p>
             </div>
+            <InteractiveMathPlayground spec={visual} />
           </div>
         )}
 

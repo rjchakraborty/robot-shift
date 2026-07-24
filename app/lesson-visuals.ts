@@ -81,6 +81,13 @@ type KindProfile = {
   physicalScenario: string;
 };
 
+type BeginnerVisualProfile = Pick<
+  KindProfile,
+  "takeaway" | "units" | "frames" | "states" | "howToRead" | "physicalScenario"
+> & {
+  softwareBridge: DayVisualSpec["softwareBridge"];
+};
+
 const baseLegend: DayVisualSpec["legend"] = [
   { label: "Input", meaning: "Measured or requested quantity", tone: "input" },
   { label: "Process", meaning: "Transform, estimate, plan, or controller", tone: "process" },
@@ -615,6 +622,198 @@ const bridges: Record<VisualKind, DayVisualSpec["softwareBridge"]> = {
   },
 };
 
+const foundationVisualProfiles: Readonly<
+  Partial<Record<number, BeginnerVisualProfile>>
+> = {
+  4: {
+    takeaway: "A coordinate is a measured address: a number, a direction from zero, and a unit.",
+    units: ["cm", "m", "count"],
+    frames: ["paper origin", "+x direction", "+y direction"],
+    states: {
+      nominal: { label: "Clear address", description: "Zero, positive directions, and units are written beside the point.", value: 0, unit: "missing labels" },
+      boundary: { label: "Mixed units", description: "The numbers are usable only after centimetres and metres are converted to one unit.", value: 1, unit: "conversion needed" },
+      failure: { label: "Unknown direction", description: "A signed number is ambiguous when nobody says which way is positive.", value: 2, unit: "missing directions" },
+    },
+    howToRead: [
+      "Find the zero point first.",
+      "Follow the arrows marked positive x and positive y.",
+      "Read the sign and unit with every number.",
+    ],
+    physicalScenario: "Tape graph paper to a table, choose one corner as zero, and describe a toy robot's position in centimetres.",
+    softwareBridge: bridges.coordinate,
+  },
+  5: {
+    takeaway: "A vector is an arrow: its components say how far to move sideways and up, while its norm says the straight-line length.",
+    units: ["grid squares", "cm", "cm² for a dot product"],
+    frames: ["one labelled paper grid"],
+    states: {
+      nominal: { label: "Arrow matches", description: "The drawn arrow and its two components describe the same movement.", value: 0, unit: "component error" },
+      boundary: { label: "Zero arrow", description: "An arrow with both components zero has no direction and length zero.", value: 0, unit: "length" },
+      failure: { label: "Components swapped", description: "Swapping sideways and upward parts points the arrow somewhere else.", value: 2, unit: "wrong components" },
+    },
+    howToRead: [
+      "Start at the arrow's tail and finish at its head.",
+      "Count the horizontal part, then the vertical part.",
+      "Use the square-root length rule only after the two parts make sense.",
+    ],
+    physicalScenario: "A toy robot moves 3 squares right and 4 squares up; the movement arrow has components (3,4) and length 5 squares.",
+    softwareBridge: bridges.coordinate,
+  },
+  6: {
+    takeaway: "A coordinate frame is a small map key: it declares where zero is and which ways its axes point.",
+    units: ["cm", "m", "direction sign"],
+    frames: ["table", "robot"],
+    states: {
+      nominal: { label: "Frames labelled", description: "Both maps name their origins, axes, directions, and units.", value: 0, unit: "cm disagreement" },
+      boundary: { label: "Origin uncertain", description: "A small origin measurement error moves every converted point.", value: 2, unit: "cm uncertainty" },
+      failure: { label: "Axis reversed", description: "Treating left as right changes the sign and puts the point on the wrong side.", value: 2, unit: "wrong axis signs" },
+    },
+    howToRead: [
+      "Circle the origin of each frame.",
+      "Trace the positive axis arrows.",
+      "Say which frame owns every coordinate before using it.",
+    ],
+    physicalScenario: "Draw one grid on the table and a smaller grid on a paper robot, then describe the same sticker from both grids.",
+    softwareBridge: bridges.coordinate,
+  },
+  7: {
+    takeaway: "A matrix is a grid-shaped rule: each row builds one output by multiplying and adding the input parts.",
+    units: ["input units", "output units", "unitless rotation entries"],
+    frames: ["input arrow", "output arrow"],
+    states: {
+      nominal: { label: "Row rule works", description: "Each row produces the expected output component.", value: 0, unit: "wrong outputs" },
+      boundary: { label: "Shape check", description: "The number of matrix columns must match the number of input parts.", value: 2, unit: "required columns" },
+      failure: { label: "Order swapped", description: "Reading rows and columns in the wrong order produces a different arrow.", value: 2, unit: "wrong outputs" },
+    },
+    howToRead: [
+      "Read the matrix size as rows by columns.",
+      "Cover all but one row and multiply it by the input column.",
+      "Add that row's products to get one output number.",
+    ],
+    physicalScenario: "A two-by-two number grid turns the paper arrow (2,0) into (0,2), one row at a time.",
+    softwareBridge: bridges.coordinate,
+  },
+  8: {
+    takeaway: "A 2D transform first turns an object and then moves it, using one declared order.",
+    units: ["degrees", "radians", "cm"],
+    frames: ["paper robot", "table"],
+    states: {
+      nominal: { label: "Order declared", description: "The rotation is applied before the translation, exactly as written.", value: 0, unit: "cm error" },
+      boundary: { label: "Angle converted", description: "Degrees and radians describe the same turn only after a correct conversion.", value: 90, unit: "degrees" },
+      failure: { label: "Order reversed", description: "Moving first and turning second gives a different final position.", value: 2, unit: "cm error" },
+    },
+    howToRead: [
+      "Mark the local point before anything moves.",
+      "Draw the rotated point.",
+      "Add the translation arrow last and check the final coordinate.",
+    ],
+    physicalScenario: "Turn a paper robot 90 degrees, slide it two squares right and one up, and track a sticker on its nose.",
+    softwareBridge: bridges.coordinate,
+  },
+  9: {
+    takeaway: "Composition follows a chain in order; an inverse walks the same chain backward.",
+    units: ["cm", "m", "ordered steps"],
+    frames: ["world", "robot", "tool"],
+    states: {
+      nominal: { label: "Round trip works", description: "Going forward through the chain and back through its inverse recovers the starting point.", value: 0, unit: "cm round-trip error" },
+      boundary: { label: "Link missing", description: "One unknown transform breaks the otherwise valid frame chain.", value: 1, unit: "missing link" },
+      failure: { label: "Wrong order", description: "Reordering transforms changes the physical result.", value: 2, unit: "misordered links" },
+    },
+    howToRead: [
+      "Write the start and destination frame.",
+      "Follow connected arrows in order without skipping a frame.",
+      "Reverse both direction and order when taking the inverse.",
+    ],
+    physicalScenario: "Use three nested paper grids for the table, robot base, and gripper, then move a marked point out and back.",
+    softwareBridge: bridges.coordinate,
+  },
+  10: {
+    takeaway: "SO(3) is the set of honest 3D rotations: they turn arrows without stretching or mirroring them.",
+    units: ["degrees", "radians", "unitless matrix entries"],
+    frames: ["before rotation", "after rotation"],
+    states: {
+      nominal: { label: "Length preserved", description: "The arrow changes direction but keeps the same length.", value: 0, unit: "length change" },
+      boundary: { label: "Rounded values", description: "Small decimal rounding creates a tiny numerical length error.", value: 0.001, unit: "length change" },
+      failure: { label: "Not a rotation", description: "A matrix that stretches or mirrors the object is not in SO(3).", value: 1, unit: "failed rotation checks" },
+    },
+    howToRead: [
+      "Compare the arrow before and after the turn.",
+      "Check that its length did not change.",
+      "Check that the axes remain perpendicular and right-handed.",
+    ],
+    physicalScenario: "Rotate a book in your hands without bending, stretching, or reflecting it in a mirror.",
+    softwareBridge: bridges.coordinate,
+  },
+  11: {
+    takeaway: "Euler angles and quaternions are two ways to store orientation; neither changes the physical pose by itself.",
+    units: ["degrees", "radians", "unitless quaternion"],
+    frames: ["body", "world"],
+    states: {
+      nominal: { label: "Same orientation", description: "The Euler angles and normalized quaternion describe the same physical turn.", value: 1, unit: "quaternion norm" },
+      boundary: { label: "Euler singularity", description: "Near a 90-degree middle turn, two Euler axes become hard to distinguish.", value: 89, unit: "degrees pitch" },
+      failure: { label: "Not normalized", description: "A quaternion with length other than one is not a valid pure orientation.", value: 0.2, unit: "norm error" },
+    },
+    howToRead: [
+      "Picture the physical orientation before reading its stored numbers.",
+      "Keep the Euler rotation order explicit.",
+      "Check that a quaternion has four entries and norm one.",
+    ],
+    physicalScenario: "Hold a phone facing forward, turn it left by 90 degrees, and store that same pose as yaw or as a quaternion.",
+    softwareBridge: bridges.coordinate,
+  },
+  12: {
+    takeaway: "SE(3) stores one rigid 3D pose: an orientation plus a position, with no stretching.",
+    units: ["m", "radians", "unitless rotation entries"],
+    frames: ["local object", "world"],
+    states: {
+      nominal: { label: "Rigid pose", description: "Rotation and translation move the object while preserving its shape.", value: 0, unit: "shape change" },
+      boundary: { label: "Measured offset", description: "Translation uncertainty moves every transformed point by the same small offset.", value: 2, unit: "cm uncertainty" },
+      failure: { label: "Invalid transform", description: "A bad rotation block or bottom row no longer represents a rigid pose.", value: 1, unit: "failed pose checks" },
+    },
+    howToRead: [
+      "Separate the rotation part from the translation part.",
+      "Apply the rotation to the local point.",
+      "Add translation and verify that distances within the object stay unchanged.",
+    ],
+    physicalScenario: "Move a small cardboard box on a table: turn it, slide it, and record the complete pose without changing its shape.",
+    softwareBridge: bridges.coordinate,
+  },
+  13: {
+    takeaway: "Forward kinematics starts with known joint values and predicts where the robot's tool will be.",
+    units: ["m", "degrees", "radians"],
+    frames: ["base", "joint 1", "joint 2", "tool"],
+    states: {
+      nominal: { label: "Prediction checked", description: "Measured link lengths and joint angles predict the observed tool position.", value: 0, unit: "cm position error" },
+      boundary: { label: "Near a limit", description: "The pose is reachable but leaves little room for another move.", value: 5, unit: "degrees margin" },
+      failure: { label: "Wrong angle meaning", description: "Treating a child-joint angle as a world angle predicts the wrong tool position.", value: 12, unit: "cm position error" },
+    },
+    howToRead: [
+      "Start at the fixed base.",
+      "Apply each joint and link in parent-to-child order.",
+      "Measure the paper arm to check the predicted tool point.",
+    ],
+    physicalScenario: "Set two angles on a cardboard arm, calculate its fingertip position, and check it against graph paper.",
+    softwareBridge: bridges.kinematics,
+  },
+  14: {
+    takeaway: "Inverse kinematics starts with a desired tool point and searches for joint values that reach it.",
+    units: ["m", "degrees", "cm target error"],
+    frames: ["base", "target", "tool"],
+    states: {
+      nominal: { label: "Solution verified", description: "Forward kinematics sends the chosen joint values back to the requested target.", value: 0, unit: "cm target error" },
+      boundary: { label: "Reach limit", description: "A target near full extension may have little motion margin and poor numerical behaviour.", value: 1, unit: "cm reach margin" },
+      failure: { label: "Unreachable target", description: "No joint values can reach a point beyond the total link length.", value: -10, unit: "cm reach margin" },
+    },
+    howToRead: [
+      "Check whether the target lies inside the arm's reach.",
+      "Search within declared joint limits.",
+      "Run forward kinematics on the answer and measure the remaining error.",
+    ],
+    physicalScenario: "Mark a target on graph paper, adjust two cardboard-arm joints to touch it, and verify the angles by calculating forward again.",
+    softwareBridge: bridges.kinematics,
+  },
+};
+
 const keywordRules: readonly { kind: VisualKind; pattern: RegExp }[] = [
   { kind: "evidence", pattern: /\b(report|metric|evaluation|evaluate|acceptance|audit|demo|knowledge check|ship|repository|portfolio|résumé|interview|readiness|retrospective|model card|dataset card|architecture review|gate|frozen 50-trial|publish)\b/i },
   { kind: "safety", pattern: /\b(safety|safe |hazard|guardrail|workspace, force|collision monitoring|watchdog|threat|SROS2|prompt injection|adversarial|rollback|human handoff|reward hacking|command limits)\b/i },
@@ -643,8 +842,10 @@ function topicKey(day: CurriculumDay) {
 }
 
 function kindForDay(day: CurriculumDay): VisualKind {
-  if (day.id <= 6) return "coordinate";
-  if (day.id >= 8 && day.id <= 14) return "kinematics";
+  if (day.id === 1) return "system";
+  if (day.id >= 2 && day.id <= 3) return "kinematics";
+  if (day.id >= 4 && day.id <= 12) return "coordinate";
+  if (day.id >= 13 && day.id <= 14) return "kinematics";
   if (day.id >= 15 && day.id <= 21) return day.id === 21 ? "evidence" : "feedback";
 
   for (const rule of keywordRules) {
@@ -656,14 +857,113 @@ function kindForDay(day: CurriculumDay): VisualKind {
 
 function fixtureForDay(day: CurriculumDay, kind: VisualKind): Pick<DayVisualSpec, "fixture" | "math"> {
   if (day.id === 1) {
+    return {
+      fixture: {
+        inputs: [2, 1, 2],
+        outputs: [5],
+        parameters: {
+          sensors: 2,
+          controllers: 1,
+          actuators: 2,
+          totalParts: 5,
+        },
+      },
+      math: {
+        formula: "robot roles = sensing parts + thinking parts + acting parts",
+        latex: String.raw`N_{\mathrm{roles}}=N_{\mathrm{sense}}+N_{\mathrm{think}}+N_{\mathrm{act}}`,
+        walkthrough: [
+          "Count two sensing parts: a camera and a distance sensor.",
+          "Count one thinking part: the controller running the program.",
+          "Count two acting parts: the motors. Altogether, 2+1+2=5 parts fill the three roles.",
+        ],
+        result: "2 sensors + 1 controller + 2 motors = 5 counted parts in one sense–think–act loop.",
+      },
+    };
+  }
+
+  if (day.id === 2) {
+    return {
+      fixture: {
+        inputs: [2, 1, 1],
+        outputs: [3],
+        parameters: {
+          revoluteJoints: 2,
+          prismaticJoints: 1,
+          fixedJoints: 1,
+          degreesOfFreedom: 3,
+        },
+      },
+      math: {
+        formula: "DOF = rotating joints + sliding joints; fixed joints add 0",
+        latex: String.raw`\mathrm{DOF}=N_{\mathrm{rotate}}+N_{\mathrm{slide}}`,
+        walkthrough: [
+          "A one-axis rotating joint contributes one independent movement.",
+          "A one-axis sliding joint contributes one independent movement.",
+          "A fixed joint cannot move, so 2 rotating + 1 sliding + 1 fixed gives 3 DOF.",
+        ],
+        result: "This simple robot has 4 joints but only 3 independent movements, so it has 3 DOF.",
+      },
+    };
+  }
+
+  if (day.id === 3) {
+    return {
+      fixture: {
+        inputs: [30, -20, 8],
+        outputs: [3],
+        parameters: {
+          shoulderDegrees: 30,
+          elbowDegrees: -20,
+          sliderCentimetres: 8,
+          configurationCoordinates: 3,
+        },
+      },
+      math: {
+        formula: "one configuration records one number for every independent movement",
+        latex: String.raw`\mathbf q=[30^\circ,\,-20^\circ,\,8\ \mathrm{cm}]`,
+        walkthrough: [
+          "Record the shoulder angle: 30°.",
+          "Record the elbow angle and slider position: −20° and 8 cm.",
+          "Keep the three values in a fixed order; together they describe one complete robot configuration.",
+        ],
+        result: "The snapshot q = [30°, −20°, 8 cm] uses 3 coordinates for a 3-DOF robot.",
+      },
+    };
+  }
+
+  if (day.id === 4) {
+    return {
+      fixture: {
+        inputs: [150, -40],
+        outputs: [1.5, -0.4],
+        parameters: {
+          xCentimetres: 150,
+          yCentimetres: -40,
+          xMetres: 1.5,
+          yMetres: -0.4,
+        },
+      },
+      math: {
+        formula: "metres = centimetres ÷ 100",
+        latex: String.raw`\begin{aligned}x_{\mathrm m}&=\frac{x_{\mathrm{cm}}}{100}\\y_{\mathrm m}&=\frac{y_{\mathrm{cm}}}{100}\end{aligned}`,
+        walkthrough: [
+          "The sign gives direction: positive x is right, while negative y is down in this declared frame.",
+          "Convert 150 cm to 1.5 m by dividing by 100.",
+          "Convert −40 cm to −0.4 m and keep the minus sign.",
+        ],
+        result: "The same point is (150 cm, −40 cm) or (1.5 m, −0.4 m).",
+      },
+    };
+  }
+
+  if (day.id === 5) {
     const normA = 5;
     const normB = Math.sqrt(29);
     const dot = 23;
-    const cosine = dot / (normA * normB);
     return {
       fixture: {
         inputs: [3, 4, 5, 2],
-        outputs: [dot, normA, normB, cosine],
+        outputs: [dot, normA, normB],
         parameters: {
           ax: 3,
           ay: 4,
@@ -672,23 +972,47 @@ function fixtureForDay(day: CurriculumDay, kind: VisualKind): Pick<DayVisualSpec
           dot,
           normA,
           normB,
-          cosine,
         },
       },
       math: {
-        formula: "A·B = AₓBₓ + AᵧBᵧ,  cosθ = (A·B)/(||A||·||B||)",
-        latex: String.raw`\begin{aligned}\mathbf A\cdot\mathbf B &= A_xB_x+A_yB_y \\ \cos\theta &= \frac{\mathbf A\cdot\mathbf B}{\lVert\mathbf A\rVert\lVert\mathbf B\rVert}\end{aligned}`,
+        formula: "||A|| = √(Aₓ²+Aᵧ²),  A·B = AₓBₓ + AᵧBᵧ",
+        latex: String.raw`\begin{aligned}\lVert\mathbf A\rVert&=\sqrt{A_x^2+A_y^2}\\\mathbf A\cdot\mathbf B&=A_xB_x+A_yB_y\end{aligned}`,
         walkthrough: [
-          "Multiply matching components: 3×5 and 4×2.",
-          "Add them: A·B = 15+8 = 23.",
-          "Compute ||A||=5 and ||B||=√29, then divide: cosθ=23/(5√29)≈0.854.",
+          "Find A's length: √(3²+4²)=5.",
+          "Multiply matching components for the dot product: 3×5 and 4×2.",
+          "Add them: A·B=15+8=23. A positive result means the arrows point broadly the same way.",
         ],
-        result: "A=(3,4), B=(5,2): dot=23, cosθ≈0.854, so θ≈31.4°.",
+        result: "A=(3,4), B=(5,2): ||A||=5, ||B||=√29, and A·B=23 (positive alignment).",
       },
     };
   }
 
-  if (day.id === 2) {
+  if (day.id === 6) {
+    return {
+      fixture: {
+        inputs: [2, 1, 1],
+        outputs: [3],
+        parameters: {
+          worldToRobotXMetres: 2,
+          pointInRobotXMetres: 1,
+          robotXAxisDirection: 1,
+          pointInWorldXMetres: 3,
+        },
+      },
+      math: {
+        formula: "world position = robot origin + axis direction × local position",
+        latex: String.raw`x_{\mathrm{world}}=x_{\mathrm{robot\ origin}}+s_x x_{\mathrm{local}}`,
+        walkthrough: [
+          "Place the robot-frame origin at x=2 m in the world.",
+          "Its +x axis points the same way as world +x, so sₓ=+1.",
+          "A point 1 m along robot +x is at 2+(+1)×1=3 m in the world.",
+        ],
+        result: "Robot-frame x=1 m becomes world-frame x=3 m when the robot origin is at 2 m.",
+      },
+    };
+  }
+
+  if (day.id === 7) {
     return {
       fixture: {
         inputs: [0, -1, 1, 0, 2, 0],
@@ -718,6 +1042,169 @@ function fixtureForDay(day: CurriculumDay, kind: VisualKind): Pick<DayVisualSpec
     };
   }
 
+  if (day.id === 8) {
+    return {
+      fixture: {
+        inputs: [1, 0, Math.PI / 2, 2, 1],
+        outputs: [2, 2],
+        parameters: {
+          inputX: 1,
+          inputY: 0,
+          angleRadians: Math.PI / 2,
+          translationX: 2,
+          translationY: 1,
+          outputX: 2,
+          outputY: 2,
+        },
+      },
+      math: {
+        formula: "world point = rotate(local point) + translation",
+        latex: String.raw`\begin{aligned}x'&=x\cos\theta-y\sin\theta+t_x\\y'&=x\sin\theta+y\cos\theta+t_y\end{aligned}`,
+        walkthrough: [
+          "Rotate local point (1,0) by 90° to get (0,1).",
+          "Translate it by (2,1).",
+          "Add component by component: (0+2, 1+1)=(2,2).",
+        ],
+        result: "A 90° rotation followed by translation (2,1) maps (1,0) to (2,2).",
+      },
+    };
+  }
+
+  if (day.id === 9) {
+    return {
+      fixture: {
+        inputs: [2, 1.5, 0.5],
+        outputs: [3.5, 4, 0.5],
+        parameters: {
+          worldToBaseMetres: 2,
+          baseToToolMetres: 1.5,
+          pointInToolMetres: 0.5,
+          worldToToolMetres: 3.5,
+          pointInWorldMetres: 4,
+          recoveredToolPointMetres: 0.5,
+        },
+      },
+      math: {
+        formula: "compose by adding in order; invert by subtracting the same transform",
+        latex: String.raw`\begin{aligned}t_{WT}&=t_{WB}+t_{BT}\\p_W&=t_{WT}+p_T\\p_T&=p_W-t_{WT}\end{aligned}`,
+        walkthrough: [
+          "Compose world→base 2 m and base→tool 1.5 m to get world→tool 3.5 m.",
+          "Add tool-local point 0.5 m to get world point 4 m.",
+          "Invert by subtracting 3.5 m: 4−3.5=0.5 m, recovering the original local point.",
+        ],
+        result: "The ordered transform chain maps 0.5 m in tool to 4 m in world and back again.",
+      },
+    };
+  }
+
+  if (day.id === 10) {
+    return {
+      fixture: {
+        inputs: [1, 0, 90],
+        outputs: [0, 1, 0],
+        parameters: {
+          inputX: 1,
+          inputY: 0,
+          angleDegrees: 90,
+          outputX: 0,
+          outputY: 1,
+          lengthChange: 0,
+        },
+      },
+      math: {
+        formula: "a valid rotation changes direction but preserves length",
+        latex: String.raw`\lVert R\mathbf p\rVert=\lVert\mathbf p\rVert,\qquad \det(R)=1`,
+        walkthrough: [
+          "Start with a unit arrow (1,0) in the xy plane.",
+          "Rotate it 90° around the z axis to (0,1).",
+          "Both arrows have length 1; preserving length is one check for a valid rotation.",
+        ],
+        result: "The 90° z rotation maps (1,0) to (0,1) and changes length by 0.",
+      },
+    };
+  }
+
+  if (day.id === 11) {
+    return {
+      fixture: {
+        inputs: [90],
+        outputs: [Math.SQRT1_2, Math.SQRT1_2, 1],
+        parameters: {
+          yawDegrees: 90,
+          quaternionW: Math.SQRT1_2,
+          quaternionZ: Math.SQRT1_2,
+          quaternionNorm: 1,
+        },
+      },
+      math: {
+        formula: "for yaw only: quaternion = [cos(yaw/2), 0, 0, sin(yaw/2)]",
+        latex: String.raw`\mathbf q=\left[\cos\frac{\psi}{2},\,0,\,0,\,\sin\frac{\psi}{2}\right]`,
+        walkthrough: [
+          "Take half of yaw 90°: 45°.",
+          "cos45° and sin45° are both about 0.707.",
+          "The quaternion [0.707,0,0,0.707] has length 1, so it is normalized.",
+        ],
+        result: "Yaw 90° becomes quaternion [0.707, 0, 0, 0.707].",
+      },
+    };
+  }
+
+  if (day.id === 12) {
+    return {
+      fixture: {
+        inputs: [1, 0, 90, 2, 1],
+        outputs: [2, 2],
+        parameters: {
+          localX: 1,
+          localY: 0,
+          angleDegrees: 90,
+          translationX: 2,
+          translationY: 1,
+          worldX: 2,
+          worldY: 2,
+        },
+      },
+      math: {
+        formula: "a rigid pose contains rotation R and translation t",
+        latex: String.raw`\mathbf p_{\mathrm{world}}=R\mathbf p_{\mathrm{local}}+\mathbf t`,
+        walkthrough: [
+          "Rotate local point (1,0) by 90° to (0,1).",
+          "Use translation t=(2,1).",
+          "Add them to get world point (2,2).",
+        ],
+        result: "The rigid pose maps local (1,0) to world (2,2).",
+      },
+    };
+  }
+
+  if (day.id === 14) {
+    return {
+      fixture: {
+        inputs: [1, 1, 1, 1],
+        outputs: [0, 90, 0],
+        parameters: {
+          link1Metres: 1,
+          link2Metres: 1,
+          targetXMetres: 1,
+          targetYMetres: 1,
+          shoulderDegrees: 0,
+          elbowDegrees: 90,
+          targetErrorMetres: 0,
+        },
+      },
+      math: {
+        formula: "IK asks for joint angles that place the tool at a requested target",
+        latex: String.raw`\cos\theta_2=\frac{x^2+y^2-l_1^2-l_2^2}{2l_1l_2}`,
+        walkthrough: [
+          "The target (1,1) is √2 m from the base, inside the 2 m maximum reach.",
+          "With two 1 m links, the elbow equation gives cosθ₂=0, so θ₂=90°.",
+          "One valid shoulder solution is 0°; forward kinematics returns tool (1,1), so error is 0.",
+        ],
+        result: "For target (1,1) m, one IK solution is shoulder 0°, elbow 90°.",
+      },
+    };
+  }
+
   return {
     fixture: profiles[kind].fixture,
     math: profiles[kind].math,
@@ -728,6 +1215,65 @@ export function createDayVisualSpec(day: CurriculumDay): DayVisualSpec {
   const kind = kindForDay(day);
   const profile = profiles[kind];
   const exact = fixtureForDay(day, kind);
+  const beginnerProfile = day.id === 1
+    ? {
+        takeaway: "A robot repeats three jobs: sense what is happening, think what to do, and act on the physical world.",
+        units: ["parts", "signals", "commands"] as const,
+        frames: ["environment", "sensor", "controller", "actuator"] as const,
+        states: {
+          nominal: { label: "Complete loop", description: "The robot senses, decides, acts, and observes the result.", value: 3, unit: "roles connected" },
+          boundary: { label: "Open loop", description: "The robot can act, but it does not check what actually happened.", value: 2, unit: "roles connected" },
+          failure: { label: "Missing role", description: "Without sensing, thinking, or acting, the physical task cannot complete safely.", value: 1, unit: "roles connected" },
+        },
+        howToRead: [
+          "Read from left to right: sense, then think, then act.",
+          "Match sensors to eyes and ears, the controller to a brain, and actuators to muscles.",
+          "Follow the return arrow: after acting, the robot must sense the changed world again.",
+        ],
+        physicalScenario: "A small wheeled robot sees a chair leg, decides to turn, powers its wheel motors, and checks the new view.",
+        softwareBridge: {
+          skill: "Web" as const,
+          analogy: "A web app reads an event, runs decision logic, changes the screen, and reads the next event; a robot follows the same information loop.",
+          dangerousDifference: "A wrong screen update changes pixels; a wrong actuator command can move real mass, so limits and a stop control are required.",
+        },
+      }
+      : day.id === 2
+      ? {
+          takeaway: "A degree of freedom is one independent way a robot can move.",
+          units: ["joints", "DOF", "count"] as const,
+          frames: ["base", "joint", "link"] as const,
+          states: {
+            nominal: { label: "Movement counted", description: "Rotating and sliding joints are counted once; the fixed joint adds zero.", value: 3, unit: "DOF" },
+            boundary: { label: "At a stop", description: "The joint still has one DOF even when it reaches the end of its allowed travel.", value: 0, unit: "movement left" },
+            failure: { label: "Fixed is not motion", description: "Counting a fixed connection as a movement gives the wrong DOF.", value: 1, unit: "extra DOF" },
+          },
+          howToRead: [
+            "Find each joint between two rigid links.",
+            "Ask whether that joint rotates, slides, or is fixed.",
+            "Count only independent movements; a fixed joint adds zero DOF.",
+          ],
+          physicalScenario: "A cardboard arm uses two paper fasteners as rotating joints and one straw as a sliding joint.",
+          softwareBridge: bridges[kind],
+        }
+      : day.id === 3
+        ? {
+            takeaway: "A configuration is one complete snapshot containing one number for every independent movement.",
+            units: ["deg", "cm", "configuration coordinates"] as const,
+            frames: ["base", "joint_1", "joint_2", "slider"] as const,
+            states: {
+              nominal: { label: "Complete snapshot", description: "Every independent movement has one ordered value and a unit.", value: 3, unit: "coordinates recorded" },
+              boundary: { label: "At a limit", description: "A value on its allowed boundary is valid but leaves no travel in that direction.", value: 0, unit: "margin" },
+              failure: { label: "Ambiguous snapshot", description: "A missing value, unit, or fixed order does not fully describe the robot.", value: 1, unit: "missing field" },
+            },
+            howToRead: [
+              "Choose and write one fixed order for the joints.",
+              "Record one value, with its unit, for every independent movement.",
+              "Imagine every allowed combination of those values as the robot's configuration space.",
+            ],
+            physicalScenario: "Three labelled sliders record the shoulder, elbow, and telescoping-link values of a small arm.",
+            softwareBridge: bridges[kind],
+          }
+        : foundationVisualProfiles[day.id] ?? null;
 
   return {
     dayId: day.id,
@@ -735,16 +1281,17 @@ export function createDayVisualSpec(day: CurriculumDay): DayVisualSpec {
     topicKey: topicKey(day),
     kind,
     title: `${day.title}: visual field guide`,
-    takeaway: profile.takeaway,
-    units: profile.units,
-    frames: profile.frames,
+    takeaway: beginnerProfile?.takeaway ?? profile.takeaway,
+    units: beginnerProfile?.units ?? profile.units,
+    frames: beginnerProfile?.frames ?? profile.frames,
     fixture: exact.fixture,
     math: exact.math,
-    states: profile.states,
-    howToRead: profile.howToRead,
+    states: beginnerProfile?.states ?? profile.states,
+    howToRead: beginnerProfile?.howToRead ?? profile.howToRead,
     legend: profile.legend,
-    softwareBridge: bridges[kind],
-    physicalScenario: `${profile.physicalScenario} This visual applies that grammar to “${day.title}”.`,
+    softwareBridge: beginnerProfile?.softwareBridge ?? bridges[kind],
+    physicalScenario: beginnerProfile?.physicalScenario
+      ?? `${profile.physicalScenario} This visual applies that grammar to “${day.title}”.`,
     source: day.resource,
   };
 }
@@ -858,19 +1405,43 @@ export function validateAllDayVisuals(
   const day1 = visuals.find((visual) => visual.dayId === 1);
   if (
     !day1 ||
-    day1.fixture.parameters.dot !== 23 ||
-    Math.abs(day1.fixture.parameters.cosine - 23 / (5 * Math.sqrt(29))) > 1e-12
+    day1.kind !== "system" ||
+    day1.fixture.parameters.totalParts !== 5
   ) {
-    errors.push("day 1 vector fixture must use dot=23 and cos=23/(5√29)");
+    errors.push("day 1 robot-anatomy fixture must count 5 sense-think-act parts");
   }
 
   const day2 = visuals.find((visual) => visual.dayId === 2);
   if (
     !day2 ||
-    day2.fixture.parameters.outputX !== 0 ||
-    day2.fixture.parameters.outputY !== 2
+    day2.kind !== "kinematics" ||
+    day2.fixture.parameters.degreesOfFreedom !== 3
   ) {
-    errors.push("day 2 matrix fixture must satisfy R90·(2,0)=(0,2)");
+    errors.push("day 2 joint fixture must count 3 independent degrees of freedom");
+  }
+
+  const day3 = visuals.find((visual) => visual.dayId === 3);
+  if (!day3 || day3.fixture.parameters.configurationCoordinates !== 3) {
+    errors.push("day 3 configuration fixture must record 3 coordinates");
+  }
+
+  const day5 = visuals.find((visual) => visual.dayId === 5);
+  if (
+    !day5 ||
+    day5.fixture.parameters.dot !== 23 ||
+    day5.fixture.parameters.normA !== 5 ||
+    Math.abs(day5.fixture.parameters.normB - Math.sqrt(29)) > 1e-12
+  ) {
+    errors.push("day 5 vector fixture must use normA=5, normB=√29, and dot=23");
+  }
+
+  const day7 = visuals.find((visual) => visual.dayId === 7);
+  if (
+    !day7 ||
+    day7.fixture.parameters.outputX !== 0 ||
+    day7.fixture.parameters.outputY !== 2
+  ) {
+    errors.push("day 7 matrix fixture must satisfy R90·(2,0)=(0,2)");
   }
 
   return { valid: errors.length === 0, errors };

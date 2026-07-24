@@ -47,6 +47,98 @@ test("every curriculum day has complete topic-specific teaching content", () => 
   }
 });
 
+test("the opening foundation assumes no maths and introduces concepts in dependency order", async () => {
+  assert.deepEqual(
+    curriculumDays.slice(0, 14).map((day) => day.title),
+    [
+      "Robot anatomy: sense, think, act, links, and actuators",
+      "Joints, allowed motion, and degrees of freedom",
+      "Configuration, C-space, workspace, limits, and topology",
+      "Number lines, coordinates, scalars, variables, and physical units",
+      "Vectors from arrows: components, add, subtract, norm, and dot product",
+      "Coordinate frames, axes, origins, and handedness",
+      "Matrices from grids: inputs, outputs, and simple actions",
+      "2D rotation, translation, transforms, degrees, radians, sine, and cosine",
+      "Compose and invert transforms through a frame tree",
+      "SO(3): safe 3D rotation matrices",
+      "Euler angles, quaternions, and representation singularities",
+      "SE(3): one 3D pose matrix",
+      "Forward kinematics for a serial arm",
+      "Jacobian intuition and bounded numerical inverse kinematics",
+    ],
+  );
+
+  const opening = lessonForDay(curriculumDays[0]);
+  const openingText = [
+    opening.bigIdea,
+    opening.math.meaning,
+    opening.math.formula,
+    opening.math.connection,
+    ...opening.simpleExplanation,
+    ...opening.pareto,
+    ...opening.math.steps,
+    ...opening.examples.flatMap(({ title, explanation, tryIt }) => [title, explanation, tryIt]),
+    ...opening.practice.flatMap(({ title, task, doneWhen }) => [title, task, doneWhen]),
+    ...opening.quiz.flatMap(({ question, answer }) => [question, answer]),
+    opening.teachBack,
+  ].join("\n");
+  assert.match(openingText, /sensor.*controller.*actuator/i);
+  assert.doesNotMatch(
+    openingText,
+    /\bvector\b|\bmatrix\b|\bC-space\b|\bcoordinate frame\b|\bPythagoras\b|\btrigonometry\b|\bsin\b|\bcos\b|arccos/i,
+  );
+
+  assert.match(lessonForDay(curriculumDays[3]).bigIdea, /scalar.*variable.*coordinates.*units/i);
+  assert.match(lessonForDay(curriculumDays[4]).bigIdea, /vector.*norm.*dot product/i);
+  assert.match(lessonForDay(curriculumDays[6]).bigIdea, /matrix.*input-to-output/i);
+  assert.match(lessonForDay(curriculumDays[7]).bigIdea, /pose.*rotation.*translation/i);
+  assert.match(lessonForDay(curriculumDays[13]).bigIdea, /Jacobian.*inverse kinematics/i);
+
+  const day2 = lessonForDay(curriculumDays[1]);
+  assert.match(`${day2.bigIdea} ${day2.math.connection}`, /independent configuration coordinate/i);
+  assert.match(`${day2.bigIdea} ${day2.math.connection}`, /passive joints still count/i);
+
+  const day5 = lessonForDay(curriculumDays[4]);
+  assert.match(
+    `${day5.math.connection} ${day5.math.connectionMarkdown}`,
+    /Pythagoras.*squar.*multiply.*square root/is,
+  );
+
+  const day6 = lessonForDay(curriculumDays[5]);
+  assert.doesNotMatch(`${day6.math.connection} ${day6.math.connectionMarkdown}`, /cross product|\\times/);
+
+  const day10 = lessonForDay(curriculumDays[9]);
+  assert.match(day10.math.connectionMarkdown ?? "", /\\det.*ad-bc.*0\\times0-\(-1\\times1\)=1/is);
+
+  const day12 = lessonForDay(curriculumDays[11]);
+  assert.match(
+    `${day12.math.connection} ${day12.math.connectionMarkdown}`,
+    /point.*w=1.*direction.*w=0.*translation/is,
+  );
+
+  for (const day of curriculumDays.slice(0, 14)) {
+    const lesson = lessonForDay(day);
+    assert.ok(lesson.sources.length <= 3, `day ${day.id} should keep its source list focused`);
+    assert.match(day.task, /draw|find|record|build|convert|attach|treat|create|make|compare|measure|estimate/i);
+    assert.equal(
+      new Set(lesson.examples.map(({ title }) => title)).size,
+      lesson.examples.length,
+      `day ${day.id} contains duplicate example titles`,
+    );
+  }
+
+  const studioSource = await readFile(
+    new URL("../app/learning-studio.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(studioSource, /EXPLAIN IT LIKE I’M 12/);
+  assert.ok(
+    studioSource.indexOf('<details className="math-rescue" open>') <
+      studioSource.indexOf("<InteractiveMathPlayground spec={visual} />"),
+    "the zero-prerequisite explanation must appear before the interactive maths controls",
+  );
+});
+
 test("the revised 180-day plan includes every mandatory practical robotics lane", () => {
   assert.deepEqual(
     curriculumDays.map((day) => day.id),
@@ -216,6 +308,8 @@ test("the live tutor is grounded in the resolved displayed lesson", async () => 
   assert.match(routeSource, /lesson\.math\.connection|lesson\.math/);
   assert.match(routeSource, /lesson\.examples/);
   assert.match(routeSource, /lesson\.sources/);
+  assert.match(routeSource, /curious 12-year-old/);
+  assert.match(routeSource, /assume no prior knowledge of vectors, matrices, trigonometry, algebra, or coordinate frames/);
   assert.match(routeSource, /thinkingLevel:\s*"low"/);
   assert.match(routeSource, /finishReason === "MAX_TOKENS"/);
   assert.match(routeSource, /GitHub-Flavored Markdown/);

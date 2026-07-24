@@ -37,6 +37,11 @@ export const ORIGINAL_SYNTHESIS_NOTICE =
 
 const modernRobotics: Resource = { label: "Modern Robotics — Northwestern", url: "https://modernrobotics.northwestern.edu/nu-gm-book-resource/" };
 const configurationSpace: Resource = { label: "Modern Robotics — configuration-space topology", url: "https://modernrobotics.northwestern.edu/nu-gm-book-resource/2-3-1-configuration-space-topology/" };
+const vexRobotics: Resource = { label: "VEX Education — introduction to robotic arms", url: "https://education.vex.com/stemlabs/cte/introduction-to-the-6-axis-arm/introduction-to-robotic-arms/lesson-1-introduction-to-factory-automation" };
+const openStaxCoordinates: Resource = { label: "OpenStax — rectangular coordinates", url: "https://openstax.org/books/prealgebra-2e/pages/11-1-use-the-rectangular-coordinate-system" };
+const openStaxPythagoras: Resource = { label: "OpenStax — triangles and Pythagoras", url: "https://openstax.org/books/prealgebra-2e/pages/9-3-use-properties-of-angles-triangles-and-the-pythagorean-theorem" };
+const nistSi: Resource = { label: "NIST — metric SI units", url: "https://www.nist.gov/pml/owm/metric-si/si-units" };
+const threeBlueOneBrown: Resource = { label: "3Blue1Brown — vectors and matrices", url: "https://www.3blue1brown.com/topics/linear-algebra" };
 const corkeBook: Resource = { label: "Robotics, Vision and Control (3rd ed.)", url: "https://link.springer.com/book/10.1007/978-3-031-06469-2" };
 const roboticsToolbox: Resource = { label: "Robotics Toolbox for Python", url: "https://petercorke.github.io/robotics-toolbox-python/" };
 const ros2: Resource = { label: "Official ROS 2 tutorials", url: "https://docs.ros.org/en/jazzy/Tutorials.html" };
@@ -62,54 +67,54 @@ const pi05: Resource = { label: "Physical Intelligence π0.5", url: "https://www
 
 export const weekLessonPacks: readonly WeekPack[] = [
   {
-    bigIdea: "A robot can act correctly only when every number says what it measures, in which unit, and in which coordinate frame.",
-    pareto: ["A vector has size and direction.", "A dot product measures alignment.", "A matrix can rotate or move coordinates.", "Transforms compose from one named frame to another."],
-    simpleExplanation: ["Draw an arrow for every position or direction.", "Write the frame name beside the arrow.", "Apply transforms in order, then check the units and direction."],
+    bigIdea: "First understand the physical robot; then invent only the maths needed to describe its parts, allowed motion, measurements, arrows, and maps.",
+    pareto: ["A robot senses, decides, and acts through a physical body.", "Links are rigid parts; joints decide allowed motion and DOF.", "Configuration describes the whole robot shape; workspace describes tool locations.", "Numbers need a meaning, unit, origin, direction, and frame."],
+    simpleExplanation: ["Start with a toy, door hinge, drawer, ruler, and floor grid—not a formula.", "Count and measure one physical thing before giving it a symbol.", "Build coordinates, vectors, and matrices only after the robot question that needs them is visible."],
     math: {
-      title: "Vector length without fear",
-      meaning: "For v = [x,y], x and y are perpendicular distances in metres; ||v|| is the straight-line distance.",
-      formula: "||v|| = √(x² + y²)",
-      latex: String.raw`\lVert \mathbf{v} \rVert = \sqrt{x^2 + y^2}`,
-      steps: ["Square each component.", "Add the squares.", "Take the square root and keep the unit."],
-      check: "For v = [3 m, 4 m], ||v|| = √(9 + 16) = 5 m.",
+      title: "Measure and predict one coordinate",
+      meaning: "x_start is the starting coordinate, Δx is the measured change, and x_new is the predicted new coordinate. Every distance uses one declared unit.",
+      formula: "x_new = x_start + Δx",
+      latex: String.raw`x_{\mathrm{new}}=x_{\mathrm{start}}+\Delta x`,
+      steps: ["Choose zero and the positive direction on a number line.", "Write the start and measured change in the same unit.", "Add them, then check the prediction with a ruler or counted grid squares."],
+      check: "Starting at 20 cm and moving +30 cm gives x_new=50 cm=0.50 m.",
     },
     examples: [
-      { title: "Map directions", explanation: "East and north distances form a position vector.", tryIt: "Walk 3 tiles east and 4 north; measure the direct distance." },
-      { title: "Phone orientation", explanation: "Screen coordinates rotate when the phone rotates.", tryIt: "Track where the screen's up arrow points after a quarter-turn." },
-      { title: "Robot camera", explanation: "A detected cup must be transformed from camera frame to robot frame.", tryIt: "Sketch camera, base, and cup arrows with frame labels." },
+      { title: "Cardboard arm", explanation: "Paper strips are links; fasteners are revolute joints; two independent hinges give 2 DOF.", tryIt: "Record six angle pairs and trace the hand point." },
+      { title: "Floor-grid rover", explanation: "A taped origin and axes turn movement into coordinates and vectors.", tryIt: "Walk to (-2,3), then draw the start-to-finish arrow." },
+      { title: "Matrix action cards", explanation: "A small number grid can leave, scale, reflect, or rotate an input arrow.", tryIt: "Apply an identity and a quarter-turn to (1,2), one row at a time." },
     ],
-    story: { title: "The multilingual map", body: "Frames are languages. A transform is the translator that stops 'two metres ahead' from meaning two different places.", memoryHook: "No frame, no meaning." },
-    mistakes: ["Mixing centimetres and metres.", "Adding vectors expressed in different frames.", "Applying transforms in the wrong order."],
+    story: { title: "The robot’s picture dictionary", body: "The robot appears first. Every new symbol is added only when the robot needs a word for a part, motion, distance, direction, or map.", memoryHook: "Physical picture first; symbol second." },
+    mistakes: ["Memorizing symbols before naming the physical object.", "Counting objects instead of independent motions for DOF.", "Mixing configuration space with reachable workspace.", "Writing a number without its unit, axis, or origin."],
     quiz: [
-      { question: "What does a dot product near zero mean?", answer: "The vectors are close to perpendicular." },
-      { question: "Why name a coordinate frame?", answer: "The same coordinates can represent different physical points in different frames." },
+      { question: "What is one degree of freedom?", answer: "One independently changeable motion needed to describe the robot configuration." },
+      { question: "Why can two robot shapes share one hand location?", answer: "Different joint configurations can map to the same workspace point." },
     ],
-    sources: [modernRobotics, corkeBook],
+    sources: [vexRobotics, modernRobotics, openStaxCoordinates, nistSi, threeBlueOneBrown],
   },
   {
-    bigIdea: "Kinematics predicts where a robot can reach from its joint values; it describes motion geometry before forces enter the story.",
-    pareto: ["A degree of freedom is one independent motion.", "Forward kinematics maps joints to tool pose.", "A Jacobian maps small joint motion to tool motion.", "Inverse kinematics can have many, one, or no solutions."],
-    simpleExplanation: ["Treat each link as a ruler joined by a hinge.", "Rotate and add each ruler from base to tip.", "Respect joint limits and inspect unreachable targets."],
+    bigIdea: "Robot motion becomes predictable when angles and transforms connect named frames, then forward and inverse kinematics connect joints to a tool pose.",
+    pareto: ["Sine and cosine split a turned link into x and y parts.", "Transforms rotate and translate between named frames in order.", "SO(3) represents proper 3D rotation; SE(3) represents a rigid 3D pose.", "FK maps joints to pose; a Jacobian gives a local motion map for numerical IK."],
+    simpleExplanation: ["Treat each link as a ruler with a tiny map attached.", "Turn and move each map from base to tip, keeping the order visible.", "For IK, take small measured steps, recompute error, and stop safely on success or a fixed limit."],
     math: {
       title: "Two-link arm position",
-      meaning: "l₁,l₂ are link lengths in metres; θ₁,θ₂ are joint angles; x,y locate the tip in the base frame.",
+      meaning: "l₁ and l₂ are link lengths in metres; θ₁ and θ₂ are joint angles; x and y locate the tip in the named base frame.",
       formula: "x=l₁cosθ₁+l₂cos(θ₁+θ₂); y=l₁sinθ₁+l₂sin(θ₁+θ₂)",
       latex: String.raw`\begin{aligned}x &= l_1\cos\theta_1 + l_2\cos(\theta_1+\theta_2) \\ y &= l_1\sin\theta_1 + l_2\sin(\theta_1+\theta_2)\end{aligned}`,
-      steps: ["Find the first link's x and y parts.", "Use θ₁+θ₂ for the second link.", "Add both link vectors."],
+      steps: ["Convert degrees to radians if the calculator or code expects radians.", "Find each link’s horizontal part with cosine and vertical part with sine.", "The second link inherits θ₁, so use θ₁+θ₂; add both link parts."],
       check: "l₁=l₂=1 m, θ₁=0°, θ₂=90° gives x=1 m, y=1 m.",
     },
     examples: [
-      { title: "Desk lamp", explanation: "Its hinges and bars form a serial arm.", tryIt: "Measure two segments and predict the bulb position." },
-      { title: "Human arm", explanation: "Shoulder and elbow angles produce hand position.", tryIt: "Find two different elbow shapes that put your hand in one place." },
-      { title: "Door handle", explanation: "A revolute joint moves points along circles.", tryIt: "Trace the handle's arc while opening the door." },
+      { title: "Book on a tray", explanation: "Turning then carrying the tray shows rotation plus translation and why order matters.", tryIt: "Mark a point, turn 90°, shift, predict, and measure." },
+      { title: "Camera on a box", explanation: "A fixed camera follows the box’s full 3D SE(3) pose.", tryIt: "Track three marks and verify their distances stay fixed." },
+      { title: "Desk lamp", explanation: "Its bars and hinges form a serial arm for FK and small-step IK.", tryIt: "Predict the bulb position, then measure the error." },
     ],
     story: { title: "The chain of rulers", body: "Every joint hands the next link a new direction, like friends passing a compass down a chain.", memoryHook: "Rotate, extend, add." },
-    mistakes: ["Using degrees in a function expecting radians.", "Ignoring joint limits or collisions.", "Treating Euler-angle singularity as physical lockup."],
+    mistakes: ["Using degrees in a function expecting radians.", "Multiplying transforms in the wrong frame order.", "Treating Euler gimbal lock as physical lockup.", "Allowing IK steps to ignore limits, singularities, or failure budgets."],
     quiz: [
       { question: "Forward versus inverse kinematics?", answer: "Forward finds pose from joints; inverse finds joints for a desired pose." },
-      { question: "Why can inverse kinematics fail?", answer: "The target may be unreachable, constrained, singular, or blocked by limits." },
+      { question: "Why can numerical inverse kinematics fail?", answer: "The target may be unreachable, constrained, singular, poorly initialized, or blocked by limits." },
     ],
-    sources: [modernRobotics, configurationSpace, roboticsToolbox],
+    sources: [modernRobotics, threeBlueOneBrown, roboticsToolbox],
   },
   {
     bigIdea: "Feedback repeatedly measures error and corrects it, but delays, noise, and actuator limits decide whether the robot settles or oscillates.",
@@ -720,6 +725,64 @@ function uniqueSources(sources: Resource[]): Resource[] {
   return sources.filter((source, index) => sources.findIndex((item) => item.url === source.url) === index);
 }
 
+const foundationSourcesByDay: Readonly<Record<number, readonly Resource[]>> = {
+  1: [vexRobotics, modernRobotics],
+  2: [modernRobotics, vexRobotics],
+  3: [configurationSpace, modernRobotics],
+  4: [openStaxCoordinates, nistSi],
+  5: [threeBlueOneBrown, openStaxPythagoras],
+  6: [modernRobotics, threeBlueOneBrown],
+  7: [threeBlueOneBrown, modernRobotics],
+  8: [threeBlueOneBrown, modernRobotics],
+  9: [modernRobotics, threeBlueOneBrown],
+  10: [modernRobotics, corkeBook],
+  11: [modernRobotics, corkeBook],
+  12: [modernRobotics, corkeBook],
+  13: [modernRobotics, roboticsToolbox],
+  14: [modernRobotics, roboticsToolbox],
+};
+
+function firstDisplayedEquation(markdown: string): string {
+  const block = markdown.match(/\$\$([\s\S]*?)\$\$/)?.[1]?.trim();
+  if (block) return block;
+  const inline = markdown.match(/\$([^$]+)\$/)?.[1]?.trim();
+  return inline || String.raw`\text{Use today's measured relationship}`;
+}
+
+function foundationMathForDay(day: CurriculumDay, detail: TopicDetail): LessonMath {
+  const equation = firstDisplayedEquation(detail.mathMarkdown);
+  return {
+    title: `${day.title}: one checked idea at a time`,
+    meaning: "Start with the physical picture, name every number and unit, then work through only today’s relationship.",
+    formula: equation,
+    latex: equation,
+    steps: [
+      "Start with the physical object or motion. Name what each number describes before calculating.",
+      "Read the highlighted relationship from left to right and explain what each symbol means.",
+      `Check the result physically: ${detail.example.tryIt}`,
+    ],
+    check: `Your numbers, drawing, and physical check must agree. If they do not, stop and find the first mismatched meaning, order, or unit.`,
+    connection: detail.mathConnection,
+    connectionMarkdown: detail.mathMarkdown,
+  };
+}
+
+function foundationExamplesForDay(day: CurriculumDay, detail: TopicDetail): LessonExample[] {
+  return [
+    detail.example,
+    {
+      title: "Sketch before symbols",
+      explanation: "A drawing exposes the real parts, directions, limits, or motion before notation can hide a wrong assumption.",
+      tryIt: `Draw “${day.title}” using only labelled physical objects and arrows, then add each symbol beside the thing it represents.`,
+    },
+    {
+      title: "Prediction check",
+      explanation: "One known input, one predicted result, and one measurement turn an attractive explanation into evidence.",
+      tryIt: day.task,
+    },
+  ];
+}
+
 export const topicDetails: Readonly<Record<number, TopicDetail>> = {
   ...topicDetails1,
   ...topicDetails1d,
@@ -738,6 +801,7 @@ export function lessonForDay(day: CurriculumDay): DayLesson {
   if (!detail) {
     throw new RangeError(`No topic detail exists for curriculum day ${day.id}.`);
   }
+  const isZeroPrerequisiteFoundation = day.id >= 1 && day.id <= 14;
 
   return {
     ...pack,
@@ -745,46 +809,102 @@ export function lessonForDay(day: CurriculumDay): DayLesson {
     week: day.week,
     title: day.title,
     bigIdea: detail.core,
-    pareto: [
-      detail.core,
-      ...pack.pareto.slice(0, 4),
-    ],
-    simpleExplanation: [
-      detail.core,
-      ...pack.simpleExplanation.slice(0, 2),
-      `Finally, connect the result to this week's physical build: ${day.lab}`,
-    ],
-    math: {
-      ...pack.math,
-      title: `${day.title}: exact-topic connection + weekly math spine`,
-      meaning: `Start with today's exact rule or calculation, then use the weekly core formula as a second check. ${pack.math.meaning}`,
-      connection: detail.mathConnection,
-      connectionMarkdown: detail.mathMarkdown,
-    },
-    examples: [detail.example, ...pack.examples.slice(0, 2)],
-    practice: [
-      {
-        title: "Predict before building", task: `Draw the inputs, outputs, units, frame, and expected result for “${day.title}”. Predict one boundary failure.`,
-        doneWhen: "Your prediction is written before running code and can be checked objectively.",
-      },
-      {
-        title: "Build the smallest proof", task: day.task, doneWhen: day.evidence,
-      },
-      {
-        title: "Stress and explain", task: `Change one physical condition, delay, noise value, limit, or starting state in ${day.lab}; record what changes and why.`,
-        doneWhen: "You have a repeatable nominal result, one failure result, and a causal explanation.",
-      },
-    ],
-    quiz: [
-      detail.quiz,
-      ...pack.quiz,
-      {
-        question: `For “${day.title}”, what are the input, output, unit or frame, and most dangerous wrong assumption?`,
-        answer: "A strong answer names all four from today's implementation and supports the risk with an observed or deliberately tested failure.",
-      },
-    ],
-    teachBack: `Teach “${day.title}” to a 15-year-old in 90 seconds: use one everyday object, explain the week's formula symbol by symbol, predict one result, and name one failure your ${day.lab} must handle.`,
-    sources: uniqueSources([...pack.sources, day.resource]),
+    pareto: isZeroPrerequisiteFoundation
+      ? [
+          detail.core,
+          `Physical picture: ${detail.example.explanation}`,
+          `Checked relationship: ${detail.mathConnection}`,
+          `Hands-on proof: ${detail.example.tryIt}`,
+        ]
+      : [detail.core, ...pack.pareto.slice(0, 4)],
+    simpleExplanation: isZeroPrerequisiteFoundation
+      ? [
+          detail.core,
+          detail.example.explanation,
+          `Try it with the real object before adding more notation: ${detail.example.tryIt}`,
+        ]
+      : [
+          detail.core,
+          ...pack.simpleExplanation.slice(0, 2),
+          `Finally, connect the result to this week's physical build: ${day.lab}`,
+        ],
+    math: isZeroPrerequisiteFoundation
+      ? foundationMathForDay(day, detail)
+      : {
+          ...pack.math,
+          title: `${day.title}: exact-topic connection + weekly math spine`,
+          meaning: `Start with today's exact rule or calculation, then use the weekly core formula as a second check. ${pack.math.meaning}`,
+          connection: detail.mathConnection,
+          connectionMarkdown: detail.mathMarkdown,
+        },
+    examples: isZeroPrerequisiteFoundation
+      ? foundationExamplesForDay(day, detail)
+      : [detail.example, ...pack.examples.slice(0, 2)],
+    practice: isZeroPrerequisiteFoundation
+      ? [
+          {
+            title: "Name the physical picture",
+            task: `Draw the real objects and allowed motion for “${day.title}”. Add only the words and symbols introduced today.`,
+            doneWhen: "Every label points to something visible or measurable in the drawing.",
+          },
+          {
+            title: "Build today’s proof",
+            task: day.task,
+            doneWhen: day.evidence,
+          },
+          {
+            title: "Compare prediction with reality",
+            task: `Change one input in today’s paper, household-object, or browser exercise. Predict the result first, then measure it and explain any mismatch.`,
+            doneWhen: "The note contains the input, prediction, observed result, and the first cause of any difference.",
+          },
+        ]
+      : [
+          {
+            title: "Predict before building", task: `Draw the inputs, outputs, units, frame, and expected result for “${day.title}”. Predict one boundary failure.`,
+            doneWhen: "Your prediction is written before running code and can be checked objectively.",
+          },
+          {
+            title: "Build the smallest proof", task: day.task, doneWhen: day.evidence,
+          },
+          {
+            title: "Stress and explain", task: `Change one physical condition, delay, noise value, limit, or starting state in ${day.lab}; record what changes and why.`,
+            doneWhen: "You have a repeatable nominal result, one failure result, and a causal explanation.",
+          },
+        ],
+    quiz: isZeroPrerequisiteFoundation
+      ? [
+          detail.quiz,
+          {
+            question: `What physical object, motion, or measurement does the newest word or symbol in “${day.title}” represent?`,
+            answer: detail.mathConnection,
+          },
+          {
+            question: "What observation would prove that your explanation or calculation is wrong?",
+            answer: `Use today’s check and compare the prediction with the result: ${detail.example.tryIt}`,
+          },
+        ]
+      : [
+          detail.quiz,
+          ...pack.quiz,
+          {
+            question: `For “${day.title}”, what are the input, output, unit or frame, and most dangerous wrong assumption?`,
+            answer: "A strong answer names all four from today's implementation and supports the risk with an observed or deliberately tested failure.",
+          },
+        ],
+    mistakes: isZeroPrerequisiteFoundation
+      ? [
+          "Using a new word or symbol before pointing to its physical meaning.",
+          "Dropping a unit, direction, order, or limit when today’s quantity has one.",
+          "Accepting a plausible drawing without checking one known input and measured result.",
+        ]
+      : pack.mistakes,
+    teachBack: isZeroPrerequisiteFoundation
+      ? `Teach “${day.title}” to a curious 12-year-old in 90 seconds: start with one everyday object, explain only today’s new words and symbols, predict one result, and describe how today’s exercise checks it.`
+      : `Teach “${day.title}” to a curious 12-year-old in 90 seconds: start with one everyday object, explain every new word and symbol, predict one result, and name one failure your ${day.lab} must handle.`,
+    sources: uniqueSources([
+      ...(foundationSourcesByDay[day.id] ?? pack.sources),
+      day.resource,
+    ]),
     notice: ORIGINAL_SYNTHESIS_NOTICE,
   };
 }

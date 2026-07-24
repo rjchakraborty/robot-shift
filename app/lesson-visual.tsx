@@ -102,15 +102,35 @@ function DiagramLabel({
 
 function CoordinateDiagram({ spec, mode, marker }: DiagramProps) {
   const failed = mode === "failure";
-  const dayOne = spec.dayId === 1;
-  const dayTwo = spec.dayId === 2;
+  const vectorDay = spec.dayId === 5;
   const originX = 230;
   const originY = 320;
   const scale = 42;
-  const ax = dayOne ? 3 : dayTwo ? 2 : 2.2;
-  const ay = dayOne ? 4 : dayTwo ? 0 : 0.8;
-  const bx = dayOne ? 5 : dayTwo ? 0 : 3.2;
-  const by = dayOne ? 2 : dayTwo ? 2 : 1.6;
+  const scene = (() => {
+    switch (spec.dayId) {
+      case 4:
+        return { ax: 1.5, ay: -0.4, bx: 1.5, by: -0.4, inputLabel: "(150, −40) cm", outputLabel: "(1.5, −0.4) m", failureLabel: "sign or unit lost" };
+      case 5:
+        return { ax: 3, ay: 4, bx: 5, by: 2, inputLabel: "A=(3,4)", outputLabel: "B=(5,2)", failureLabel: "parts swapped" };
+      case 6:
+        return { ax: 1, ay: 0, bx: 3, by: 0, inputLabel: "local x=1 m", outputLabel: "world x=3 m", failureLabel: "axis sign wrong" };
+      case 7:
+        return { ax: 2, ay: 0, bx: 0, by: 2, inputLabel: "v=(2,0)", outputLabel: "R₉₀v=(0,2)", failureLabel: "row order wrong" };
+      case 8:
+        return { ax: 1, ay: 0, bx: 2, by: 2, inputLabel: "local (1,0)", outputLabel: "world (2,2)", failureLabel: "order reversed" };
+      case 9:
+        return { ax: 0.5, ay: 0, bx: 4, by: 0, inputLabel: "tool point 0.5 m", outputLabel: "world point 4 m", failureLabel: "chain order wrong" };
+      case 10:
+        return { ax: 1, ay: 0, bx: 0, by: 1, inputLabel: "before (1,0)", outputLabel: "after (0,1)", failureLabel: "length changed" };
+      case 11:
+        return { ax: 1, ay: 0, bx: 0, by: 1, inputLabel: "yaw 0°", outputLabel: "yaw 90°", failureLabel: "quaternion invalid" };
+      case 12:
+        return { ax: 1, ay: 0, bx: 2, by: 2, inputLabel: "local (1,0)", outputLabel: "world (2,2)", failureLabel: "pose not rigid" };
+      default:
+        return { ax: 2.2, ay: 0.8, bx: 3.2, by: 1.6, inputLabel: "input", outputLabel: "output", failureLabel: "wrong frame" };
+    }
+  })();
+  const { ax, ay, bx, by } = scene;
 
   return (
     <>
@@ -149,16 +169,25 @@ function CoordinateDiagram({ spec, mode, marker }: DiagramProps) {
           strokeDasharray="7 7"
         />
       )}
-      <DiagramLabel x={originX + ax * scale + 12} y={originY - ay * scale - 8} fill={colours.input} strong>
-        {dayOne ? "A=(3,4)" : dayTwo ? "v=(2,0)" : "input"}
+      <DiagramLabel
+        x={originX + ax * scale + 12}
+        y={originY - ay * scale - 8 + (spec.dayId === 4 ? -18 : 0)}
+        fill={colours.input}
+        strong
+      >
+        {scene.inputLabel}
       </DiagramLabel>
-      <DiagramLabel x={originX + bx * scale + 12} y={originY - by * scale - 8} fill={failed ? colours.warning : colours.output} strong>
-        {dayOne ? "B=(5,2)" : dayTwo ? "R₉₀v=(0,2)" : failed ? "wrong frame" : "output"}
+      <DiagramLabel
+        x={originX + bx * scale + 12}
+        y={originY - by * scale - 8 + (spec.dayId === 4 ? 18 : 0)}
+        fill={failed ? colours.warning : colours.output}
+        strong
+      >
+        {failed ? scene.failureLabel : scene.outputLabel}
       </DiagramLabel>
-      {mode === "math" && dayOne && (
+      {mode === "math" && vectorDay && (
         <>
-          <path d="M356 152 A150 150 0 0 1 420 236" fill="none" stroke={colours.process} strokeWidth="4" />
-          <DiagramLabel x={418} y={183} fill={colours.process}>θ≈31.4°</DiagramLabel>
+          <DiagramLabel x={418} y={183} fill={colours.process}>A·B=23</DiagramLabel>
         </>
       )}
     </>
@@ -170,6 +199,135 @@ type DiagramProps = {
   mode: VisualMode;
   marker: string;
 };
+
+function RobotAnatomyDiagram({ mode, marker }: DiagramProps) {
+  const failed = mode === "failure";
+  const blocks = [
+    { x: 55, label: "SENSE", detail: "2 sensors", tone: colours.input },
+    { x: 280, label: "THINK", detail: "1 controller", tone: colours.process },
+    { x: 505, label: "ACT", detail: "2 motors", tone: failed ? colours.warning : colours.output },
+  ];
+
+  return (
+    <>
+      {blocks.map((block) => (
+        <g key={block.label}>
+          <rect x={block.x} y="105" width="160" height="105" rx="12" fill={colours.paper} stroke={block.tone} strokeWidth="6" />
+          <DiagramLabel x={block.x + 80} y={148} anchor="middle" fill={block.tone} strong>{block.label}</DiagramLabel>
+          <DiagramLabel x={block.x + 80} y={181} anchor="middle">{block.detail}</DiagramLabel>
+        </g>
+      ))}
+      <line x1="215" y1="157" x2="272" y2="157" stroke={colours.ink} strokeWidth="4" markerEnd={`url(#${marker})`} />
+      <line
+        x1="440"
+        y1="157"
+        x2="497"
+        y2="157"
+        stroke={failed ? colours.warning : colours.ink}
+        strokeWidth="4"
+        strokeDasharray={failed ? "10 7" : undefined}
+        markerEnd={`url(#${marker})`}
+      />
+      <path
+        d="M585 218 L585 300 L135 300 L135 218"
+        fill="none"
+        stroke={failed ? colours.warning : colours.signal}
+        strokeWidth="4"
+        strokeDasharray={failed ? "10 7" : undefined}
+        markerEnd={`url(#${marker})`}
+      />
+      <DiagramLabel x={360} y={333} anchor="middle" fill={failed ? colours.warning : colours.signal}>
+        {failed ? "result is not sensed again" : "observe the result and repeat"}
+      </DiagramLabel>
+      <DiagramLabel x={135} y={78} anchor="middle">camera + range</DiagramLabel>
+      <DiagramLabel x={360} y={78} anchor="middle">program + decisions</DiagramLabel>
+      <DiagramLabel x={585} y={78} anchor="middle">wheels + arm</DiagramLabel>
+      {mode === "math" && (
+        <DiagramLabel x={360} y={382} anchor="middle" fill={colours.process} strong>
+          2 sensing + 1 thinking + 2 acting = 5 parts
+        </DiagramLabel>
+      )}
+      {failed && (
+        <>
+          <line x1="456" y1="112" x2="487" y2="202" stroke={colours.warning} strokeWidth="8" />
+          <line x1="487" y1="112" x2="456" y2="202" stroke={colours.warning} strokeWidth="8" />
+        </>
+      )}
+    </>
+  );
+}
+
+function JointDofDiagram({ mode, marker }: DiagramProps) {
+  const failed = mode === "failure";
+  const cards = [
+    { x: 45, label: "ROTATE", detail: "1 DOF", tone: colours.input },
+    { x: 270, label: "SLIDE", detail: "1 DOF", tone: colours.process },
+    { x: 495, label: "FIXED", detail: "0 DOF", tone: failed ? colours.warning : colours.output },
+  ];
+
+  return (
+    <>
+      {cards.map((card, index) => (
+        <g key={card.label}>
+          <rect x={card.x} y="75" width="180" height="235" rx="10" fill={colours.paper} stroke={card.tone} strokeWidth="5" />
+          <DiagramLabel x={card.x + 90} y={112} anchor="middle" fill={card.tone} strong>{card.label}</DiagramLabel>
+          {index === 0 && (
+            <>
+              <line x1={card.x + 45} y1="205" x2={card.x + 90} y2="165" stroke={colours.ink} strokeWidth="14" />
+              <line x1={card.x + 90} y1="165" x2={card.x + 137} y2="210" stroke={colours.ink} strokeWidth="14" />
+              <circle cx={card.x + 90} cy="165" r="17" fill={colours.paper} stroke={card.tone} strokeWidth="5" />
+              <path d={`M${card.x + 52} 155 A45 45 0 0 1 ${card.x + 128} 155`} fill="none" stroke={card.tone} strokeWidth="3" markerEnd={`url(#${marker})`} />
+            </>
+          )}
+          {index === 1 && (
+            <>
+              <rect x={card.x + 35} y="162" width="80" height="34" fill={colours.paper} stroke={colours.ink} strokeWidth="5" />
+              <line x1={card.x + 110} y1="179" x2={card.x + 150} y2="179" stroke={card.tone} strokeWidth="7" markerEnd={`url(#${marker})`} />
+            </>
+          )}
+          {index === 2 && (
+            <>
+              <line x1={card.x + 42} y1="180" x2={card.x + 138} y2="180" stroke={colours.ink} strokeWidth="18" />
+              <rect x={card.x + 79} y="157" width="22" height="46" fill={card.tone} />
+            </>
+          )}
+          <DiagramLabel x={card.x + 90} y={276} anchor="middle" fill={card.tone} strong>{card.detail}</DiagramLabel>
+        </g>
+      ))}
+      <DiagramLabel x={360} y={358} anchor="middle" fill={failed ? colours.warning : colours.ink} strong>
+        {failed ? "Do not count the fixed joint as movement" : "2 rotate + 1 slide + 1 fixed = 3 DOF"}
+      </DiagramLabel>
+    </>
+  );
+}
+
+function ConfigurationDiagram({ mode }: DiagramProps) {
+  const failed = mode === "failure";
+  const rows = [
+    { y: 95, label: "shoulder", value: "30°", position: 455, tone: colours.input },
+    { y: 185, label: "elbow", value: "−20°", position: failed ? 175 : 310, tone: colours.process },
+    { y: 275, label: "slider", value: "8 cm", position: 505, tone: colours.output },
+  ];
+
+  return (
+    <>
+      {rows.map((row, index) => (
+        <g key={row.label}>
+          <DiagramLabel x={120} y={row.y + 8} anchor="end" fill={row.tone} strong>{row.label}</DiagramLabel>
+          <line x1="155" y1={row.y} x2="555" y2={row.y} stroke={colours.grid} strokeWidth="9" strokeLinecap="round" />
+          <circle cx={row.position} cy={row.y} r="16" fill={failed && index === 1 ? colours.warning : row.tone} stroke={colours.ink} strokeWidth="3" />
+          <DiagramLabel x={585} y={row.y + 8} fill={failed && index === 1 ? colours.warning : row.tone} strong>
+            {failed && index === 1 ? "missing unit" : row.value}
+          </DiagramLabel>
+        </g>
+      ))}
+      <rect x="185" y="335" width="350" height="50" fill={colours.paper} stroke={failed ? colours.warning : colours.ink} strokeWidth="4" />
+      <DiagramLabel x={360} y={367} anchor="middle" fill={failed ? colours.warning : colours.ink} strong>
+        {failed ? "q without a fixed order or units is ambiguous" : "q = [30°, −20°, 8 cm] · 3 coordinates"}
+      </DiagramLabel>
+    </>
+  );
+}
 
 function KinematicsDiagram({ mode, marker }: DiagramProps) {
   const failed = mode === "failure";
@@ -526,6 +684,10 @@ function EvidenceDiagram({ mode }: DiagramProps) {
 }
 
 function DiagramBody(props: DiagramProps) {
+  if (props.spec.dayId === 1) return <RobotAnatomyDiagram {...props} />;
+  if (props.spec.dayId === 2) return <JointDofDiagram {...props} />;
+  if (props.spec.dayId === 3) return <ConfigurationDiagram {...props} />;
+
   const renderers: Record<VisualKind, (diagramProps: DiagramProps) => ReactNode> = {
     coordinate: CoordinateDiagram,
     kinematics: KinematicsDiagram,

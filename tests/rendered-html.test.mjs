@@ -101,7 +101,7 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     ["notes and evidence", "Notes and evidence"],
     ["progress analytics", "READINESS INSTRUMENT PANEL"],
     ["job-readiness evidence", "JOB-READINESS MATRIX"],
-    ["local persistence", "robot-shift-tracker-v1"],
+    ["local persistence", "robot-shift-tracker-v2"],
     ["persisted system, light, and dark themes", "robot-shift-theme-v1"],
     ["progress export", "Export backup"],
     ["progress import", "Import backup"],
@@ -112,12 +112,12 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     ["software-to-robotics analogy warnings", "Important difference:"],
     ["beginner teaching modes", "Explain simply"],
     ["simple math walkthroughs", "Math lab"],
-    ["26-week beginner math rescue", "BEGINNER RESCUE"],
+    ["26-week zero-prerequisite math rescue", "START FROM ZERO"],
     ["real-world application examples", "Real-life examples"],
     ["teach-back and quiz practice", "Quiz / teach-back"],
     ["inline AI teacher", "Ask the AI teacher"],
     ["collapsed official learning media", "Watch / explore"],
-    ["device-local tutor history", "robot-shift-tutor-v1"],
+    ["device-local tutor history", "robot-shift-tutor-v2"],
     ["original source synthesis notice", "Original teaching synthesis"],
   ];
 

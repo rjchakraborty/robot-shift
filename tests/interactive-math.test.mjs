@@ -21,7 +21,9 @@ function metric(model, id) {
 }
 
 function modelForKind(kind) {
-  const spec = allDayVisuals.find((item) => item.kind === kind);
+  const spec =
+    allDayVisuals.find((item) => item.kind === kind && item.dayId > 14) ??
+    allDayVisuals.find((item) => item.kind === kind);
   assert.ok(spec, `expected a ${kind} visual`);
   return createInteractiveMathModel(spec);
 }
@@ -41,7 +43,7 @@ test("all 14 visual families and all 180 days have validated interactive math", 
     const model = createInteractiveMathModel(spec);
     assert.equal(model.dayId, spec.dayId);
     assert.equal(model.kind, spec.kind);
-    assert.equal(model.controls.length >= 2 && model.controls.length <= 3, true);
+    assert.equal(model.controls.length >= 2 && model.controls.length <= 4, true);
     assert.equal(new Set(model.controls.map((item) => item.id)).size, model.controls.length);
     assert.equal(model.evaluation.steps.length, 3);
     assert.ok(model.evaluation.formula);
@@ -69,12 +71,45 @@ test("all 14 visual families and all 180 days have validated interactive math", 
 
 test("verified fixtures produce the expected worked results", () => {
   const dayOne = createInteractiveMathModel(allDayVisuals[0]);
-  assert.equal(metric(dayOne, "dot"), 23);
-  assert.ok(Math.abs(metric(dayOne, "angle") - 31.3286929) < 1e-6);
+  assert.equal(metric(dayOne, "totalParts"), 5);
+  assert.match(dayOne.title, /sense–think–act/i);
 
   const dayTwo = createInteractiveMathModel(allDayVisuals[1]);
-  assert.ok(Math.abs(metric(dayTwo, "outputX")) < 1e-9);
-  assert.ok(Math.abs(metric(dayTwo, "outputY") - 2) < 1e-9);
+  assert.equal(metric(dayTwo, "degreesOfFreedom"), 3);
+
+  const dayThree = createInteractiveMathModel(allDayVisuals[2]);
+  assert.equal(metric(dayThree, "configurationCoordinates"), 3);
+
+  const dayFive = createInteractiveMathModel(allDayVisuals[4]);
+  assert.equal(metric(dayFive, "dot"), 23);
+  assert.equal(metric(dayFive, "normA"), 5);
+  assert.ok(Math.abs(metric(dayFive, "normB") - Math.sqrt(29)) < 1e-12);
+  assert.equal(dayFive.evaluation.metrics.some((item) => item.id === "angle"), false);
+
+  const daySeven = createInteractiveMathModel(allDayVisuals[6]);
+  assert.ok(Math.abs(metric(daySeven, "outputX")) < 1e-9);
+  assert.ok(Math.abs(metric(daySeven, "outputY") - 2) < 1e-9);
+
+  const dayEight = createInteractiveMathModel(allDayVisuals[7]);
+  assert.ok(Math.abs(metric(dayEight, "outputX") - 2) < 1e-9);
+  assert.ok(Math.abs(metric(dayEight, "outputY") - 2) < 1e-9);
+
+  const dayNine = createInteractiveMathModel(allDayVisuals[8]);
+  assert.ok(metric(dayNine, "roundTripError") < 1e-9);
+  assert.ok(metric(dayNine, "orderDifference") > 0);
+  assert.match(dayNine.evaluation.formula, /RWT=RWB·RBT/);
+
+  const dayFourteen = createInteractiveMathModel(allDayVisuals[13]);
+  assert.ok(metric(dayFourteen, "targetError") < 1e-3);
+  assert.equal(metric(dayFourteen, "converged"), 1);
+  assert.ok(metric(dayFourteen, "iterationsUsed") <= dayFourteen.values.maxIterations);
+  assert.match(dayFourteen.evaluation.formula, /damped-least-squares IK/i);
+  assert.match(dayFourteen.evaluation.steps.join(" "), /finite difference/i);
+  assert.match(dayFourteen.evaluation.steps.join(" "), /0\.0001 rad/);
+
+  const dayEleven = createInteractiveMathModel(allDayVisuals[10]);
+  assert.match(dayEleven.evaluation.steps.join(" "), /q_w=/);
+  assert.doesNotMatch(dayEleven.evaluation.steps.join(" "), /qᵥ/);
 
   const kinematics = modelForKind("kinematics");
   assert.ok(Math.abs(metric(kinematics, "toolX") - 1.07308064) < 1e-6);
@@ -102,6 +137,67 @@ test("verified fixtures produce the expected worked results", () => {
   assert.ok(Math.abs(metric(modelForKind("safety"), "stopDistance") - 0.225) < 1e-12);
   assert.equal(metric(modelForKind("hardware"), "power"), 72);
   assert.equal(metric(modelForKind("evidence"), "successRate"), 92);
+});
+
+test("Day 9 distinguishes aligned addition from ordered rotated transforms", () => {
+  const spec = allDayVisuals[8];
+  const aligned = createInteractiveMathModel(spec, {
+    worldBaseAngle: 0,
+    baseToolAngle: 0,
+    pointToolX: 0.5,
+  });
+  assert.match(aligned.evaluation.status.label, /aligned translation special case/i);
+  assert.equal(metric(aligned, "orderDifference"), 0);
+  assert.match(aligned.evaluation.steps.join(" "), /2\+1\.5=3\.5 m/);
+
+  const rotated = createInteractiveMathModel(spec, {
+    worldBaseAngle: 90,
+    baseToolAngle: 0,
+    pointToolX: 0.5,
+  });
+  assert.ok(metric(rotated, "orderDifference") > 2);
+  assert.ok(metric(rotated, "roundTripError") < 1e-9);
+  assert.match(rotated.evaluation.status.explanation, /do not commute/i);
+});
+
+test("Day 14 numerical IK reports convergence, iteration exhaustion, reach, and joint limits honestly", () => {
+  const spec = allDayVisuals[13];
+  const converged = createInteractiveMathModel(spec);
+  assert.equal(metric(converged, "converged"), 1);
+  assert.ok(metric(converged, "targetError") < 1e-3);
+  assert.ok(Math.abs(metric(converged, "oracleResidual")) < 1e-9);
+
+  const exhausted = createInteractiveMathModel(spec, {
+    targetX: 1,
+    targetY: 1,
+    maxIterations: 1,
+    stepSize: 0.05,
+  });
+  assert.equal(metric(exhausted, "converged"), 0);
+  assert.ok(metric(exhausted, "targetError") > 0.1);
+  assert.match(exhausted.evaluation.status.label, /iteration bound reached/i);
+
+  const unreachable = createInteractiveMathModel(spec, {
+    targetX: 2.2,
+    targetY: 2.2,
+    maxIterations: 80,
+    stepSize: 1,
+  });
+  assert.equal(metric(unreachable, "converged"), 0);
+  assert.equal(unreachable.evaluation.status.tone, "danger");
+  assert.match(unreachable.evaluation.status.label, /outside geometric reach/i);
+
+  const limited = createInteractiveMathModel(spec, {
+    targetX: -2,
+    targetY: 0,
+    maxIterations: 80,
+    stepSize: 1,
+  });
+  assert.equal(metric(limited, "converged"), 0);
+  assert.ok(metric(limited, "jointLimitHits") > 0);
+  assert.ok(Math.abs(metric(limited, "shoulder")) <= 170);
+  assert.ok(Math.abs(metric(limited, "elbow")) <= 170);
+  assert.match(limited.evaluation.status.label, /joint limit blocked convergence/i);
 });
 
 test("minimum and maximum slider values stay finite and deterministic", () => {
