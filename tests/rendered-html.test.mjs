@@ -143,3 +143,14 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     assert.ok(!bundle.includes(clutter), `the default course UI should omit repeated or motivational copy: ${clutter}`);
   }
 });
+
+test("keeps tutor Markdown in one readable document flow", async () => {
+  const [studioSource, globalStyles] = await Promise.all([
+    readFile(new URL("../app/learning-studio.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(studioSource, /className="chat-message-meta"/);
+  assert.match(globalStyles, /\.chat-message-meta\s*\{/);
+  assert.doesNotMatch(globalStyles, /\.chat-message\s*>\s*div\s*\{/);
+});

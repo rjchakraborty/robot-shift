@@ -3271,20 +3271,20 @@ textarea::placeholder {
   border-right: 4px solid var(--signal);
 }
 
-.chat-message > div {
+.chat-message-meta {
   display: flex;
   justify-content: space-between;
   gap: 14px;
 }
 
-.chat-message > div strong,
-.chat-message > div span {
+.chat-message-meta strong,
+.chat-message-meta span {
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.6rem;
   letter-spacing: 0.06em;
 }
 
-.chat-message > div span {
+.chat-message-meta span {
   color: #9ea8aa;
 }
 
@@ -3711,7 +3711,7 @@ textarea::placeholder {
     max-width: 94%;
   }
 
-  .chat-message > div {
+  .chat-message-meta {
     align-items: start;
     flex-direction: column;
     gap: 3px;

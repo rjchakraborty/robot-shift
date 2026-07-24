@@ -787,7 +787,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
           )}
           {messages.map((message) => (
             <article key={message.id} className={`chat-message ${message.role}`}>
-              <div>
+              <div className="chat-message-meta">
                 <strong>{message.role === "user" ? "You" : "Teacher"}</strong>
                 <span>{message.mode ? modeLabels[message.mode] : "Ask"}{message.model ? ` · ${message.model}` : ""}</span>
               </div>
