@@ -131,11 +131,43 @@ test("the opening foundation assumes no maths and introduces concepts in depende
     new URL("../app/learning-studio.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(studioSource, /EXPLAIN IT LIKE I’M 12/);
+  const articleSource = await readFile(
+    new URL("../app/lesson-article.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(studioSource, /loadChapterContent\(day\.week\)/);
+  assert.doesNotMatch(
+    studioSource,
+    /primaryLessonSections|supportLessonSections|lesson-next-step|setSection\(|Optional help|<h2[^>]*>Lesson<\/h2>|lesson\.bigIdea|lesson\.simpleExplanation/,
+  );
+  assert.doesNotMatch(
+    articleSource,
+    /EXPLAIN IT LIKE|lesson\.bigIdea|lesson\.simpleExplanation|Answer before revealing|Check your understanding/,
+  );
+  assert.match(articleSource, /Build the physical picture first/);
+  assert.match(articleSource, /Words you need/);
+  assert.match(articleSource, /Math, one line at a time/);
+  assert.match(articleSource, /Interview questions: \{day\.title\}/);
+  assert.match(articleSource, /deepDive\.jobConnection\.interviewPrompt/);
+  assert.match(articleSource, /Technical follow-up questions/);
+  assert.match(articleSource, /Model interview answer/);
+  assert.equal(
+    (articleSource.match(/deepDive\.jobConnection\.interviewPrompt/g) ?? []).length,
+    1,
+    "the chapter-specific interview scenario should appear once",
+  );
+  assert.equal(
+    (articleSource.match(/<LessonMediaPanel/g) ?? []).length,
+    2,
+    "media should render once for chapter sources and once for exact foundation media",
+  );
+  assert.match(articleSource, /firstDayOfChapter \? \(/);
+  assert.match(articleSource, /hasReviewedFoundationTopicMedia\(day\.id\)/);
+  assert.match(articleSource, /sources=\{\[\]\}/);
   assert.ok(
-    studioSource.indexOf('<details className="math-rescue" open>') <
-      studioSource.indexOf("<InteractiveMathPlayground spec={visual} />"),
-    "the zero-prerequisite explanation must appear before the interactive maths controls",
+    articleSource.indexOf("Build the physical picture first")
+      < articleSource.indexOf("Work through today’s relationship"),
+    "the physical explanation must appear before the mathematics",
   );
 });
 
@@ -286,6 +318,15 @@ test("all 26 weeks include a beginner math rescue", () => {
 });
 
 test("adjacent topics resolve to different explanations, math, examples, and quizzes", () => {
+  const exactTopicMath = curriculumDays.map(
+    (day) => lessonForDay(day).math.connectionMarkdown,
+  );
+  assert.equal(
+    new Set(exactTopicMath).size,
+    180,
+    "every day needs distinct exact-topic mathematics",
+  );
+
   for (let index = 1; index < curriculumDays.length; index += 1) {
     const previous = lessonForDay(curriculumDays[index - 1]);
     const current = lessonForDay(curriculumDays[index]);
@@ -304,10 +345,13 @@ test("the live tutor is grounded in the resolved displayed lesson", async () => 
   ]);
 
   assert.match(routeSource, /lessonForDay\(day\)/);
+  assert.match(routeSource, /loadChapterContent\(day\.week\)/);
   assert.match(routeSource, /TRUSTED DISPLAYED LESSON/);
   assert.match(routeSource, /lesson\.math\.connection|lesson\.math/);
-  assert.match(routeSource, /lesson\.examples/);
-  assert.match(routeSource, /lesson\.sources/);
+  assert.match(routeSource, /deepDive\.physicalExamples/);
+  assert.match(routeSource, /deepDive\.commonMistakes/);
+  assert.match(routeSource, /deepDive\.jobConnection/);
+  assert.match(routeSource, /chapter\.sources/);
   assert.match(routeSource, /curious 12-year-old/);
   assert.match(routeSource, /assume no prior knowledge of vectors, matrices, trigonometry, algebra, or coordinate frames/);
   assert.match(routeSource, /thinkingLevel:\s*"low"/);
@@ -315,7 +359,7 @@ test("the live tutor is grounded in the resolved displayed lesson", async () => 
   assert.match(routeSource, /GitHub-Flavored Markdown/);
   assert.match(routeSource, /KaTeX-compatible LaTeX/);
   assert.match(routeSource, /Never output raw HTML/);
-  assert.match(routeSource, /authored LaTeX/);
+  assert.match(routeSource, /Exact-topic maths/);
   assert.match(studioSource, /function isRecord\(value: unknown\)/);
   assert.match(studioSource, /!isRecord\(payload\)/);
 });

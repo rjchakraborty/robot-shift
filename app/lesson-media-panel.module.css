@@ -63,8 +63,7 @@
   text-transform: uppercase;
 }
 
-.title,
-.reading h4 {
+.title {
   margin: 0;
   color: var(--ink);
   font-size: 1rem;
@@ -140,13 +139,6 @@
   color: var(--steel);
 }
 
-.attribution {
-  margin: 0;
-  color: var(--steel);
-  font-size: 0.75rem;
-  line-height: 1.5;
-}
-
 @media (min-width: 760px) {
   .body {
     grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
@@ -156,7 +148,4 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .attribution {
-    grid-column: 1 / -1;
-  }
 }

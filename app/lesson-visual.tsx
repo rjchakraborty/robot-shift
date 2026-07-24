@@ -3,9 +3,6 @@
 import {
   lazy,
   Suspense,
-  useRef,
-  useState,
-  type KeyboardEvent,
   type ReactNode,
 } from "react";
 import type { DayVisualSpec, VisualKind, VisualMode } from "./lesson-visuals";
@@ -16,15 +13,8 @@ const RichText = lazy(() => import("./rich-text").then((module) => ({
 
 export type LessonVisualProps = {
   spec: DayVisualSpec;
-  mode?: VisualMode;
-  onModeChange?: (mode: VisualMode) => void;
+  mode: VisualMode;
 };
-
-const modes: readonly { id: VisualMode; label: string }[] = [
-  { id: "concept", label: "Concept" },
-  { id: "math", label: "Math" },
-  { id: "failure", label: "Failure case" },
-];
 
 const colours = {
   ink: "var(--visual-ink)",
@@ -38,13 +28,6 @@ const colours = {
   warning: "var(--visual-warning)",
   signal: "var(--visual-signal)",
 };
-
-const legendColours = {
-  input: colours.input,
-  process: colours.process,
-  output: colours.output,
-  warning: colours.warning,
-} as const;
 
 function modeState(mode: VisualMode) {
   return mode === "failure" ? "failure" : "nominal";
@@ -710,71 +693,25 @@ function DiagramBody(props: DiagramProps) {
 
 export function LessonVisual({
   spec,
-  mode: controlledMode,
-  onModeChange,
+  mode,
 }: LessonVisualProps) {
-  const [localMode, setLocalMode] = useState<VisualMode>("concept");
-  const mode = controlledMode ?? localMode;
   const stateName = modeState(mode);
   const state = spec.states[stateName];
   const idBase = `lesson-visual-${spec.dayId}-${mode}`;
   const titleId = `${idBase}-title`;
   const descriptionId = `${idBase}-description`;
   const gridId = `${idBase}-grid`;
-  const panelId = `${idBase}-panel`;
   const accent = modeAccent(mode);
-  const modeRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
-  function selectMode(nextMode: VisualMode) {
-    if (controlledMode === undefined) setLocalMode(nextMode);
-    onModeChange?.(nextMode);
-  }
-
-  function moveMode(event: KeyboardEvent<HTMLButtonElement>, currentIndex: number) {
-    let nextIndex: number | null = null;
-    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % modes.length;
-    if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + modes.length) % modes.length;
-    if (event.key === "Home") nextIndex = 0;
-    if (event.key === "End") nextIndex = modes.length - 1;
-    if (nextIndex === null) return;
-
-    event.preventDefault();
-    selectMode(modes[nextIndex].id);
-    modeRefs.current[nextIndex]?.focus();
-  }
 
   return (
-    <section className={`lesson-visual lesson-visual--hard-border lesson-visual--${spec.kind}`} aria-labelledby={`${idBase}-heading`}>
-      <header className="lesson-visual__header">
-        <div>
-          <h3 id={`${idBase}-heading`}>Visual explanation</h3>
-        </div>
-        <div className="lesson-visual__mode-tabs lesson-tabs" role="tablist" aria-label="Visual explanation mode">
-          {modes.map((item, index) => (
-            <button
-              key={item.id}
-              ref={(node) => { modeRefs.current[index] = node; }}
-              id={`${idBase}-tab-${item.id}`}
-              type="button"
-              role="tab"
-              aria-selected={mode === item.id}
-              aria-controls={panelId}
-              tabIndex={mode === item.id ? 0 : -1}
-              className={mode === item.id ? "active" : undefined}
-              onClick={() => selectMode(item.id)}
-              onKeyDown={(event) => moveMode(event, index)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </header>
-
+    <section
+      className={`lesson-visual lesson-visual--hard-border lesson-visual--${spec.kind}`}
+      aria-label={`${spec.topic} visual explanation`}
+    >
       <div
-        id={panelId}
-        className="lesson-visual__board"
-        role="tabpanel"
-        aria-labelledby={`${idBase}-tab-${mode}`}
+        className={`lesson-visual__board ${mode === "concept" ? "lesson-visual__board--single" : ""}`}
+        role="group"
+        aria-label={`${spec.topic}: ${state.label}`}
       >
         <figure className="lesson-visual__figure formula-card">
           <span className="lesson-visual__scroll-hint">Swipe the technical canvas horizontally on a small screen.</span>
@@ -804,65 +741,34 @@ export function LessonVisual({
           </figcaption>
         </figure>
 
-        <aside className="lesson-visual__read-rail" aria-label="How to read this visual">
-          {mode === "math" && (
-            <section className="lesson-visual__math">
-              <strong>Math example</strong>
-              <Suspense fallback={<strong>{spec.math.formula}</strong>}>
-                <RichText
-                  content={`$$\n${spec.math.latex}\n$$`}
-                  className="lesson-visual__typeset"
-                />
-              </Suspense>
-              <ol>
-                {spec.math.walkthrough.map((step) => <li key={step}>{step}</li>)}
-              </ol>
-              <p>{spec.math.result}</p>
-            </section>
-          )}
+        {mode !== "concept" ? (
+          <aside className="lesson-visual__read-rail" aria-label="How to read this visual">
+            {mode === "math" ? (
+              <section className="lesson-visual__math">
+                <strong>Math example</strong>
+                <Suspense fallback={<strong>{spec.math.formula}</strong>}>
+                  <RichText
+                    content={`$$\n${spec.math.latex}\n$$`}
+                    className="lesson-visual__typeset"
+                  />
+                </Suspense>
+                <ol>
+                  {spec.math.walkthrough.map((step) => <li key={step}>{step}</li>)}
+                </ol>
+                <p>{spec.math.result}</p>
+              </section>
+            ) : null}
 
-          {mode === "failure" && (
-            <section className="lesson-visual__failure">
-              <strong>Failure check</strong>
-              <strong>{spec.states.failure.label}</strong>
-              <p>{spec.states.failure.description}</p>
-              <p>Ask: what detects this, what stops motion, and what evidence proves recovery?</p>
-            </section>
-          )}
-
-          <details className="visual-help">
-            <summary>How to read this diagram</summary>
-            <section>
-              <ol>
-                {spec.howToRead.map((step) => <li key={step}>{step}</li>)}
-              </ol>
-            </section>
-            <section className="lesson-visual__legend" aria-label="Diagram legend">
-              <strong>Legend</strong>
-              <ul>
-                {spec.legend.map((item) => (
-                  <li key={item.label}>
-                    <span
-                      aria-hidden="true"
-                      className={`lesson-visual__legend-swatch lesson-visual__legend-swatch--${item.tone}`}
-                      style={{ backgroundColor: legendColours[item.tone] }}
-                    />
-                    <strong>{item.label}:</strong> {item.meaning}
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <section className="lesson-visual__bridge">
-              <strong>Connection to {spec.softwareBridge.skill}</strong>
-              <p>{spec.softwareBridge.analogy}</p>
-              <p><strong>Important difference:</strong> {spec.softwareBridge.dangerousDifference}</p>
-            </section>
-            <section className="lesson-visual__metadata">
-              <p><strong>Units:</strong> {spec.units.join(", ")}</p>
-              <p><strong>Frames:</strong> {spec.frames.join(" → ")}</p>
-            </section>
-          </details>
-        </aside>
+            {mode === "failure" ? (
+              <section className="lesson-visual__failure">
+                <strong>Failure check</strong>
+                <strong>{spec.states.failure.label}</strong>
+                <p>{spec.states.failure.description}</p>
+                <p>Ask: what detects this, what stops motion, and what evidence proves recovery?</p>
+              </section>
+            ) : null}
+          </aside>
+        ) : null}
       </div>
     </section>
   );

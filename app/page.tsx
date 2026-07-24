@@ -516,10 +516,6 @@ function TodayView({
         <div className="hero-copy">
           <div className="viewing-state">
             <span>Day {day.id} of 180</span>
-            <button className="bookmark-inline" onClick={() => toggleBookmark(day.id)} aria-pressed={tracker.bookmarks.includes(day.id)}>
-              <span aria-hidden="true">{tracker.bookmarks.includes(day.id) ? "★" : "☆"}</span>
-              <span className="bookmark-label">{tracker.bookmarks.includes(day.id) ? "Important" : "Mark important"}</span>
-            </button>
           </div>
           <div className="hero-meta">
             <span>{phase.number}</span>
@@ -533,31 +529,19 @@ function TodayView({
 
       <LearningStudio day={day} />
 
-      <div className="today-grid">
-        <section id="practical-task" className="task-board" aria-labelledby="task-title">
-          <div className="section-heading">
-            <div><h2 id="task-title">Practical task</h2></div>
-          </div>
-          <article className="lab-card">
-            <h3>{day.lab}</h3>
-          </article>
-          <article className="proof-target-card">
-            <strong>What good work looks like</strong>
-            <p>{day.evidence}</p>
-          </article>
-          {day.checkpoint && (
-            <article className="gate-card"><span>GATE</span><strong>{day.checkpoint}</strong></article>
-          )}
-        </section>
-
+      <div className="lesson-tools">
         <details className="study-notes">
-          <summary>Notes, evidence, and source</summary>
+          <summary>Notes and evidence</summary>
           <div className="field-panel">
             <section>
-              <strong>Source</strong>
-              <a className="resource-link" href={day.resource.url} target="_blank" rel="noreferrer">
-                <span>↗</span><strong>{day.resource.label}</strong>
-              </a>
+              <label className="bookmark-checkbox">
+                <input
+                  type="checkbox"
+                  checked={tracker.bookmarks.includes(day.id)}
+                  onChange={() => toggleBookmark(day.id)}
+                />
+                Keep this day in Notes
+              </label>
             </section>
             <section>
               <label htmlFor="field-note"><strong>Notes</strong></label>
@@ -615,7 +599,9 @@ function RoadmapView({
           <option value="all">All phases</option>
           {phases.map((phase) => <option key={phase.id} value={phase.id}>{phase.number} · {phase.shortTitle}</option>)}
         </select>
-        <button onClick={clearFilters}>Clear</button>
+        {query || phaseFilter !== "all"
+          ? <button onClick={clearFilters}>Clear</button>
+          : null}
       </section>
 
       {weekNumbers.length ? (

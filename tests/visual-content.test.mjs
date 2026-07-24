@@ -37,7 +37,7 @@ test("all 180 course days have a validated exact-topic visual specification", ()
   }
 });
 
-test("every concept, math, and failure visual renders accessible deterministic SVG", () => {
+test("every concept, math, and failure visual renders as static accessible SVG", () => {
   for (const visual of allDayVisuals) {
     for (const mode of modes) {
       const html = renderToStaticMarkup(
@@ -49,21 +49,13 @@ test("every concept, math, and failure visual renders accessible deterministic S
       assert.match(html, /<title id=/);
       assert.match(html, /<desc id=/);
       assert.match(html, /<figcaption>/);
-      assert.match(html, /How to read this diagram/);
-      assert.match(html, /Legend/);
-      assert.match(html, /Important difference:/);
       assert.match(html, new RegExp(`Day ${visual.dayId}`));
       assert.ok(html.includes(visual.topic));
       assert.doesNotMatch(html, /<script\b|<foreignObject\b/i);
-      assert.equal((html.match(/\brole="tab"/g) ?? []).length, 3);
-      assert.equal((html.match(/\btabindex="0"/g) ?? []).length, 1);
-      assert.equal((html.match(/\btabindex="-1"/g) ?? []).length, 2);
-      assert.match(
-        html,
-        new RegExp(
-          `role="tabpanel" aria-labelledby="lesson-visual-${visual.dayId}-${mode}-tab-${mode}"`,
-        ),
-      );
+      assert.doesNotMatch(html, /<button\b|<details\b|role="tab(?:list|panel)?"/);
+      assert.match(html, /role="group"/);
+      if (mode === "math") assert.match(html, /Math example/);
+      if (mode === "failure") assert.match(html, /Failure check/);
 
       const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
       assert.equal(ids.length, new Set(ids).size, `day ${visual.dayId} ${mode} has duplicate SVG/DOM IDs`);

@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { curriculumDays } from "../app/curriculum";
+import {
+  hasReviewedFoundationTopicMedia,
+  REVIEWED_FOUNDATION_MEDIA_DAY_IDS,
+} from "../app/lesson-media-days";
 import { resolveLessonMedia } from "../app/lesson-media-catalog";
 
 test("official optional media covers all 26 weeks within the quiet UI limit", () => {
@@ -68,4 +72,24 @@ test("the first 14 topic titles resolve only to explicitly reviewed videos", () 
       `day ${day.id} media does not match “${day.title}”`,
     );
   }
+});
+
+test("every reviewed foundation media item is reachable on its exact lesson", () => {
+  const expectedReachableDays: number[] = [];
+
+  for (const day of curriculumDays.slice(0, 14)) {
+    const media = resolveLessonMedia(day.week, day.id);
+    const hasMedia = Boolean(media.video || media.explore.length > 0);
+    assert.equal(
+      hasReviewedFoundationTopicMedia(day.id),
+      hasMedia,
+      `day ${day.id} reachability must match its reviewed media`,
+    );
+    if (hasMedia) expectedReachableDays.push(day.id);
+  }
+
+  assert.deepEqual(
+    REVIEWED_FOUNDATION_MEDIA_DAY_IDS,
+    expectedReachableDays,
+  );
 });

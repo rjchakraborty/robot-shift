@@ -53,6 +53,18 @@ test("marks a standalone tutor equation for visual emphasis", () => {
   assert.match(html, /<p class="standalone-equation"><span class="katex"/);
 });
 
+test("promotes inline double-dollar course equations into highlighted display maths", () => {
+  const html = renderToStaticMarkup(
+    <RichText
+      content={String.raw`Count the parts: $$N=N_s+N_a.$$ Then check the physical total.`}
+    />,
+  );
+
+  assert.match(html, /Count the parts:/);
+  assert.match(html, /class="katex-display"/);
+  assert.match(html, /Then check the physical total/);
+});
+
 test("all curated weekly formulas compile as strict, untrusted KaTeX", () => {
   assert.equal(weekLessonPacks.length, 26);
 

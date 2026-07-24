@@ -80,9 +80,9 @@ test("server-renders the Robot/Shift release shell", async () => {
 
 test("ships the complete Robot/Shift curriculum manager", async () => {
   const pageAssets = (await readdir(clientAssetsRoot)).filter((file) =>
-    /^page-[\w-]+\.js$/.test(file),
+    /\.js$/.test(file),
   );
-  assert.ok(pageAssets.length > 0, "the build should emit a client page bundle");
+  assert.ok(pageAssets.length > 0, "the build should emit client bundles");
 
   const bundle = (
     await Promise.all(
@@ -91,8 +91,7 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
   ).join("\n");
 
   const releaseSignals = [
-    ["practical lesson workflow", "Practical task"],
-    ["guided lesson path", "Guided lesson path"],
+    ["practical lesson workflow", "Build today"],
     ["180-day curriculum", "Curriculum"],
     ["roadmap search and filters", "Search topics, labs, or notes"],
     ["portfolio milestones", "Portfolio projects"],
@@ -102,19 +101,20 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     ["course data export", "Export backup"],
     ["course data import", "Import backup"],
     ["guarded reset", "Reset saved course data?"],
-    ["daily knowledge studio", "Lesson"],
-    ["day-linked visual field guides", "Visual explanation"],
-    ["concept, math, and failure diagram modes", "Failure case"],
-    ["software-to-robotics analogy warnings", "Important difference:"],
-    ["beginner teaching modes", "Explain simply"],
-    ["simple math walkthroughs", "Math lab"],
-    ["26-week zero-prerequisite math rescue", "START FROM ZERO"],
-    ["real-world application examples", "Real-life examples"],
-    ["teach-back and quiz practice", "Quiz / teach-back"],
+    ["content-first lesson", "Build the physical picture first"],
+    ["beginner vocabulary", "Words you need"],
+    ["typeset exact-topic mathematics", "Math, one line at a time"],
+    ["real-world application examples", "Physical examples"],
+    ["measurable practical learning", "Hands-on exercise"],
+    ["corrected misconceptions", "Common mistakes"],
+    ["role and interview alignment", "Job connection"],
+    ["chapter-specific interview practice", "Interview questions:"],
+    ["interview scenario practice", "Primary interview scenario"],
+    ["answer-backed technical follow-ups", "Model interview answer"],
     ["inline AI teacher", "Ask the AI teacher"],
-    ["collapsed official learning media", "Watch / explore"],
+    ["compact tutor teaching mode", "Teaching style"],
+    ["chapter-level learning media", "Chapter references"],
     ["device-local tutor history", "robot-shift-tutor-v2"],
-    ["original source synthesis notice", "Original teaching synthesis"],
   ];
 
   for (const [capability, signal] of releaseSignals) {
@@ -141,6 +141,19 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     "Your first useful failure belongs here.",
     "You are changing domain, not restarting your career",
     "Six builds. Six hiring signals.",
+    "Guided lesson path",
+    "Practical task",
+    "Optional help",
+    "80/20 summary",
+    "Story and metaphor",
+    "EXPLAIN IT LIKE I’M 12",
+    "START FROM ZERO",
+    "Watch / explore",
+    "Mark important",
+    "NEXT LEARNING STEP",
+    "RECALL BEFORE REVEAL",
+    "Answer before revealing",
+    "Check your understanding",
   ]) {
     assert.ok(!bundle.includes(clutter), `the default course UI should omit repeated or motivational copy: ${clutter}`);
   }

@@ -332,17 +332,17 @@ export type CourseSkillMap = {
 };
 
 export const courseSkillMap: readonly CourseSkillMap[] = [
-  { skill: "Python", days: "Days 22–28, 85–105", startDay: 22, action: "Build tested robot utilities, data pipelines, and policy evaluation code.", terms: ["python", "pytest"] },
+  { skill: "Python", days: "Days 29–35, 85–147", startDay: 29, action: "Build ROS 2 utilities, robot-data pipelines, policy training, and evaluation code.", terms: ["python", "pytest"] },
   { skill: "C++", days: "Days 22–28", startDay: 22, action: "Build a bounded sensor→controller pipeline with CMake, tests, and deterministic replay.", terms: ["c++", "cpp", "cmake", "gtest"] },
   { skill: "ROS 2", days: "Days 29–56", startDay: 29, action: "Ship and debug multi-node ROS 2 systems using tf2, URDF, QoS, lifecycle, launch, and ros2_control.", terms: ["ros 2", "ros2", "rclcpp", "rclpy", "tf2", "urdf", "ros2_control", "nav2"] },
   { skill: "Linux", days: "Days 22–35", startDay: 22, action: "Practice device permissions, processes, timing, logs, builds, and robot-runtime diagnosis.", terms: ["linux", "bash", "ubuntu", "systemd"] },
   { skill: "Testing", days: "Days 113–119", startDay: 113, action: "Create a risk-linked regression system with pytest, gtest, launch_testing, SIL/HIL, and FAT/SAT.", terms: ["test", "testing", "qa", "regression", "pytest", "gtest", "launch_testing", "sil", "hil", "fat", "sat"] },
   { skill: "Simulation", days: "Days 43–49, 115–116", startDay: 43, action: "Build deterministic Gazebo scenarios, fault injection, and simulation-to-HIL acceptance checks.", terms: ["simulation", "gazebo", "isaac sim", "mujoco", "sil", "hil"] },
-  { skill: "Navigation / SLAM", days: "Days 57–70", startDay: 57, action: "Integrate mapping, localization, Nav2 planning, behavior trees, and recovery.", terms: ["navigation", "nav2", "slam", "localization", "mapping", "path planning", "behavior tree"] },
+  { skill: "Navigation / SLAM", days: "Days 50–77", startDay: 50, action: "Integrate mapping, localization, Nav2 planning, behavior trees, perception, state estimation, and recovery.", terms: ["navigation", "nav2", "slam", "localization", "mapping", "path planning", "behavior tree"] },
   { skill: "Deployment", days: "Days 106–119, 148–175", startDay: 106, action: "Package, deploy, observe, roll back, commission, and document a robot system.", terms: ["deployment", "commissioning", "customer site", "ota", "rollback", "fat", "sat"] },
   { skill: "Fleet / AMR", days: "Days 106–112, 117", startDay: 106, action: "Implement robot missions, task allocation, traffic, battery/docking, fleet APIs, and VDA5050/Open-RMF boundaries.", terms: ["fleet", "amr", "agv", "task allocation", "traffic management", "vda5050", "vda 5050", "open-rmf", "rmf"] },
   { skill: "Backend / APIs", days: "Days 106–109", startDay: 106, action: "Design idempotent mission APIs and safe cancellation across robot, edge, and cloud.", terms: ["backend", "api", "rest", "fastapi", "microservice", "grpc"] },
-  { skill: "Web / Mobile UI", days: "Day 110", startDay: 110, action: "Build a safe operator HMI with telemetry, stale-state indicators, access control, and dead-man teleoperation.", terms: ["react", "flutter", "android", "frontend", "ui", "hmi", "dashboard", "three.js", "threejs"] },
+  { skill: "Web / Mobile UI", days: "Days 110 and 157", startDay: 110, action: "Build a safe operator HMI and real-robot teleoperation console with telemetry, stale-state indicators, access control, and dead-man control.", terms: ["react", "flutter", "android", "frontend", "ui", "hmi", "dashboard", "three.js", "threejs"] },
   { skill: "Realtime networking", days: "Days 35, 108–110", startDay: 35, action: "Handle DDS QoS, WebSocket/WebRTC telemetry, cancellation, latency, and reconnects.", terms: ["websocket", "websockets", "webrtc", "dds", "mqtt", "zeromq", "zmq", "real-time", "realtime"] },
   { skill: "Cloud / DevOps", days: "Days 109–112, 169–175", startDay: 109, action: "Containerize edge/cloud services and practice versioned config, CI, canaries, and rollback.", terms: ["docker", "kubernetes", "k8s", "ci/cd", "devops", "cloud", "aws", "gcp"] },
   { skill: "Observability", days: "Days 112, 169–175", startDay: 112, action: "Join logs, metrics, traces, bags, alerts, and SLOs into a repeatable fault investigation.", terms: ["observability", "telemetry", "logging", "metrics", "tracing", "alerting", "slo"] },
@@ -351,7 +351,7 @@ export const courseSkillMap: readonly CourseSkillMap[] = [
   { skill: "ML / PyTorch", days: "Days 85–105, 120–147", startDay: 85, action: "Train and evaluate applied robot policies; measure failures and distribution shift.", terms: ["pytorch", "machine learning", "ml", "neural network", "behavior cloning", "imitation learning"] },
   { skill: "LLM / VLA", days: "Days 120–147", startDay: 120, action: "Ground language in safe robot skills with tool contracts, evaluation, guardrails, and recovery.", terms: ["llm", "vla", "vision-language-action", "multimodal", "lerobot", "openvla", "gemini robotics", "gr00t"] },
   { skill: "Databases / messaging", days: "Days 107–109", startDay: 107, action: "Model missions and telemetry with PostgreSQL, Redis, event streams, ordering, and backpressure.", terms: ["postgres", "postgresql", "redis", "kafka", "rabbitmq", "database", "sql", "queue", "messaging", "event stream"] },
-  { skill: "Controls / kinematics", days: "Days 1–21, 71–84", startDay: 1, action: "Explain and implement frames, kinematics, PID, planning, and manipulation fundamentals.", terms: ["kinematics", "dynamics", "control", "pid", "jacobian", "motion planning", "moveit"] },
+  { skill: "Controls / kinematics", days: "Days 1–21 and 78–84", startDay: 1, action: "Explain and implement frames, kinematics, PID, planning, and manipulation fundamentals.", terms: ["kinematics", "dynamics", "control", "pid", "jacobian", "motion planning", "moveit"] },
 ];
 
 export type SkillCount = {

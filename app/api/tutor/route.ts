@@ -1,4 +1,9 @@
 import { getChatGPTUser } from "../../chatgpt-auth";
+import { loadChapterContent } from "../../chapter-content";
+import type {
+  ChapterContent,
+  DailyLessonDeepDive,
+} from "../../chapter-content-types";
 import { curriculumDays, type CurriculumDay } from "../../curriculum";
 import { lessonForDay, type DayLesson } from "../../lessons";
 
@@ -103,6 +108,16 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse(404, "That curriculum day does not exist.");
   }
   const lesson = lessonForDay(day);
+  let chapter: ChapterContent;
+  try {
+    chapter = await loadChapterContent(day.week);
+  } catch {
+    return errorResponse(500, "The trusted chapter content could not be loaded.");
+  }
+  const deepDive = chapter.days.find((item) => item.dayId === day.id);
+  if (!deepDive) {
+    return errorResponse(500, "The trusted daily lesson content is incomplete.");
+  }
 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
@@ -142,7 +157,13 @@ export async function POST(request: Request): Promise<Response> {
         systemInstruction: {
           parts: [
             {
-              text: buildTeacherInstruction(day, lesson, parsed.value.mode),
+              text: buildTeacherInstruction(
+                day,
+                lesson,
+                chapter,
+                deepDive,
+                parsed.value.mode,
+              ),
             },
           ],
         },
@@ -312,6 +333,8 @@ function parseTutorRequest(
 function buildTeacherInstruction(
   day: CurriculumDay,
   lesson: DayLesson,
+  chapter: ChapterContent,
+  deepDive: DailyLessonDeepDive,
   mode: TutorMode,
 ): string {
   const modeInstruction: Record<TutorMode, string> = {
@@ -341,14 +364,17 @@ CURRENT TRUSTED CURRICULUM CONTEXT
 - Time budget: ${day.minutes} minutes
 
 TRUSTED DISPLAYED LESSON
-- Big idea: ${lesson.bigIdea}
-- Vital ideas: ${lesson.pareto.join(" | ")}
-- Beginner explanation: ${lesson.simpleExplanation.join(" ")}
-- Math: ${lesson.math.title}; ${lesson.math.meaning}; readable formula ${lesson.math.formula}; authored LaTeX ${lesson.math.latex}; worked steps ${lesson.math.steps.join(" → ")}; check ${lesson.math.check}
-- Physical examples: ${lesson.examples.map((example) => `${example.title}: ${example.explanation} Try: ${example.tryIt}`).join(" | ")}
-- Practice: ${lesson.practice.map((practice) => `${practice.title}: ${practice.task} Done when: ${practice.doneWhen}`).join(" | ")}
-- Common mistakes: ${lesson.mistakes.join(" | ")}
-- Memory story: ${lesson.story.title}: ${lesson.story.body} Hook: ${lesson.story.memoryHook}
+- Chapter: ${chapter.title}
+- Chapter purpose: ${chapter.purpose}
+- Mental model: ${deepDive.mentalModel}
+- Beginner explanation: ${deepDive.explanation.join(" ")}
+- Key terms: ${deepDive.keyTerms.map((item) => `${item.term}: ${item.meaning}; physical example: ${item.physicalExample}`).join(" | ")}
+- Exact-topic maths: ${lesson.math.connectionMarkdown ?? lesson.math.latex}
+- Worked example: ${deepDive.workedExample.title}; setup: ${deepDive.workedExample.setup}; steps: ${deepDive.workedExample.steps.join(" → ")}; result: ${deepDive.workedExample.result}; takeaway: ${deepDive.workedExample.takeaway}
+- Physical examples: ${deepDive.physicalExamples.map((example) => `${example.title}: ${example.scenario}; observe: ${example.lookFor}`).join(" | ")}
+- Hands-on exercise: ${deepDive.handsOn.setup}; steps: ${deepDive.handsOn.steps.join(" → ")}; observe: ${deepDive.handsOn.observe}; done when: ${deepDive.handsOn.doneWhen}
+- Common mistakes and corrections: ${deepDive.commonMistakes.map((item) => `${item.mistake} → ${item.correction}`).join(" | ")}
+- Job connection: roles ${deepDive.jobConnection.roles.join(", ")}; work example: ${deepDive.jobConnection.workExample}; interview prompt: ${deepDive.jobConnection.interviewPrompt}
 
 TEACHING MODE
 ${modeInstruction[mode]}
@@ -369,7 +395,7 @@ TEACHING RULES
 13. Keep a normal answer under 650 words. In quiz mode, end with exactly one question.
 
 APPROVED REFERENCE LINKS
-${lesson.sources.map((source) => `- ${source.label}: ${source.url}`).join("\n")}
+${chapter.sources.map((source) => `- ${source.label}: ${source.url} — use for ${source.useFor}`).join("\n")}
 
 You cannot browse during this answer. Cite only an approved link, using its exact URL, when it genuinely supports the lesson.`;
 }

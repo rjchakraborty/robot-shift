@@ -12,6 +12,27 @@ import {
   THEME_STORAGE_KEY,
 } from "../app/theme.ts";
 
+function contrastRatio(foreground, background) {
+  const luminance = (hex) => {
+    const channels = hex
+      .match(/[0-9a-f]{2}/gi)
+      .map((part) => Number.parseInt(part, 16) / 255)
+      .map((value) => (
+        value <= 0.04045
+          ? value / 12.92
+          : ((value + 0.055) / 1.055) ** 2.4
+      ));
+    return (
+      (0.2126 * channels[0])
+      + (0.7152 * channels[1])
+      + (0.0722 * channels[2])
+    );
+  };
+  const values = [luminance(foreground), luminance(background)]
+    .sort((left, right) => right - left);
+  return (values[0] + 0.05) / (values[1] + 0.05);
+}
+
 test("theme preferences resolve deterministically", () => {
   assert.equal(parseThemePreference("system"), "system");
   assert.equal(parseThemePreference("light"), "light");
@@ -75,13 +96,33 @@ test("dark mode covers page surfaces and both vector teaching systems", async ()
 test("dark lesson and career edge states keep accessible semantic contrast", async () => {
   const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
-  assert.match(css, /\.lesson-kicker\s*\{[^}]*color:\s*var\(--signal-text\)/s);
-  assert.match(css, /\.example-card\s*>\s*span\s*\{[^}]*color:\s*var\(--signal-text\)/s);
-  assert.match(css, /\.quiz-list summary\s*>\s*span\s*\{[^}]*color:\s*var\(--signal-text\)/s);
-  assert.match(css, /\.practice-list article\s*>\s*span\s*\{[^}]*color:\s*var\(--text-on-accent\)/s);
-  assert.match(css, /\.story-lesson\s*>\s*p\s*\{[^}]*color:\s*var\(--steel\)/s);
+  assert.match(
+    css,
+    /\.lesson-article__deliverable h3\s*\{[^}]*color:\s*var\(--steel\)/s,
+  );
+  assert.match(
+    css,
+    /\.lesson-article__deliverable p\s*\{[^}]*color:\s*var\(--ink\)/s,
+  );
   assert.match(
     css,
     /\.career-jd-input:focus-visible\s*\{[^}]*outline:\s*3px solid var\(--cyan\)/s,
   );
+});
+
+test("the fixed dark tutor keeps readable colors in both page themes", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+
+  assert.match(css, /\.tutor-panel\s*\{[^}]*color:\s*#f8fafc/s);
+  assert.match(
+    css,
+    /\.tutor-panel \.tutor-mode-select\s*\{[^}]*color:\s*#dce0df/s,
+  );
+  assert.match(
+    css,
+    /\.tutor-panel \.tutor-mode-select select\s*\{[^}]*background:\s*#151b1e[^}]*color:\s*#f8fafc/s,
+  );
+  assert.ok(contrastRatio("#f8fafc", "#20282b") >= 4.5);
+  assert.ok(contrastRatio("#dce0df", "#20282b") >= 4.5);
+  assert.ok(contrastRatio("#f8fafc", "#151b1e") >= 4.5);
 });

@@ -45,12 +45,26 @@ function isMathOnlyParagraph(children: ReactNode) {
   return typeof className === "string" && /\bkatex(?:-display)?\b/.test(className);
 }
 
+function normalizeDisplayMathBlocks(content: string) {
+  return content
+    .split(/(```[\s\S]*?```)/g)
+    .map((segment) => {
+      if (segment.startsWith("```")) return segment;
+      return segment.replace(
+        /\$\$([\s\S]*?)\$\$/g,
+        (_, expression: string) => `\n\n$$\n${expression.trim()}\n$$\n\n`,
+      );
+    })
+    .join("");
+}
+
 export const RichText = memo(function RichText({
   content,
   className,
   allowedLinks,
 }: RichTextProps) {
   const approved = allowedLinks ? new Set(allowedLinks.map((url) => new URL(url).href)) : undefined;
+  const normalizedContent = normalizeDisplayMathBlocks(content);
 
   return (
     <div className={className}>
@@ -86,7 +100,7 @@ export const RichText = memo(function RichText({
           ),
         }}
       >
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );

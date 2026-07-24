@@ -4,19 +4,16 @@ import {
   lazy,
   Suspense,
   type FormEvent,
-  type KeyboardEvent,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { loadChapterContent } from "./chapter-content";
+import type { ChapterContent } from "./chapter-content-types";
 import { type CurriculumDay } from "./curriculum";
-import { InteractiveMathPlayground } from "./interactive-math-playground";
-import { LessonMediaPanel } from "./lesson-media-panel";
-import { LessonVisual } from "./lesson-visual";
-import { allDayVisuals } from "./lesson-visuals";
+import { LessonArticle } from "./lesson-article";
 import { lessonForDay } from "./lessons";
-import { getMathRescue } from "./math-rescue";
 import {
   archiveLegacyPayload,
   CURRICULUM_REVISION,
@@ -39,48 +36,18 @@ type LearningStudioProps = {
   day: CurriculumDay;
 };
 
-export type LessonSection =
-  | "visual"
-  | "pareto"
-  | "simple"
-  | "math"
-  | "examples"
-  | "practice"
-  | "quiz"
-  | "story";
-
 type TutorMode = StoredTutorMode;
 type TutorRole = "user" | "assistant";
 type TutorMessage = StoredTutorMessage;
 type TutorThread = StoredTutorThread;
 type TutorStore = TutorStoreV2;
+
 const MAX_INPUT_LENGTH = 2_000;
 const MAX_MESSAGE_LENGTH = 7_000;
 const MAX_HISTORY_ITEM_LENGTH = 2_500;
 const MAX_HISTORY_LENGTH = 10_000;
 const MAX_MESSAGES_PER_DAY = 12;
 const MAX_STORED_DAYS = 14;
-
-type LessonSectionItem = {
-  id: LessonSection;
-  label: string;
-  shortLabel: string;
-  hint: string;
-};
-
-const primaryLessonSections: LessonSectionItem[] = [
-  { id: "visual", label: "Visual guide", shortLabel: "Visual", hint: "See the system" },
-  { id: "simple", label: "Explain simply", shortLabel: "Explain", hint: "Build intuition" },
-  { id: "math", label: "Math lab", shortLabel: "Math", hint: "Move the numbers" },
-  { id: "examples", label: "Real-life examples", shortLabel: "Examples", hint: "See it at work" },
-  { id: "practice", label: "Practice", shortLabel: "Practise", hint: "Try it yourself" },
-  { id: "quiz", label: "Quiz / teach-back", shortLabel: "Check", hint: "Explain it back" },
-];
-
-const supportLessonSections: LessonSectionItem[] = [
-  { id: "pareto", label: "80/20 summary", shortLabel: "80/20", hint: "Only the vital ideas" },
-  { id: "story", label: "Story and metaphor", shortLabel: "Story", hint: "Make it memorable" },
-];
 
 const tutorModes: {
   id: Exclude<TutorMode, "ask">;
@@ -89,45 +56,46 @@ const tutorModes: {
 }[] = [
   {
     id: "pareto",
-    label: "80/20",
+    label: "Show the vital 20%",
     prompt: "What is the most important 20% I should understand and remember today?",
   },
   {
     id: "simple",
-    label: "Explain simpler",
+    label: "Explain more simply",
     prompt: "Explain this in even simpler words with one everyday example.",
   },
   {
     id: "math",
-    label: "Math walkthrough",
+    label: "Walk through the maths",
     prompt: "Walk me through today’s math one tiny step at a time. Explain every symbol.",
   },
   {
     id: "solve",
-    label: "Solve step-by-step",
+    label: "Solve one problem",
     prompt: "Give me one beginner problem and show the complete step-by-step solution.",
   },
   {
     id: "quiz",
-    label: "Quiz & diagnose",
+    label: "Quiz and diagnose me",
     prompt: "Test me one question at a time, diagnose my gaps, and correct me gently.",
   },
   {
     id: "story",
-    label: "Story & metaphor",
+    label: "Give me a memory metaphor",
     prompt: "Turn this idea into a memorable story or physical metaphor.",
   },
 ];
+
 const cannedTutorPrompts = new Set(tutorModes.map((item) => item.prompt));
 
 const modeLabels: Record<TutorMode, string> = {
-  ask: "Ask",
-  pareto: "80/20",
-  simple: "Explain simpler",
+  ask: "Ask normally",
+  pareto: "Vital 20%",
+  simple: "Explain simply",
   math: "Math walkthrough",
-  solve: "Solve step-by-step",
-  quiz: "Quiz & diagnose",
-  story: "Story & metaphor",
+  solve: "Solved problem",
+  quiz: "Quiz and diagnose",
+  story: "Memory metaphor",
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -135,7 +103,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function createMessageId() {
-  if (typeof window !== "undefined" && typeof window.crypto?.randomUUID === "function") {
+  if (
+    typeof window !== "undefined"
+    && typeof window.crypto?.randomUUID === "function"
+  ) {
     return window.crypto.randomUUID();
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -147,7 +118,8 @@ function withUpdatedThread(
   updater: (messages: TutorMessage[]) => TutorMessage[],
 ) {
   const dayKey = String(dayId);
-  const messages = updater(current[dayKey]?.messages ?? []).slice(-MAX_MESSAGES_PER_DAY);
+  const messages = updater(current[dayKey]?.messages ?? [])
+    .slice(-MAX_MESSAGES_PER_DAY);
   const next: Record<string, TutorThread> = {
     ...current,
     [dayKey]: { updatedAt: Date.now(), messages },
@@ -176,13 +148,8 @@ function historyForRequest(messages: TutorMessage[]) {
 
 export function LearningStudio({ day }: LearningStudioProps) {
   const lesson = useMemo(() => lessonForDay(day), [day]);
-  const mathRescue = useMemo(() => getMathRescue(day.week), [day.week]);
-  const approvedSourceUrls = useMemo(
-    () => lesson.sources.map((source) => source.url),
-    [lesson.sources],
-  );
-  const visual = allDayVisuals[day.id - 1];
-  const [section, setSection] = useState<LessonSection>("visual");
+  const [chapter, setChapter] = useState<ChapterContent | null>(null);
+  const [chapterError, setChapterError] = useState<string | null>(null);
   const [threads, setThreads] = useState<Record<string, TutorThread>>({});
   const [storageReady, setStorageReady] = useState(false);
   const [storageNotice, setStorageNotice] = useState<string | null>(null);
@@ -190,13 +157,39 @@ export function LearningStudio({ day }: LearningStudioProps) {
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const tabRefs = useRef<Partial<Record<LessonSection, HTMLButtonElement | null>>>({});
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<AbortController | null>(null);
   const skipNextTutorSaveRef = useRef(false);
   const dayKey = String(day.id);
   const messages = threads[dayKey]?.messages ?? [];
+  const deepDive = chapter?.days.find((item) => item.dayId === day.id);
+  const approvedSourceUrls = useMemo(
+    () => (chapter?.sources ?? lesson.sources).map((source) => source.url),
+    [chapter, lesson.sources],
+  );
+
+  useEffect(() => {
+    let active = true;
+
+    void loadChapterContent(day.week)
+      .then((content) => {
+        if (active) {
+          setChapter(content);
+          setChapterError(null);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setChapter(null);
+          setChapterError("This chapter could not be loaded. Refresh the page and try again.");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [day.week]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -208,7 +201,9 @@ export function LearningStudio({ day }: LearningStudioProps) {
             setThreads(parsed.threads);
           } else {
             skipNextTutorSaveRef.current = true;
-            setStorageNotice("Saved version 2 tutor history was unreadable and was not overwritten.");
+            setStorageNotice(
+              "Saved version 2 tutor history was unreadable and was not overwritten.",
+            );
           }
         } else {
           const legacyRaw = window.localStorage.getItem(LEGACY_TUTOR_STORAGE_KEY);
@@ -228,16 +223,21 @@ export function LearningStudio({ day }: LearningStudioProps) {
               );
             } else {
               skipNextTutorSaveRef.current = true;
-              setStorageNotice("Version 1 tutor history was archived but could not be migrated.");
+              setStorageNotice(
+                "Version 1 tutor history was archived but could not be migrated.",
+              );
             }
           }
         }
       } catch {
-        setStorageNotice("Tutor history is available for this visit, but this browser cannot save it.");
+        setStorageNotice(
+          "Tutor history is available for this visit, but this browser cannot save it.",
+        );
       } finally {
         setStorageReady(true);
       }
     }, 0);
+
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -247,6 +247,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
       skipNextTutorSaveRef.current = false;
       return;
     }
+
     try {
       const store: TutorStore = {
         version: 2,
@@ -256,7 +257,9 @@ export function LearningStudio({ day }: LearningStudioProps) {
       window.localStorage.setItem(TUTOR_STORAGE_KEY, JSON.stringify(store));
     } catch {
       const timer = window.setTimeout(() => {
-        setStorageNotice("Tutor history is available for this visit, but the browser could not save it.");
+        setStorageNotice(
+          "Tutor history is available for this visit, but the browser could not save it.",
+        );
       }, 0);
       return () => window.clearTimeout(timer);
     }
@@ -265,12 +268,12 @@ export function LearningStudio({ day }: LearningStudioProps) {
   useEffect(() => {
     requestRef.current?.abort();
     const timer = window.setTimeout(() => {
-      setSection("visual");
       setLoading(false);
       setError(null);
       setMode("ask");
       setDraft("");
     }, 0);
+
     return () => window.clearTimeout(timer);
   }, [day.id]);
 
@@ -278,18 +281,20 @@ export function LearningStudio({ day }: LearningStudioProps) {
 
   useEffect(() => {
     const chat = chatRef.current;
-    if (chat) {
-      const reduceMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-      chat.scrollTo({
-        top: chat.scrollHeight,
-        behavior: reduceMotion ? "auto" : "smooth",
-      });
-    }
+    if (!chat) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    chat.scrollTo({
+      top: chat.scrollHeight,
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
   }, [messages.length, loading]);
 
-  function chooseTutorMode(nextMode: Exclude<TutorMode, "ask">, prompt: string) {
+  function chooseTutorMode(
+    nextMode: Exclude<TutorMode, "ask">,
+    prompt: string,
+  ) {
     setMode(nextMode);
     setDraft((current) => {
       const trimmed = current.trim();
@@ -299,22 +304,17 @@ export function LearningStudio({ day }: LearningStudioProps) {
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }
 
-  function moveTab(
-    event: KeyboardEvent<HTMLButtonElement>,
-    currentIndex: number,
-    items: readonly LessonSectionItem[],
-  ) {
-    let nextIndex: number | null = null;
-    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % items.length;
-    if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + items.length) % items.length;
-    if (event.key === "Home") nextIndex = 0;
-    if (event.key === "End") nextIndex = items.length - 1;
-    if (nextIndex === null) return;
+  function changeTutorMode(nextMode: TutorMode) {
+    if (nextMode === "ask") {
+      setMode("ask");
+      setDraft((current) => (
+        cannedTutorPrompts.has(current.trim()) ? "" : current
+      ));
+      return;
+    }
 
-    event.preventDefault();
-    const nextSection = items[nextIndex].id;
-    setSection(nextSection);
-    tabRefs.current[nextSection]?.focus();
+    const option = tutorModes.find((item) => item.id === nextMode);
+    if (option) chooseTutorMode(option.id, option.prompt);
   }
 
   async function submitQuestion(event: FormEvent<HTMLFormElement>) {
@@ -359,10 +359,10 @@ export function LearningStudio({ day }: LearningStudioProps) {
 
       const payload: unknown = await response.json().catch(() => null);
       if (
-        !response.ok ||
-        !isRecord(payload) ||
-        typeof payload.answer !== "string" ||
-        payload.answer.trim().length === 0
+        !response.ok
+        || !isRecord(payload)
+        || typeof payload.answer !== "string"
+        || payload.answer.trim().length === 0
       ) {
         const apiError = isRecord(payload) && typeof payload.error === "string"
           ? payload.error
@@ -379,8 +379,11 @@ export function LearningStudio({ day }: LearningStudioProps) {
         role: "assistant",
         content: answer,
         mode,
-        model: typeof payload.model === "string" ? payload.model.slice(0, 100) : undefined,
+        model: typeof payload.model === "string"
+          ? payload.model.slice(0, 100)
+          : undefined,
       };
+
       setThreads((current) => withUpdatedThread(
         current,
         submittedDay,
@@ -388,7 +391,11 @@ export function LearningStudio({ day }: LearningStudioProps) {
       ));
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") return;
-      setError(caught instanceof Error ? caught.message : "The tutor could not answer right now.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The tutor could not answer right now.",
+      );
     } finally {
       if (requestRef.current === controller) {
         requestRef.current = null;
@@ -413,407 +420,156 @@ export function LearningStudio({ day }: LearningStudioProps) {
   }
 
   return (
-    <section className="learning-studio" aria-labelledby={`learning-studio-title-${day.id}`}>
-      <header className="studio-heading">
-        <div>
-          <h2 id={`learning-studio-title-${day.id}`}>Lesson</h2>
-          <p>{lesson.bigIdea}</p>
-        </div>
-      </header>
-
-      <div className="lesson-path" role="tablist" aria-label="Guided lesson path">
-        {primaryLessonSections.map((item, index) => (
-          <button
-            key={item.id}
-            ref={(node) => { tabRefs.current[item.id] = node; }}
-            id={`lesson-tab-${day.id}-${item.id}`}
-            type="button"
-            role="tab"
-            aria-label={item.label}
-            aria-selected={section === item.id}
-            aria-controls={`lesson-panel-${day.id}`}
-            tabIndex={
-              section === item.id
-                || (!primaryLessonSections.some((stage) => stage.id === section) && index === 0)
-                ? 0
-                : -1
-            }
-            className={section === item.id ? "active" : ""}
-            onClick={() => setSection(item.id)}
-            onKeyDown={(event) => moveTab(event, index, primaryLessonSections)}
-          >
-            <strong>{item.shortLabel}</strong>
-          </button>
-        ))}
-      </div>
-
-      <details className="lesson-support-bar optional-panel">
-        <summary>Optional help</summary>
-        <div className="lesson-support-tabs">
-          <div aria-label="Supporting lesson tools">
-            {supportLessonSections.map((item) => (
-              <button
-                key={item.id}
-                ref={(node) => { tabRefs.current[item.id] = node; }}
-                id={`lesson-tab-${day.id}-${item.id}`}
-                type="button"
-                aria-pressed={section === item.id}
-                aria-controls={`lesson-panel-${day.id}`}
-                className={section === item.id ? "active" : ""}
-                onClick={() => setSection(item.id)}
-              >
-                {item.shortLabel}
-              </button>
-            ))}
-          </div>
-        </div>
-      </details>
-
-      <div
-        className="lesson-panel"
-        id={`lesson-panel-${day.id}`}
-        role={primaryLessonSections.some((item) => item.id === section) ? "tabpanel" : "region"}
-        aria-labelledby={`lesson-tab-${day.id}-${section}`}
-        tabIndex={0}
-      >
-        {section === "visual" && <LessonVisual spec={visual} />}
-
-        {section === "pareto" && (
-          <div className="lesson-section lesson-pareto">
-            <div className="lesson-lead">
-              <span>THE ONE-SENTENCE MODEL</span>
-              <p>{lesson.bigIdea}</p>
-            </div>
-            <div className="lesson-two-column">
-              <div>
-                <h3>The vital 20%</h3>
-                <ol className="lesson-list">
-                  {lesson.pareto.map((point, index) => <li key={`${index}-${point}`}>{point}</li>)}
-                </ol>
-              </div>
-              <div>
-                <h3>Traps to avoid</h3>
-                <ul className="lesson-list warning-list">
-                  {lesson.mistakes.map((mistake, index) => <li key={`${index}-${mistake}`}>{mistake}</li>)}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {section === "simple" && (
-          <div className="lesson-section">
-            <span className="lesson-kicker">EXPLAIN IT LIKE I’M 12</span>
-            <h3>{day.title}, without the fog</h3>
-            <div className="lesson-prose">
-              {lesson.simpleExplanation.map((paragraph, index) => <p key={`${index}-${paragraph}`}>{paragraph}</p>)}
-            </div>
-            <aside className="lesson-connection">
-              <strong>Connect it to today’s build</strong>
-              <p>{day.task}</p>
-            </aside>
-          </div>
-        )}
-
-        {section === "math" && (
-          <div className="lesson-section math-lesson">
-            <span className="lesson-kicker">NO-SKIPPED-STEPS MATH</span>
-            <h3>{lesson.math.title}</h3>
-            <p>{lesson.math.meaning}</p>
-            <details className="math-rescue" open>
-              <summary>
-                <span>START FROM ZERO // WEEK {String(day.week).padStart(2, "0")}</span>
-                {mathRescue.title}
-              </summary>
-              <div className="math-rescue-body">
-                <p>{mathRescue.whyItMatters}</p>
-                <div className="math-symbols" aria-label="Symbols used this week">
-                  {mathRescue.symbols.map((item) => (
-                    <article key={item.symbol}>
-                      <strong>{item.symbol}</strong>
-                      <span>{item.meaning}</span>
-                      <small>Unit: {item.unit}</small>
-                    </article>
-                  ))}
-                </div>
-                <ol className="math-steps">
-                  {mathRescue.workedSteps.map((step, index) => (
-                    <li key={step}>
-                      <span>{String(index + 1).padStart(2, "0")}</span>
-                      <p>{step}</p>
-                    </li>
-                  ))}
-                </ol>
-                <aside className="math-analogy">
-                  <strong>Connect to software you already know</strong>
-                  <p>{mathRescue.analogy}</p>
-                </aside>
-                <details className="math-quick-check">
-                  <summary>Quick check: {mathRescue.quickCheck}</summary>
-                  <p><strong>Answer:</strong> {mathRescue.answer}</p>
-                </details>
-              </div>
-            </details>
-            {lesson.math.connection && (
-              <div className="math-topic-connection">
-                <strong>Today’s exact-topic connection</strong>
-                {lesson.math.connectionMarkdown ? (
-                  <Suspense fallback={<p>{lesson.math.connection}</p>}>
-                    <RichText content={lesson.math.connectionMarkdown} className="math-connection-markdown" />
-                  </Suspense>
-                ) : (
-                  <p>{lesson.math.connection}</p>
-                )}
-              </div>
-            )}
-            <div className="formula-card" aria-label={`Formula: ${lesson.math.formula}`}>
-              <span>{day.id <= 14 ? "TODAY’S CHECKED RELATIONSHIP" : "WEEKLY CORE FORMULA"}</span>
-              <Suspense fallback={<strong>{lesson.math.formula}</strong>}>
-                <RichText
-                  content={`$$\n${lesson.math.latex}\n$$`}
-                  className="formula-typeset"
-                />
-              </Suspense>
-            </div>
-            <ol className="math-steps">
-              {lesson.math.steps.map((step, index) => (
-                <li key={`${index}-${step}`}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <p>{step}</p>
-                </li>
-              ))}
-            </ol>
-            <div className="math-check">
-              <strong>Sanity check</strong>
-              <p>{lesson.math.check}</p>
-            </div>
-            <InteractiveMathPlayground spec={visual} />
-          </div>
-        )}
-
-        {section === "examples" && (
-          <div className="lesson-section">
-            <span className="lesson-kicker">FROM SYMBOLS TO THE PHYSICAL WORLD</span>
-            <h3>Three places this idea becomes real</h3>
-            <div className="example-grid">
-              {lesson.examples.map((example, index) => (
-                <article key={example.title} className="example-card">
-                  <span>0{index + 1}</span>
-                  <h4>{example.title}</h4>
-                  <p>{example.explanation}</p>
-                  <div><strong>Try it:</strong> {example.tryIt}</div>
-                </article>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {section === "practice" && (
-          <div className="lesson-section">
-            <span className="lesson-kicker">ACTIVE PRACTICE</span>
-            <h3>Do, observe, explain.</h3>
-            <div className="practice-list">
-              {lesson.practice.map((exercise, index) => (
-                <article key={exercise.title}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <div>
-                    <h4>{exercise.title}</h4>
-                    <p>{exercise.task}</p>
-                    <small><strong>Done when:</strong> {exercise.doneWhen}</small>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <aside className="lesson-connection">
-              <strong>Today’s evidence target</strong>
-              <p>{day.evidence}</p>
-            </aside>
-          </div>
-        )}
-
-        {section === "quiz" && (
-          <div className="lesson-section">
-            <span className="lesson-kicker">RECALL BEFORE REVEAL</span>
-            <h3>Answer aloud before opening each check.</h3>
-            <div className="quiz-list">
-              {lesson.quiz.map((item, index) => (
-                <details key={item.question}>
-                  <summary><span>Q{index + 1}</span>{item.question}</summary>
-                  <div><strong>Better answer</strong><p>{item.answer}</p></div>
-                </details>
-              ))}
-            </div>
-            <div className="teach-back-card">
-              <span>TEACH-BACK</span>
-              <p>{lesson.teachBack}</p>
-              <button
-                type="button"
-                onClick={() => chooseTutorMode("quiz", `Here is my teach-back for “${day.title}”: `)}
-              >
-                Give my explanation to the tutor →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {section === "story" && (
-          <div className="lesson-section story-lesson">
-            <span className="lesson-kicker">MEMORY HOOK</span>
-            <h3>{lesson.story.title}</h3>
-            <p>{lesson.story.body}</p>
-            <blockquote>{lesson.story.memoryHook}</blockquote>
-          </div>
-        )}
-
-        <div className="lesson-next-step">
-          {primaryLessonSections.findIndex((item) => item.id === section) >= 0
-            && primaryLessonSections.findIndex((item) => item.id === section) < primaryLessonSections.length - 1 ? (
-              <>
-                <span>
-                  NEXT LEARNING STEP
-                  <strong>
-                    {primaryLessonSections[primaryLessonSections.findIndex((item) => item.id === section) + 1].label}
-                  </strong>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const currentIndex = primaryLessonSections.findIndex((item) => item.id === section);
-                    const nextSection = primaryLessonSections[currentIndex + 1].id;
-                    setSection(nextSection);
-                    window.setTimeout(() => tabRefs.current[nextSection]?.focus(), 0);
-                  }}
-                >
-                  Continue →
-                </button>
-              </>
-            ) : section === "quiz" ? (
-              <>
-                <span>LESSON COMPLETE<strong>Apply the idea in today’s practical task.</strong></span>
-                <button type="button" onClick={() => document.getElementById("practical-task")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-                  Continue to practical task ↓
-                </button>
-              </>
-            ) : (
-              <>
-                <span>OPTIONAL HELP<strong>Return to the main lesson when ready.</strong></span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSection("visual");
-                    window.setTimeout(() => tabRefs.current.visual?.focus(), 0);
-                  }}
-                >
-                  Back to Visual →
-                </button>
-              </>
-            )}
-        </div>
-      </div>
-
-      <LessonMediaPanel
-        key={lesson.dayId}
-        week={lesson.week}
-        dayId={lesson.dayId}
-        sources={lesson.sources}
-      />
+    <section
+      className="learning-studio"
+      aria-label={`Learning content for Day ${day.id}`}
+    >
+      {chapter && deepDive ? (
+        <LessonArticle
+          chapter={chapter}
+          day={day}
+          deepDive={deepDive}
+          lesson={lesson}
+        />
+      ) : chapterError ? (
+        <p className="lesson-content-error" role="alert">{chapterError}</p>
+      ) : (
+        <p className="lesson-content-loading" role="status">
+          Loading this chapter…
+        </p>
+      )}
 
       <details className="optional-panel tutor-disclosure">
         <summary>Ask the AI teacher</summary>
-        <section id={`tutor-panel-${day.id}`} className="tutor-panel" aria-labelledby={`tutor-title-${day.id}`}>
-        <header className="tutor-heading">
-          <div>
-            <h3 id={`tutor-title-${day.id}`}>Ask a question</h3>
-          </div>
-          <button type="button" className="clear-chat-button" onClick={clearChat} disabled={messages.length === 0 && !draft}>
-            Clear chat
-          </button>
-        </header>
+        <section
+          id={`tutor-panel-${day.id}`}
+          className="tutor-panel"
+          aria-labelledby={`tutor-title-${day.id}`}
+        >
+          <header className="tutor-heading">
+            <div>
+              <h3 id={`tutor-title-${day.id}`}>Ask about this lesson</h3>
+            </div>
+            {messages.length > 0 || draft ? (
+              <button
+                type="button"
+                className="clear-chat-button"
+                onClick={clearChat}
+              >
+                Clear chat
+              </button>
+            ) : null}
+          </header>
 
-        <div className="tutor-mode-list" aria-label="Tutor teaching modes">
-          {tutorModes.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              className={mode === item.id ? "active" : ""}
-              aria-pressed={mode === item.id}
-              onClick={() => chooseTutorMode(item.id, item.prompt)}
+          <label className="tutor-mode-select" htmlFor={`tutor-mode-${day.id}`}>
+            Teaching style
+            <select
+              id={`tutor-mode-${day.id}`}
+              value={mode}
+              onChange={(event) => changeTutorMode(event.target.value as TutorMode)}
             >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        <div ref={chatRef} className="tutor-chat" role="log" aria-live="polite" aria-relevant="additions text" aria-busy={loading}>
-          {messages.length === 0 && (
-            <div className="tutor-empty">
-              <p>Ask about today’s lesson, maths, exercise, or quiz.</p>
-            </div>
-          )}
-          {messages.map((message) => (
-            <article key={message.id} className={`chat-message ${message.role}`}>
-              <div className="chat-message-meta">
-                <strong>{message.role === "user" ? "You" : "Teacher"}</strong>
-                <span>{message.mode ? modeLabels[message.mode] : "Ask"}{message.model ? ` · ${message.model}` : ""}</span>
-              </div>
-              {message.role === "assistant" ? (
-                <Suspense fallback={<p>{message.content}</p>}>
-                  <RichText
-                    content={message.content}
-                    className="tutor-markdown"
-                    allowedLinks={approvedSourceUrls}
-                  />
-                </Suspense>
-              ) : (
-                <p>{message.content}</p>
-              )}
-            </article>
-          ))}
-          {loading && (
-            <div className="tutor-thinking" role="status">
-              <span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" />
-              Teacher is building a step-by-step answer…
-            </div>
-          )}
-        </div>
-
-        <form className="tutor-form" onSubmit={submitQuestion}>
-          <label htmlFor={`tutor-question-${day.id}`}>
-            Your question
-            <span>{modeLabels[mode]} mode · {draft.length}/{MAX_INPUT_LENGTH}</span>
+              <option value="ask">Ask normally</option>
+              {tutorModes.map((item) => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </select>
           </label>
-          <textarea
-            ref={inputRef}
-            id={`tutor-question-${day.id}`}
-            value={draft}
-            maxLength={MAX_INPUT_LENGTH}
-            rows={3}
-            disabled={loading}
-            placeholder={`Ask about “${day.title}”…`}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              if (mode !== "ask" && event.target.value.length === 0) setMode("ask");
-            }}
-            onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                event.preventDefault();
-                event.currentTarget.form?.requestSubmit();
-              }
-            }}
-          />
-          <div className="tutor-form-footer">
-            <span>⌘/Ctrl + Enter · latest 14 day chats stay on this device; recent chat is sent to Gemini when you ask</span>
-            <button type="submit" className="primary-button" disabled={loading || !draft.trim()}>
-              {loading ? "Thinking…" : "Ask teacher →"}
-            </button>
-          </div>
-        </form>
 
-        {error && <p className="tutor-error" role="alert">{error}</p>}
-        {storageNotice && <p className="tutor-storage-notice" role="status">{storageNotice}</p>}
-        <p className="tutor-safety-note">
-          AI can make mistakes. Check equations against the linked source and never send generated commands directly to powered hardware without limits, an emergency stop, and human review.
-        </p>
+          <div
+            ref={chatRef}
+            className="tutor-chat"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-busy={loading}
+          >
+            {messages.length === 0 ? (
+              <div className="tutor-empty">
+                <p>Ask about the explanation, equation, exercise, or interview connection.</p>
+              </div>
+            ) : null}
+            {messages.map((message) => (
+              <div key={message.id} className={`chat-message ${message.role}`}>
+                <div className="chat-message-meta">
+                  <strong>{message.role === "user" ? "You" : "Teacher"}</strong>
+                  <span>
+                    {message.mode ? modeLabels[message.mode] : "Ask normally"}
+                    {message.model ? ` · ${message.model}` : ""}
+                  </span>
+                </div>
+                {message.role === "assistant" ? (
+                  <Suspense fallback={<p>{message.content}</p>}>
+                    <RichText
+                      content={message.content}
+                      className="tutor-markdown"
+                      allowedLinks={approvedSourceUrls}
+                    />
+                  </Suspense>
+                ) : (
+                  <p>{message.content}</p>
+                )}
+              </div>
+            ))}
+            {loading ? (
+              <div className="tutor-thinking" role="status">
+                <span aria-hidden="true" />
+                <span aria-hidden="true" />
+                <span aria-hidden="true" />
+                Building a step-by-step answer…
+              </div>
+            ) : null}
+          </div>
+
+          <form className="tutor-form" onSubmit={submitQuestion}>
+            <label htmlFor={`tutor-question-${day.id}`}>
+              Your question
+              <span>{modeLabels[mode]} · {draft.length}/{MAX_INPUT_LENGTH}</span>
+            </label>
+            <textarea
+              ref={inputRef}
+              id={`tutor-question-${day.id}`}
+              value={draft}
+              maxLength={MAX_INPUT_LENGTH}
+              rows={3}
+              disabled={loading}
+              placeholder={`Ask about “${day.title}”…`}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                if (mode !== "ask" && event.target.value.length === 0) {
+                  setMode("ask");
+                }
+              }}
+              onKeyDown={(event) => {
+                if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+            />
+            <div className="tutor-form-footer">
+              <span>
+                ⌘/Ctrl + Enter · recent chat stays on this device and is sent to
+                Gemini only when you ask
+              </span>
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={loading || !draft.trim()}
+              >
+                {loading ? "Thinking…" : "Ask teacher"}
+              </button>
+            </div>
+          </form>
+
+          {error ? <p className="tutor-error" role="alert">{error}</p> : null}
+          {storageNotice ? (
+            <p className="tutor-storage-notice" role="status">{storageNotice}</p>
+          ) : null}
+          <p className="tutor-safety-note">
+            Check equations against the chapter sources. Never send generated
+            commands directly to powered hardware without limits, an emergency
+            stop, and human review.
+          </p>
         </section>
       </details>
     </section>

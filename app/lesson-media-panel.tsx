@@ -11,23 +11,23 @@ import styles from "./lesson-media-panel.module.css";
 type LessonMediaPanelProps = {
   week: number;
   dayId: number;
-  sources: readonly Resource[];
+  sources: readonly (Resource & { useFor?: string })[];
+  label?: string;
 };
 
-type ReadingItem = LessonExploreLink & { curated: boolean };
+type ReadingItem = LessonExploreLink;
 
 function mergedReading(
   explore: readonly LessonExploreLink[],
-  sources: readonly Resource[],
+  sources: readonly (Resource & { useFor?: string })[],
 ): ReadingItem[] {
   const items: ReadingItem[] = [
-    ...explore.map((item) => ({ ...item, curated: true })),
+    ...explore,
     ...sources.map((source) => ({
       title: source.label,
       publisher: "Lesson source",
       url: source.url,
-      why: "Open the publisher page for the complete reference.",
-      curated: false,
+      why: source.useFor ?? "Open the publisher page for the complete reference.",
     })),
   ];
 
@@ -40,6 +40,7 @@ export function LessonMediaPanel({
   week,
   dayId,
   sources,
+  label = "Sources and optional media",
 }: LessonMediaPanelProps) {
   const [loadedMedia, setLoadedMedia] = useState<{
     dayId: number;
@@ -69,15 +70,15 @@ export function LessonMediaPanel({
 
   return (
     <details className={styles.panel} onToggle={handleToggle}>
-      <summary className={styles.summary}>Watch / explore</summary>
+      <summary className={styles.summary}>{label}</summary>
 
       <div className={`${styles.body} ${media?.video ? "" : styles.noVideo}`}>
         {media?.video ? (
           <section className={styles.video} aria-labelledby={`lesson-video-${dayId}`}>
             <p className={styles.eyebrow}>{media.video.publisher}</p>
-            <h4 className={styles.title} id={`lesson-video-${dayId}`}>
+            <h3 className={styles.title} id={`lesson-video-${dayId}`}>
               {media.video.title}
-            </h4>
+            </h3>
             <p className={styles.why}>{media.video.why}</p>
 
             {isPlaying ? (
@@ -113,29 +114,20 @@ export function LessonMediaPanel({
           </section>
         ) : null}
 
-        <section className={styles.reading} aria-labelledby={`lesson-reading-${dayId}`}>
-          <p className={styles.eyebrow}>Official references</p>
-          <h4 id={`lesson-reading-${dayId}`}>Further reading</h4>
-          <ul className={styles.readingList}>
-            {reading.map((item) => (
-              <li key={item.url}>
-                <a href={item.url} target="_blank" rel="noreferrer">
-                  {item.title}
-                </a>
-                <small>
-                  {item.publisher}
-                  {item.curated ? ` · ${item.why}` : ""}
-                </small>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <p className={styles.attribution}>
-          External media stays hosted by its publisher. Publisher names and source
-          links are shown for attribution; RobotShift summaries are original study
-          guidance.
-        </p>
+        {reading.length > 0 ? (
+          <section className={styles.reading} aria-label="Reference links">
+            <ul className={styles.readingList}>
+              {reading.map((item) => (
+                <li key={item.url}>
+                  <a href={item.url} target="_blank" rel="noreferrer">
+                    {item.title}
+                  </a>
+                  <small>{item.why}</small>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </div>
     </details>
   );
