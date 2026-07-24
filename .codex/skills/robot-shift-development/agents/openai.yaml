@@ -1,0 +1,4 @@
+interface:
+  display_name: "Robot/Shift Development"
+  short_description: "Safely develop and verify the robotics course"
+  default_prompt: "Use $robot-shift-development to implement and verify a Robot/Shift course change."

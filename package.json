@@ -12,6 +12,7 @@
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs && tsx --test tests/curriculum-content.test.mjs tests/career-market.test.mjs tests/visual-content.test.mjs tests/mission-progress.test.mjs tests/interactive-math.test.mjs tests/theme.test.mjs tests/rich-text.test.tsx tests/lesson-media.test.ts tests/storage-migrations.test.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "verify": "bash scripts/verify-project.sh",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

@@ -1,98 +1,90 @@
-# vinext-starter
+# Robot/Shift
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Robot/Shift is a private, practical 180-day robotics curriculum for a senior software engineer moving into robotics, ROS 2 integration, deployment, validation, and embodied AI.
 
-## Prerequisites
+The course is designed as a single reader-first learning system:
+
+- zero-prerequisite mathematics with checked equations;
+- deterministic SVG explanations and interactive maths;
+- daily practical work and six portfolio projects;
+- India-focused role and job-description guidance;
+- an optional Gemini tutor grounded in the displayed lesson;
+- browser-local notes, evidence, bookmarks, and tutor history;
+- light and dark slate themes;
+- private deployment through OpenAI Sites.
+
+## Requirements
 
 - Node.js `>=22.13.0`
+- npm
+- Optional: a Gemini API key for the tutor
 
-## Quick Start
+## Local development
 
 ```bash
-npm install
+npm ci
+cp .env.example .env.local
 npm run dev
-npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Included Shape
+Leave `GEMINI_API_KEY` empty if the tutor is not needed. If used, keep it only in `.env.local`; never add it to client code or Git.
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+## Verification
 
-## Workspace Auth Headers
-
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```bash
+npm run verify
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+This runs lint, the production build, all curriculum/content/visual/storage/theme/tutor tests, and whitespace validation.
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+For an interactive or visual change, also exercise the real browser flow, inspect console errors, and check desktop and mobile layouts.
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+## Architecture
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+| Area | Primary files |
+|---|---|
+| Curriculum sequence | `app/curriculum.ts` |
+| Lesson resolution | `app/lessons.ts`, `app/topic-detail-*.ts` |
+| Vector teaching visuals | `app/lesson-visual.tsx`, `app/lesson-visuals.ts` |
+| Interactive maths | `app/interactive-math-playground.tsx`, `app/interactive-math.ts` |
+| Lesson and tutor UI | `app/learning-studio.tsx`, `app/rich-text.tsx` |
+| Gemini server route | `app/api/tutor/route.ts` |
+| Local persistence | `app/storage-migrations.ts` |
+| Career targeting | `app/career-market.ts`, `app/career-view.tsx` |
+| Theme and shell | `app/page.tsx`, `app/globals.css`, `app/theme.ts` |
+| Executable contracts | `tests/` |
+| Sites identity | `.openai/hosting.json` |
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+Detailed development context lives in the project-local skill:
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+- `.codex/skills/robot-shift-development/SKILL.md`
+- `.codex/skills/robot-shift-development/references/architecture.md`
+- `.codex/skills/robot-shift-development/references/content-standards.md`
+- `.codex/skills/robot-shift-development/references/qa-release.md`
 
-## Useful Commands
+Root-level agent constraints are in `AGENTS.md`.
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+## Tutor configuration
 
-## Learn More
+The browser sends a bounded request to `/api/tutor`. The server validates it, grounds the prompt in the resolved lesson, and calls Gemini with the server-only `GEMINI_API_KEY`.
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+```dotenv
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.6-flash
+```
+
+Without a key, the course remains fully usable and the tutor returns a deliberate configuration message.
+
+## Persistence
+
+Progress-compatible legacy fields, notes, evidence, bookmarks, selected day, project records, and tutor chats are stored locally in the browser. Storage migrations intentionally archive incompatible version-1 foundation records before moving compatible work to version 2.
+
+Do not rename storage keys or alter schemas without adding migration and round-trip tests.
+
+## Private deployment
+
+`.openai/hosting.json` contains the opaque Sites project identity. Use the Sites building and hosting workflows, package the exact committed source state, deploy a saved version, and verify the final deployment plus private access policy.
+
+Do not publish or change access controls unless explicitly requested.
