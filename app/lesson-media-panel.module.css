@@ -1,7 +1,9 @@
 .panel {
-  margin-top: 1rem;
-  border: 1px solid var(--muted-line);
-  background: var(--surface-subtle);
+  margin-top: 1.5rem;
+  border: 0;
+  border-top: 1px solid var(--muted-line);
+  border-bottom: 1px solid var(--muted-line);
+  background: transparent;
 }
 
 .summary {
@@ -12,9 +14,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.8rem 1rem;
-  color: var(--ink);
-  font-weight: 760;
+  padding: 0;
+  color: var(--steel);
+  font-size: 0.82rem;
+  font-weight: 650;
 }
 
 .summary::-webkit-details-marker {
@@ -29,7 +32,7 @@
 }
 
 .panel[open] .summary {
-  border-bottom: 1px solid var(--muted-line);
+  border-bottom: 0;
 }
 
 .panel[open] .summary::after {
@@ -38,15 +41,16 @@
 
 .body {
   display: grid;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 1.5rem;
+  padding: 0 0 1.5rem;
 }
 
 .video,
 .reading {
-  border: 1px solid var(--muted-line);
-  background: var(--surface-raised);
-  padding: 1rem;
+  border: 0;
+  border-top: 1px solid var(--muted-line);
+  background: transparent;
+  padding: 1.25rem 0 0;
 }
 
 .eyebrow {

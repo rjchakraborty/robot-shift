@@ -32,5 +32,5 @@ export const THEME_INITIALIZER = `(() => {
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", theme === "dark" ? "#0d1113" : "#f3f0e7");
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#0f1115" : "#ffffff");
 })();`;

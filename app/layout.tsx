@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const viewport: Viewport = {
   colorScheme: "light dark",
-  themeColor: "#f3f0e7",
+  themeColor: "#ffffff",
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
   const title = "Robot/Shift — 180-Day Robotics Field Manual";
-  const description = "A practical 180-day robotics course, progress tracker, and AI tutor for a software engineer moving into embodied AI.";
+  const description = "A practical 180-day robotics course and AI tutor for a software engineer moving into embodied AI.";
 
   return {
     title,

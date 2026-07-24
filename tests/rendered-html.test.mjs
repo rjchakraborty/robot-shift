@@ -35,7 +35,7 @@ test("server-renders the Robot/Shift release shell", async () => {
   const html = await response.text();
   assert.match(html, /<html lang="en">/i);
   assert.match(html, /<meta name="color-scheme" content="light dark"\/>/i);
-  assert.match(html, /<meta name="theme-color" content="#f3f0e7"\/>/i);
+  assert.match(html, /<meta name="theme-color" content="#ffffff"\/>/i);
   assert.match(html, /<script id="theme-init">/i);
   assert.match(html, /robot-shift-theme-v1/);
   assert.match(html, /prefers-color-scheme: dark/);
@@ -50,7 +50,7 @@ test("server-renders the Robot/Shift release shell", async () => {
   );
   assert.match(
     html,
-    /<meta name="description" content="A practical 180-day robotics course, progress tracker, and AI tutor for a software engineer moving into embodied AI\."\/>/i,
+    /<meta name="description" content="A practical 180-day robotics course and AI tutor for a software engineer moving into embodied AI\."\/>/i,
   );
   assert.match(
     html,
@@ -91,21 +91,17 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
   ).join("\n");
 
   const releaseSignals = [
-    ["daily task workflow", "Learn and explain"],
+    ["practical lesson workflow", "Practical task"],
     ["guided lesson path", "Guided lesson path"],
-    ["evidence-based course points", "Proof XP"],
-    ["proof-chain gamification", "day proof chain"],
-    ["180-day roadmap", "Roadmap"],
+    ["180-day curriculum", "Curriculum"],
     ["roadmap search and filters", "Search topics, labs, or notes"],
     ["portfolio milestones", "Portfolio projects"],
     ["notes and evidence", "Notes and evidence"],
-    ["progress analytics", "READINESS INSTRUMENT PANEL"],
-    ["job-readiness evidence", "JOB-READINESS MATRIX"],
     ["local persistence", "robot-shift-tracker-v2"],
     ["persisted system, light, and dark themes", "robot-shift-theme-v1"],
-    ["progress export", "Export backup"],
-    ["progress import", "Import backup"],
-    ["guarded reset", "Reset all progress?"],
+    ["course data export", "Export backup"],
+    ["course data import", "Import backup"],
+    ["guarded reset", "Reset saved course data?"],
     ["daily knowledge studio", "Lesson"],
     ["day-linked visual field guides", "Visual explanation"],
     ["concept, math, and failure diagram modes", "Failure case"],
@@ -134,6 +130,12 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
   );
 
   for (const clutter of [
+    "Proof XP",
+    "day proof chain",
+    "COURSE RANK",
+    "READINESS INSTRUMENT PANEL",
+    "JOB-READINESS MATRIX",
+    "Mark Understand complete",
     "Learn the idea, then make it physical.",
     "NEED ANOTHER ANGLE?",
     "Your first useful failure belongs here.",
@@ -142,6 +144,14 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
   ]) {
     assert.ok(!bundle.includes(clutter), `the default course UI should omit repeated or motivational copy: ${clutter}`);
   }
+
+  const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(pageSource, /id:\s*"progress"|<ProgressView|rail-progress|daily-quest|build-meter/);
+  assert.equal(
+    (pageSource.match(/\{ id: "(?:today|roadmap|roles|builds|notebook)", label:/g) ?? []).length,
+    5,
+    "the primary interface should expose exactly five quiet navigation destinations",
+  );
 });
 
 test("keeps tutor Markdown in one readable document flow", async () => {

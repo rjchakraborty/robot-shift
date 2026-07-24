@@ -1,24 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   curriculumDays,
   phases,
   projects,
-  readinessSkills,
-  resources,
   type CurriculumDay,
-  type Phase,
 } from "./curriculum";
 import { LearningStudio } from "./learning-studio";
-import {
-  deriveMissionProgress,
-  MISSION_TASK_LABELS,
-  MISSION_TASK_PARTS,
-  MISSION_TASK_XP,
-  type MissionProgress,
-  type MissionTaskPart,
-} from "./mission-progress";
 import { CareerView } from "./career-view";
 import {
   archiveLegacyPayload,
@@ -33,19 +22,12 @@ import {
 } from "./storage-migrations";
 import { ThemeControl } from "./theme-control";
 
-type View = "today" | "roadmap" | "roles" | "builds" | "notebook" | "progress";
-type TaskPart = MissionTaskPart;
-type FocusTarget = "top" | "visual" | "practice" | "evidence";
-type PhaseStat = Phase & { days: number; complete: number; percent: number };
+type View = "today" | "roadmap" | "roles" | "builds" | "notebook";
 
 type TrackerState = TrackerStateV2;
 
-const taskParts: readonly TaskPart[] = MISSION_TASK_PARTS;
 const MAX_TEXT_LENGTH = 5_000;
 const MAX_BACKUP_BYTES = 5_000_000;
-const projectChecklistSizes = new Map(
-  projects.map((project) => [project.id, project.proof.split(", ").length]),
-);
 
 function localDate() {
   const now = new Date();
@@ -65,10 +47,6 @@ const defaultState: TrackerState = {
   weeklyHours: 10,
   selectedDay: 1,
 };
-
-function taskKey(dayId: number, part: TaskPart) {
-  return `${dayId}:${part}`;
-}
 
 function phaseFor(day: CurriculumDay) {
   return phases.find((phase) => phase.id === day.phaseId)!;
@@ -100,13 +78,12 @@ function isValidDateString(value: unknown): value is string {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-const navigation: { id: View; label: string; mark: string }[] = [
-  { id: "today", label: "Today", mark: "01" },
-  { id: "roadmap", label: "Roadmap", mark: "02" },
-  { id: "roles", label: "Roles", mark: "03" },
-  { id: "builds", label: "Builds", mark: "04" },
-  { id: "notebook", label: "Notebook", mark: "05" },
-  { id: "progress", label: "Progress", mark: "06" },
+const navigation: { id: View; label: string }[] = [
+  { id: "today", label: "Today" },
+  { id: "roadmap", label: "Curriculum" },
+  { id: "roles", label: "Roles" },
+  { id: "builds", label: "Projects" },
+  { id: "notebook", label: "Notes" },
 ];
 
 export default function Home() {
@@ -115,14 +92,13 @@ export default function Home() {
   const [view, setView] = useState<View>("today");
   const [query, setQuery] = useState("");
   const [phaseFilter, setPhaseFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [showSettings, setShowSettings] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const [saveStatus, setSaveStatus] = useState("Ready");
   const [storageNotice, setStorageNotice] = useState<string | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
-  const [focusRequest, setFocusRequest] = useState<{ dayId: number; target: FocusTarget; nonce: number } | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{ dayId: number; nonce: number } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const skipNextSaveRef = useRef(false);
   const resetDialogRef = useRef<HTMLDivElement>(null);
@@ -137,7 +113,7 @@ export default function Home() {
         loaded = currentRaw ? parseTrackerStateV2(currentRaw) : null;
         if (currentRaw && !loaded) {
           skipNextSaveRef.current = true;
-          setStorageError("Stored version 2 progress was invalid and was not overwritten. Import a valid backup or reset.");
+          setStorageError("Stored version 2 course data was invalid and was not overwritten. Import a valid backup or reset.");
         } else if (!currentRaw) {
           const legacyRaw = window.localStorage.getItem(LEGACY_TRACKER_STORAGE_KEY);
           if (legacyRaw) {
@@ -156,11 +132,11 @@ export default function Home() {
               setStorageNotice(
                 archived
                   ? `Version 1 records for ${archived} were archived in this browser. Unchanged later-course work was migrated to version 2.`
-                  : "Version 1 progress was archived and migrated to version 2.",
+                  : "Version 1 course data was archived and migrated to version 2.",
               );
             } else {
               skipNextSaveRef.current = true;
-              setStorageError("Stored version 1 progress was archived but could not be migrated. Import a valid backup or reset.");
+              setStorageError("Stored version 1 course data was archived but could not be migrated. Import a valid backup or reset.");
             }
           }
         }
@@ -237,63 +213,18 @@ export default function Home() {
       previousFocus?.focus();
     };
   }, [showReset]);
-
-  const isPartDone = useCallback(
-    (dayId: number, part: TaskPart) => (
-      Boolean(tracker.completed[taskKey(dayId, part)])
-      && (part !== "prove" || Boolean((tracker.evidence[String(dayId)] ?? "").trim()))
-    ),
-    [tracker.completed, tracker.evidence],
-  );
-  const isDayDone = useCallback(
-    (dayId: number) => taskParts.every((part) => isPartDone(dayId, part)),
-    [isPartDone],
-  );
-
-  const completedParts = useMemo(
-    () => curriculumDays.reduce(
-      (total, day) => total + taskParts.filter((part) => isPartDone(day.id, part)).length,
-      0,
-    ),
-    [isPartDone],
-  );
-  const missionProgress = useMemo(() => deriveMissionProgress({
-    completed: tracker.completed,
-    evidence: tracker.evidence,
-    projectGates: projects.map((project) => ({
-      id: project.id,
-      label: project.title,
-      expectedCount: projectChecklistSizes.get(project.id) ?? 0,
-      checks: tracker.projectChecks[project.id],
-    })),
-    totalDays: curriculumDays.length,
-  }), [tracker.completed, tracker.evidence, tracker.projectChecks]);
-  const completedDays = useMemo(
-    () => missionProgress.daily.filter((day) => day.complete).length,
-    [missionProgress.daily],
-  );
-  const totalParts = curriculumDays.length * taskParts.length;
-  const percent = Math.round((completedParts / totalParts) * 100);
   const selectedDay = curriculumDays.find((day) => day.id === tracker.selectedDay) ?? curriculumDays[0];
   const currentPhase = phaseFor(selectedDay);
-
-  const phaseStats = phases.map((phase) => {
-    const days = curriculumDays.filter((day) => day.phaseId === phase.id);
-    const complete = days.filter((day) => isDayDone(day.id)).length;
-    return { ...phase, days: days.length, complete, percent: Math.round((complete / days.length) * 100) };
-  });
 
   const filteredDays = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return curriculumDays.filter((day) => {
       const matchesPhase = phaseFilter === "all" || day.phaseId === phaseFilter;
-      const done = isDayDone(day.id);
-      const matchesStatus = statusFilter === "all" || (statusFilter === "complete" ? done : !done);
       const note = tracker.notes[String(day.id)] ?? "";
       const matchesQuery = !normalized || `${day.title} ${day.focus} ${day.task} ${day.lab} ${note}`.toLowerCase().includes(normalized);
-      return matchesPhase && matchesStatus && matchesQuery;
+      return matchesPhase && matchesQuery;
     });
-  }, [query, phaseFilter, statusFilter, tracker.notes, isDayDone]);
+  }, [query, phaseFilter, tracker.notes]);
 
   const changeView = (nextView: View, focusMain = true) => {
     setView(nextView);
@@ -304,68 +235,26 @@ export default function Home() {
     }, 0);
   };
 
-  const openDay = (dayId: number, target: FocusTarget = "top") => {
+  const openDay = (dayId: number) => {
     setTracker((previous) => ({ ...previous, selectedDay: dayId }));
     setView("today");
-    setFocusRequest({ dayId, target, nonce: Date.now() });
+    setFocusRequest({ dayId, nonce: Date.now() });
   };
 
   useEffect(() => {
     if (!focusRequest || view !== "today" || tracker.selectedDay !== focusRequest.dayId) return;
 
     const timer = window.setTimeout(() => {
-      const targetId = focusRequest.target === "visual"
-        ? `lesson-tab-${focusRequest.dayId}-visual`
-        : focusRequest.target === "practice"
-          ? `lesson-tab-${focusRequest.dayId}-practice`
-          : focusRequest.target === "evidence"
-            ? "evidence-note"
-            : `mission-hero-${focusRequest.dayId}`;
-      const element = document.getElementById(targetId);
-      if (element instanceof HTMLButtonElement && (focusRequest.target === "visual" || focusRequest.target === "practice")) {
-        element.click();
-      }
+      const element = document.getElementById(`mission-hero-${focusRequest.dayId}`);
       element?.focus();
       element?.scrollIntoView({
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-        block: focusRequest.target === "top" ? "start" : "center",
+        block: "start",
       });
       setFocusRequest(null);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [focusRequest, tracker.selectedDay, view]);
-
-  const togglePart = (day: CurriculumDay, part: TaskPart) => {
-    const key = taskKey(day.id, part);
-    const isCurrentlyDone = isPartDone(day.id, part);
-    if (part === "prove" && !isCurrentlyDone && !(tracker.evidence[String(day.id)] ?? "").trim()) {
-      setTracker((previous) => ({
-        ...previous,
-        completed: { ...previous.completed, [key]: false },
-      }));
-      setFocusRequest({ dayId: day.id, target: "evidence", nonce: Date.now() });
-      setAnnouncement(`${day.title}: add a repository, demo, report, or decisive output before closing Prove.`);
-      return;
-    }
-
-    const next = !isCurrentlyDone;
-    const nextCompleted = { ...tracker.completed, [key]: next };
-    setTracker((previous) => ({
-      ...previous,
-      completed: nextCompleted,
-    }));
-    const nextMission = deriveMissionProgress({
-      completed: nextCompleted,
-      evidence: tracker.evidence,
-      totalDays: curriculumDays.length,
-    }).nextAction;
-    const nextCopy = nextMission.status === "active"
-      ? `Next: Day ${nextMission.dayId} ${nextMission.label}.`
-      : "Course mission complete.";
-    setAnnouncement(
-      `${day.title}: ${MISSION_TASK_LABELS[part]} ${next ? "complete" : "reopened"}. ${next ? "Earned" : "Removed"} ${MISSION_TASK_XP[part]} XP. ${nextCopy}`,
-    );
-  };
 
   const toggleBookmark = (dayId: number) => {
     setTracker((previous) => ({
@@ -380,9 +269,6 @@ export default function Home() {
     setTracker((previous) => ({
       ...previous,
       [field]: { ...previous[field], [String(dayId)]: value },
-      completed: field === "evidence" && !value.trim()
-        ? { ...previous.completed, [taskKey(dayId, "prove")]: false }
-        : previous.completed,
     }));
   };
 
@@ -403,10 +289,10 @@ export default function Home() {
     const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `robot-shift-progress-${localDate()}.json`;
+    anchor.download = `robot-shift-course-${localDate()}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
-    setAnnouncement("Progress backup exported.");
+    setAnnouncement("Course backup exported.");
   };
 
   const importProgress = async (file: File | undefined) => {
@@ -437,7 +323,7 @@ export default function Home() {
       setAnnouncement(
         parsed.migrated
           ? "Version 1 backup safely migrated to version 2."
-          : "Progress backup imported.",
+          : "Course backup imported.",
       );
     } catch {
       setAnnouncement("Import rejected. Choose a valid Robot/Shift version 1 or 2 backup under 5 MB.");
@@ -450,7 +336,7 @@ export default function Home() {
     const clean = { ...defaultState, startedOn: localDate() };
     setTracker(clean);
     setShowReset(false);
-    setAnnouncement("All local progress was reset.");
+    setAnnouncement("All locally saved course data was reset.");
   };
 
   if (!hydrated) {
@@ -467,9 +353,8 @@ export default function Home() {
       <a className="skip-link" href="#main-content">Skip to curriculum</a>
       <aside className="side-rail" aria-label="Primary" aria-hidden={showReset ? true : undefined}>
         <div className="brand-block">
-          <span className="eyebrow">FIELD MANUAL // 180</span>
-          <div className="brand-line"><span className="brand-slash">/</span> ROBOT<br />SHIFT</div>
-          <p>Senior software → production robotics</p>
+          <div className="brand-line">Robot/Shift</div>
+          <p>Practical robotics curriculum</p>
         </div>
 
         <nav className="rail-nav">
@@ -480,16 +365,10 @@ export default function Home() {
               onClick={() => changeView(item.id)}
               aria-current={view === item.id ? "page" : undefined}
             >
-              <span>{item.mark}</span>{item.label}
+              {item.label}
             </button>
           ))}
         </nav>
-
-        <div className="rail-progress">
-          <div className="rail-progress-head"><span>PROGRESS</span><strong>{percent}%</strong></div>
-          <progress value={completedParts} max={totalParts}>{percent}%</progress>
-          <p>{completedDays} of 180 days complete</p>
-        </div>
       </aside>
 
       <div className="work-area" aria-hidden={showReset ? true : undefined}>
@@ -498,16 +377,6 @@ export default function Home() {
             <strong>{currentPhase.number} · {currentPhase.shortTitle}</strong>
           </div>
           <div className="command-actions">
-            {view === "roadmap" && <label className="global-search">
-              <span>⌕</span>
-              <span className="sr-only">Search curriculum</span>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search 180 days…"
-              />
-            </label>}
-            <ThemeControl />
             <button className="utility-button" onClick={() => setShowSettings((open) => !open)} aria-expanded={showSettings}>
               Settings
             </button>
@@ -516,6 +385,7 @@ export default function Home() {
 
         {showSettings && (
           <section className="settings-drawer" aria-label="Curriculum controls">
+            <ThemeControl />
             <div>
               <label htmlFor="start-date">Start date</label>
               <input id="start-date" type="date" value={tracker.startedOn} onChange={(event) => setTracker((p) => ({ ...p, startedOn: event.target.value }))} />
@@ -554,16 +424,12 @@ export default function Home() {
           {view === "today" && (
             <TodayView
               day={selectedDay}
-              missionProgress={missionProgress}
               tracker={tracker}
-              isPartDone={isPartDone}
-              togglePart={togglePart}
               toggleBookmark={toggleBookmark}
               updateText={updateText}
               openDay={openDay}
               persistenceMessage={storageError ?? storageNotice ?? "Auto-saved locally"}
               persistenceError={Boolean(storageError)}
-              openProgress={() => changeView("progress")}
             />
           )}
 
@@ -574,12 +440,9 @@ export default function Home() {
               setQuery={setQuery}
               phaseFilter={phaseFilter}
               setPhaseFilter={setPhaseFilter}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              isDayDone={isDayDone}
               bookmarks={tracker.bookmarks}
               openDay={openDay}
-              clearFilters={() => { setQuery(""); setPhaseFilter("all"); setStatusFilter("all"); }}
+              clearFilters={() => { setQuery(""); setPhaseFilter("all"); }}
             />
           )}
 
@@ -590,31 +453,20 @@ export default function Home() {
           )}
 
           {view === "builds" && (
-            <BuildsView tracker={tracker} setTracker={setTracker} openDay={openDay} />
+            <BuildsView openDay={openDay} />
           )}
 
           {view === "notebook" && (
             <NotebookView tracker={tracker} openDay={openDay} />
           )}
 
-          {view === "progress" && (
-            <ProgressView
-              percent={percent}
-              completedDays={completedDays}
-              phaseStats={phaseStats}
-              tracker={tracker}
-              isDayDone={isDayDone}
-              missionProgress={missionProgress}
-              openCareer={() => changeView("roles")}
-            />
-          )}
         </main>
       </div>
 
       <nav className="mobile-nav" aria-label="Mobile navigation" aria-hidden={showReset ? true : undefined}>
         {navigation.map((item) => (
           <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => changeView(item.id)} aria-current={view === item.id ? "page" : undefined}>
-            <span>{item.mark}</span>{item.label}
+            {item.label}
           </button>
         ))}
       </nav>
@@ -625,10 +477,10 @@ export default function Home() {
         <div className="modal-backdrop" role="presentation">
           <div ref={resetDialogRef} className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" aria-describedby="reset-description">
             <span className="eyebrow">DESTRUCTIVE LOCAL ACTION</span>
-            <h2 id="reset-title">Reset all progress?</h2>
-            <p id="reset-description">This removes completed tasks, notes, evidence, bookmarks, and build checks from this browser. Export first if you may need them.</p>
+            <h2 id="reset-title">Reset saved course data?</h2>
+            <p id="reset-description">This removes notes, evidence, bookmarks, and legacy completion records from this browser. Export first if you may need them.</p>
             <div>
-              <button ref={resetCancelRef} onClick={() => setShowReset(false)}>Keep progress</button>
+              <button ref={resetCancelRef} onClick={() => setShowReset(false)}>Keep data</button>
               <button className="danger-button" onClick={resetProgress}>Reset everything</button>
             </div>
           </div>
@@ -640,67 +492,29 @@ export default function Home() {
 
 function TodayView({
   day,
-  missionProgress,
   tracker,
-  isPartDone,
-  togglePart,
   toggleBookmark,
   updateText,
   openDay,
   persistenceMessage,
   persistenceError,
-  openProgress,
 }: {
   day: CurriculumDay;
-  missionProgress: MissionProgress;
   tracker: TrackerState;
-  isPartDone: (dayId: number, part: TaskPart) => boolean;
-  togglePart: (day: CurriculumDay, part: TaskPart) => void;
   toggleBookmark: (dayId: number) => void;
   updateText: (field: "notes" | "evidence", dayId: number, value: string) => void;
-  openDay: (dayId: number, target?: FocusTarget) => void;
+  openDay: (dayId: number) => void;
   persistenceMessage: string;
   persistenceError: boolean;
-  openProgress: () => void;
 }) {
   const phase = phaseFor(day);
   const date = scheduledDate(tracker.startedOn, day.id, tracker.weeklyHours);
-  const completeCount = taskParts.filter((part) => isPartDone(day.id, part)).length;
-  const dailyProgress = missionProgress.daily[day.id - 1];
-  const nextAction = missionProgress.nextAction;
-  const isPreviewing = nextAction.status === "active" && day.id !== nextAction.dayId;
-  const targetForPart: Record<TaskPart, FocusTarget> = {
-    learn: "visual",
-    build: "practice",
-    prove: "evidence",
-  };
-  const taskCopy = [
-    { id: "learn" as const, label: "Understand", title: "Learn and explain" },
-    { id: "build" as const, label: "Build", title: "Complete the exercise" },
-    { id: "prove" as const, label: "Prove", title: "Save evidence" },
-  ];
-  const primaryActionCopy = nextAction.status === "course-complete"
-    ? "Review completion"
-    : isPreviewing
-      ? `Resume Day ${nextAction.dayId} · ${nextAction.label}`
-      : nextAction.part === "learn"
-        ? "Start visual lesson"
-        : nextAction.part === "build"
-          ? "Continue to practice"
-          : "Record proof evidence";
-  const runPrimaryAction = () => {
-    if (nextAction.status === "course-complete") {
-      openProgress();
-      return;
-    }
-    openDay(nextAction.dayId, targetForPart[nextAction.part]);
-  };
 
   return (
     <div className="view-wrap">
       <section id={`mission-hero-${day.id}`} className="mission-hero" tabIndex={-1}>
         <div className="hero-copy">
-          <div className={`viewing-state ${isPreviewing ? "previewing" : ""}`}>
+          <div className="viewing-state">
             <span>Day {day.id} of 180</span>
             <button className="bookmark-inline" onClick={() => toggleBookmark(day.id)} aria-pressed={tracker.bookmarks.includes(day.id)}>
               <span aria-hidden="true">{tracker.bookmarks.includes(day.id) ? "★" : "☆"}</span>
@@ -708,8 +522,8 @@ function TodayView({
             </button>
           </div>
           <div className="hero-meta">
-            <span style={{ background: phase.color }}>{phase.number}</span>
-            WEEK {String(day.week).padStart(2, "0")} · {formatMinutes(day.minutes)}
+            <span>{phase.number}</span>
+            {phase.shortTitle} · Week {day.week} · {formatMinutes(day.minutes)}
             {date ? ` · ${date}` : ""}
           </div>
           <h1>{day.title}</h1>
@@ -717,36 +531,10 @@ function TodayView({
         </div>
       </section>
 
-      <section id={`daily-quest-${day.id}`} className="daily-quest" aria-labelledby={`daily-quest-title-${day.id}`}>
-        <header>
-          <div>
-            <h2 id={`daily-quest-title-${day.id}`}>Today</h2>
-            <p>{completeCount} of 3 complete</p>
-          </div>
-          <button className="primary-button" onClick={runPrimaryAction}>{primaryActionCopy} →</button>
-        </header>
-        <div className="quest-steps">
-          {taskCopy.map((task, index) => {
-            const done = isPartDone(day.id, task.id);
-            const isNext = dailyProgress.nextPart === task.id;
-            return (
-              <label key={task.id} className={`quest-step ${done ? "done" : ""} ${isNext ? "next" : ""}`}>
-                <input type="checkbox" checked={done} onChange={() => togglePart(day, task.id)} />
-                <span className="quest-number" aria-hidden="true">{done ? "✓" : index + 1}</span>
-                <span>
-                  <small>{task.label}{isNext ? " · NEXT" : ""}</small>
-                  <strong>{task.title}</strong>
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      </section>
-
       <LearningStudio day={day} />
 
       <div className="today-grid">
-        <section className="task-board" aria-labelledby="task-title">
+        <section id="practical-task" className="task-board" aria-labelledby="task-title">
           <div className="section-heading">
             <div><h2 id="task-title">Practical task</h2></div>
           </div>
@@ -754,41 +542,42 @@ function TodayView({
             <h3>{day.lab}</h3>
           </article>
           <article className="proof-target-card">
-            <strong>Complete when</strong>
+            <strong>What good work looks like</strong>
             <p>{day.evidence}</p>
-            <button type="button" onClick={() => document.getElementById("evidence-note")?.focus()}>
-              Add evidence →
-            </button>
           </article>
           {day.checkpoint && (
             <article className="gate-card"><span>GATE</span><strong>{day.checkpoint}</strong></article>
           )}
-          <div className="day-navigation">
-            <button disabled={day.id === 1} onClick={() => openDay(day.id - 1)}>← Previous</button>
-            <span>Day {day.id} of 180</span>
-            <button disabled={day.id === 180} onClick={() => openDay(day.id + 1)}>Next →</button>
-          </div>
         </section>
 
-        <aside className="field-panel">
-          <section>
-            <strong>Reference</strong>
-            <a className="resource-link" href={day.resource.url} target="_blank" rel="noreferrer">
-              <span>↗</span><strong>{day.resource.label}</strong>
-            </a>
-          </section>
-          <section>
-            <label htmlFor="field-note"><strong>Notes</strong></label>
-            <textarea id="field-note" maxLength={MAX_TEXT_LENGTH} value={tracker.notes[String(day.id)] ?? ""} onChange={(event) => updateText("notes", day.id, event.target.value)} placeholder="Key idea, command, or question…" />
-          </section>
-          <section>
-            <label htmlFor="evidence-note"><strong>Evidence</strong></label>
-            <textarea id="evidence-note" maxLength={MAX_TEXT_LENGTH} value={tracker.evidence[String(day.id)] ?? ""} onChange={(event) => updateText("evidence", day.id, event.target.value)} placeholder="Paste a link or describe the artifact…" />
-          </section>
-          <div className={`autosave-line ${persistenceError ? "error" : ""}`} role="status">
-            <span className={`status-dot ${persistenceError ? "error" : ""}`} /> {persistenceMessage}
+        <details className="study-notes">
+          <summary>Notes, evidence, and source</summary>
+          <div className="field-panel">
+            <section>
+              <strong>Source</strong>
+              <a className="resource-link" href={day.resource.url} target="_blank" rel="noreferrer">
+                <span>↗</span><strong>{day.resource.label}</strong>
+              </a>
+            </section>
+            <section>
+              <label htmlFor="field-note"><strong>Notes</strong></label>
+              <textarea id="field-note" maxLength={MAX_TEXT_LENGTH} value={tracker.notes[String(day.id)] ?? ""} onChange={(event) => updateText("notes", day.id, event.target.value)} placeholder="Key idea, command, or question…" />
+            </section>
+            <section>
+              <label htmlFor="evidence-note"><strong>Evidence</strong></label>
+              <textarea id="evidence-note" maxLength={MAX_TEXT_LENGTH} value={tracker.evidence[String(day.id)] ?? ""} onChange={(event) => updateText("evidence", day.id, event.target.value)} placeholder="Paste a link or describe the artifact…" />
+            </section>
+            <div className={`autosave-line ${persistenceError ? "error" : ""}`} role="status">
+              {persistenceMessage}
+            </div>
           </div>
-        </aside>
+        </details>
+
+        <div className="day-navigation">
+          <button disabled={day.id === 1} onClick={() => openDay(day.id - 1)}>← Previous day</button>
+          <span>Day {day.id} of 180</span>
+          <button disabled={day.id === 180} onClick={() => openDay(day.id + 1)}>Next day →</button>
+        </div>
       </div>
     </div>
   );
@@ -800,9 +589,6 @@ function RoadmapView({
   setQuery,
   phaseFilter,
   setPhaseFilter,
-  statusFilter,
-  setStatusFilter,
-  isDayDone,
   bookmarks,
   openDay,
   clearFilters,
@@ -812,9 +598,6 @@ function RoadmapView({
   setQuery: (query: string) => void;
   phaseFilter: string;
   setPhaseFilter: (phase: string) => void;
-  statusFilter: string;
-  setStatusFilter: (status: string) => void;
-  isDayDone: (dayId: number) => boolean;
   bookmarks: number[];
   openDay: (dayId: number) => void;
   clearFilters: () => void;
@@ -823,19 +606,14 @@ function RoadmapView({
   return (
     <div className="view-wrap">
       <section className="page-intro">
-        <div><h1>Roadmap</h1><p>{days.length} of 180 days shown.</p></div>
+        <div><h1>Curriculum</h1><p>A focused 180-day path from software engineering to practical robotics.</p></div>
       </section>
 
-      <section className="filter-deck" aria-label="Roadmap filters">
-        <label><span className="sr-only">Search roadmap</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search topics, labs, or notes" /></label>
+      <section className="filter-deck" aria-label="Curriculum filters">
+        <label><span className="sr-only">Search curriculum</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search topics, labs, or notes…" /></label>
         <select value={phaseFilter} onChange={(event) => setPhaseFilter(event.target.value)} aria-label="Filter by phase">
           <option value="all">All phases</option>
           {phases.map((phase) => <option key={phase.id} value={phase.id}>{phase.number} · {phase.shortTitle}</option>)}
-        </select>
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter by status">
-          <option value="all">Any status</option>
-          <option value="open">Open</option>
-          <option value="complete">Complete</option>
         </select>
         <button onClick={clearFilters}>Clear</button>
       </section>
@@ -846,20 +624,16 @@ function RoadmapView({
             const weekDays = days.filter((day) => day.week === week);
             const sample = weekDays[0];
             const phase = phaseFor(sample);
-            const allWeekDays = curriculumDays.filter((day) => day.week === week);
-            const complete = allWeekDays.filter((day) => isDayDone(day.id)).length;
             return (
               <section className="week-card" key={week}>
                 <header>
-                  <div className="week-number" style={{ borderColor: phase.color }}><small>WK</small>{String(week).padStart(2, "0")}</div>
+                  <div className="week-number">Week {String(week).padStart(2, "0")}</div>
                   <div><span className="eyebrow">{phase.number} / {phase.shortTitle}</span><h2>{sample.focus.split(" · ")[0]}</h2><p>{sample.focus.split(" · ")[1]}</p></div>
-                  <div className="week-complete"><strong>{complete}/{allWeekDays.length}</strong><span>days closed</span></div>
                 </header>
                 <div className="day-rows">
                   {weekDays.map((day) => (
-                    <button className={`roadmap-day ${isDayDone(day.id) ? "done" : ""}`} key={day.id} onClick={() => openDay(day.id)}>
-                      <span className="day-code">D{String(day.id).padStart(3, "0")}</span>
-                      <span className="roadmap-status">{isDayDone(day.id) ? "✓ Complete" : "○ Open"}</span>
+                    <button className="roadmap-day" key={day.id} onClick={() => openDay(day.id)}>
+                      <span className="day-code">Day {day.id}</span>
                       <strong>{day.title}</strong>
                       <small>{formatMinutes(day.minutes)} {bookmarks.includes(day.id) ? "· ★ Important" : ""}</small>
                       <span aria-hidden="true">→</span>
@@ -877,7 +651,7 @@ function RoadmapView({
   );
 }
 
-function BuildsView({ tracker, setTracker, openDay }: { tracker: TrackerState; setTracker: React.Dispatch<React.SetStateAction<TrackerState>>; openDay: (id: number) => void }) {
+function BuildsView({ openDay }: { openDay: (id: number) => void }) {
   const phaseGateDays = [28, 56, 84, 119, 147, 175];
   return (
     <div className="view-wrap">
@@ -888,31 +662,16 @@ function BuildsView({ tracker, setTracker, openDay }: { tracker: TrackerState; s
         {projects.map((project, index) => {
           const phase = phases.find((item) => item.id === project.phaseId)!;
           const criteria = project.proof.split(", ");
-          const checked = tracker.projectChecks[project.id] ?? criteria.map(() => false);
-          const doneCount = checked.filter(Boolean).length;
           return (
             <article className="build-card" key={project.id}>
-              <header><span style={{ background: phase.color }}>{phase.number}</span><small>GATE {index + 1}</small></header>
+              <header><span>{phase.number}</span><small>PROJECT {index + 1}</small></header>
               <h2>{project.title}</h2>
               <p>{project.subtitle}</p>
-              <div className="build-meter"><progress value={doneCount} max={criteria.length} /><span>{doneCount}/{criteria.length}</span></div>
-              <div className="criteria-list">
-                {criteria.map((criterion, criterionIndex) => (
-                  <label key={criterion}>
-                    <input
-                      type="checkbox"
-                      checked={Boolean(checked[criterionIndex])}
-                      onChange={() => setTracker((previous) => {
-                        const next = [...(previous.projectChecks[project.id] ?? criteria.map(() => false))];
-                        next[criterionIndex] = !next[criterionIndex];
-                        return { ...previous, projectChecks: { ...previous.projectChecks, [project.id]: next } };
-                      })}
-                    />
-                    <span>{checked[criterionIndex] ? "✓" : ""}</span>{criterion}
-                  </label>
-                ))}
-              </div>
-              <button onClick={() => openDay(phaseGateDays[index])}>Open gate day →</button>
+              <strong className="criteria-heading">Project proof</strong>
+              <ul className="criteria-list">
+                {criteria.map((criterion) => <li key={criterion}>{criterion}</li>)}
+              </ul>
+              <button onClick={() => openDay(phaseGateDays[index])}>Open project lesson →</button>
             </article>
           );
         })}
@@ -936,7 +695,7 @@ function NotebookView({ tracker, openDay }: { tracker: TrackerState; openDay: (i
             const phase = phaseFor(day);
             return (
               <article className="note-card" key={day.id}>
-                <header><span style={{ color: phase.color }}>D{String(day.id).padStart(3, "0")}</span>{tracker.bookmarks.includes(day.id) && <span>★ IMPORTANT</span>}</header>
+                <header><span>{phase.shortTitle} · Day {day.id}</span>{tracker.bookmarks.includes(day.id) && <span>★ Important</span>}</header>
                 <h2>{day.title}</h2>
                 {tracker.notes[String(day.id)] && <div><small>FIELD NOTE</small><p>{tracker.notes[String(day.id)]}</p></div>}
                 {tracker.evidence[String(day.id)] && <div className="evidence-block"><small>EVIDENCE</small><p>{tracker.evidence[String(day.id)]}</p></div>}
@@ -948,138 +707,6 @@ function NotebookView({ tracker, openDay }: { tracker: TrackerState; openDay: (i
       ) : (
         <div className="empty-state"><h2>No notes or evidence yet.</h2><button onClick={() => openDay(tracker.selectedDay)}>Open current day</button></div>
       )}
-    </div>
-  );
-}
-
-function ProgressView({
-  percent,
-  completedDays,
-  phaseStats,
-  tracker,
-  isDayDone,
-  missionProgress,
-  openCareer,
-}: {
-  percent: number;
-  completedDays: number;
-  phaseStats: PhaseStat[];
-  tracker: TrackerState;
-  isDayDone: (dayId: number) => boolean;
-  missionProgress: MissionProgress;
-  openCareer: () => void;
-}) {
-  const plannedMinutes = curriculumDays.reduce((sum, day) => sum + day.minutes, 0);
-  const closedMinutes = curriculumDays.filter((day) => isDayDone(day.id)).reduce((sum, day) => sum + day.minutes, 0);
-  const completedProjects = projects.filter((project) => {
-    const checks = tracker.projectChecks[project.id] ?? [];
-    return checks.length && checks.every(Boolean);
-  }).length;
-  return (
-    <div className="view-wrap">
-      <section className="progress-hero">
-        <div>
-          <span className="eyebrow">READINESS INSTRUMENT PANEL</span>
-          <h1>{percent}% mission complete</h1>
-          <p>
-            Proof XP is derived from closed tasks; job readiness still depends on working builds, failure reports, and reproducible evidence.
-            {" "}{Math.round(closedMinutes / 60)} of {Math.round(plannedMinutes / 60)} planned hours are attached to fully closed days.
-          </p>
-        </div>
-        <div className="progress-numbers">
-          <div><strong>{completedDays}</strong><span>/ 180 days</span></div>
-          <div><strong>{missionProgress.totalXp.toLocaleString()}</strong><span>/ {missionProgress.maxXp.toLocaleString()} XP</span></div>
-          <div><strong>{missionProgress.proofChain}</strong><span>day proof chain</span></div>
-          <div><strong>{completedProjects}</strong><span>/ 6 builds</span></div>
-        </div>
-      </section>
-
-      <section className="mission-achievements" aria-labelledby="mission-rank-title">
-        <div className="rank-card">
-          <span className="eyebrow">COURSE RANK</span>
-          <h2 id="mission-rank-title">{missionProgress.rank.label}</h2>
-          <p>Ranks describe progress through this course. They are not certifications or hiring claims.</p>
-          <progress
-            value={missionProgress.rank.percentToNextRank}
-            max={100}
-            aria-label={`${missionProgress.rank.percentToNextRank}% toward the next course rank`}
-          />
-          <small>
-            {missionProgress.rank.nextMinimumXp === null
-              ? "Maximum course rank reached"
-              : `${missionProgress.rank.xpIntoRank.toLocaleString()} / ${missionProgress.rank.xpForRank.toLocaleString()} XP within this rank`}
-          </small>
-        </div>
-        <div className="badge-rack">
-          <div className="section-heading">
-            <div><span className="eyebrow">EVIDENCE BADGES</span><h2>Earned only from proof</h2></div>
-            <span>{missionProgress.badges.filter((badge) => badge.earned).length}/{missionProgress.badges.length} earned</span>
-          </div>
-          <div>
-            {missionProgress.badges.map((badge) => (
-              <article key={badge.id} className={badge.earned ? "earned" : ""}>
-                <span aria-hidden="true">{badge.earned ? "✓" : "—"}</span>
-                <div>
-                  <strong>{badge.label}</strong>
-                  <small>
-                    {badge.id === "first-proof"
-                      ? "Close Prove and save non-empty evidence"
-                      : badge.id === "seven-day-chain"
-                        ? "Close seven contiguous days from Day 1"
-                        : "Close every checklist item in this build gate"}
-                  </small>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className="analytics-grid">
-        <section className="phase-panel">
-          <div className="section-heading"><div><span className="eyebrow">PHASE TELEMETRY</span><h2>Coverage by system layer</h2></div></div>
-          {phaseStats.map((phase) => (
-            <div className="phase-row" key={phase.id}>
-              <span className="phase-code" style={{ background: phase.color }}>{phase.number}</span>
-              <div><strong>{phase.shortTitle}</strong><small>{phase.complete}/{phase.days} days</small><progress value={phase.complete} max={phase.days} /></div>
-              <b>{phase.percent}%</b>
-            </div>
-          ))}
-        </section>
-
-        <section className="skill-panel">
-          <div className="section-heading"><div><span className="eyebrow">JOB-READINESS MATRIX</span><h2>Evidence level by skill</h2></div></div>
-          <div className="level-legend"><span>0 Not started</span><span>1 Understood</span><span>2 Built</span><span>3 Demonstrated</span></div>
-          {readinessSkills.map((skill) => {
-            const phasePoint = Math.max(1, Math.floor(skill.gateDay / 3));
-            const understood = curriculumDays.slice(0, phasePoint).every((day) => tracker.completed[taskKey(day.id, "learn")]);
-            const built = curriculumDays.slice(0, Math.max(1, skill.gateDay - 6)).some((day) => day.id >= skill.gateDay - 14 && tracker.completed[taskKey(day.id, "build")]);
-            const demonstrated = isDayDone(skill.gateDay);
-            const level = demonstrated ? 3 : built ? 2 : understood ? 1 : 0;
-            return (
-              <div className="skill-row" key={skill.id}>
-                <strong>{skill.label}</strong>
-                <div className="level-blocks" aria-label={`Level ${level} of 3`}>
-                  {[1, 2, 3].map((point) => <i key={point} className={point <= level ? "on" : ""} />)}
-                </div>
-                <span>L{level}</span>
-              </div>
-            );
-          })}
-        </section>
-      </div>
-
-      <section className="role-ladder">
-        <div><span className="eyebrow">APPLICATION LADDER</span><h2>Apply before day 180.</h2><button type="button" onClick={openCareer}>Open role targets</button></div>
-        <article><span>BRIDGE FIRST</span><h3>Robot HMI or fleet platform</h3><p>Reuse React, Flutter, Python, APIs, event systems, telemetry, and production debugging after one robotics-facing proof.</p></article>
-        <article><span>PRIMARY · D84–119</span><h3>Deployment, validation, and ROS 2 integration</h3><p>Add ROS 2, Nav2, hardware integration, simulation, SIL/HIL, commissioning, rollback, and measurable recovery evidence.</p></article>
-        <article><span>STRETCH · 9–18 MONTHS</span><h3>Physical-AI deployment</h3><p>Add robot datasets, policy evaluation, safe language-to-skill execution, edge inference, and real or HIL rollout evidence—not a research claim.</p></article>
-      </section>
-
-      <section className="resource-vault">
-        <div><span className="eyebrow">CURATED SOURCE VAULT</span><h2>Primary references only</h2></div>
-        <div>{resources.map((resource, index) => <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer"><span>{String(index + 1).padStart(2, "0")}</span><strong>{resource.label}</strong><b>↗</b></a>)}</div>
-      </section>
     </div>
   );
 }

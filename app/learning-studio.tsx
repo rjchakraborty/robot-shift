@@ -130,6 +130,10 @@ const modeLabels: Record<TutorMode, string> = {
   story: "Story & metaphor",
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function createMessageId() {
   if (typeof window !== "undefined" && typeof window.crypto?.randomUUID === "function") {
     return window.crypto.randomUUID();
@@ -438,11 +442,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
             onClick={() => setSection(item.id)}
             onKeyDown={(event) => moveTab(event, index, primaryLessonSections)}
           >
-            <span className="lesson-stage-number" aria-hidden="true">{index + 1}</span>
-            <span>
-              <strong>{item.shortLabel}</strong>
-              <small>{item.hint}</small>
-            </span>
+            <strong>{item.shortLabel}</strong>
           </button>
         ))}
       </div>
@@ -689,9 +689,9 @@ export function LearningStudio({ day }: LearningStudioProps) {
               </>
             ) : section === "quiz" ? (
               <>
-                <span>LESSON COMPLETE<strong>Mark Understand complete when you can explain it back.</strong></span>
-                <button type="button" onClick={() => document.getElementById(`daily-quest-${day.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}>
-                  Return to checklist ↑
+                <span>LESSON COMPLETE<strong>Apply the idea in today’s practical task.</strong></span>
+                <button type="button" onClick={() => document.getElementById("practical-task")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                  Continue to practical task ↓
                 </button>
               </>
             ) : (

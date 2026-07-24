@@ -298,10 +298,10 @@ test("adjacent topics resolve to different explanations, math, examples, and qui
 });
 
 test("the live tutor is grounded in the resolved displayed lesson", async () => {
-  const routeSource = await readFile(
-    new URL("../app/api/tutor/route.ts", import.meta.url),
-    "utf8",
-  );
+  const [routeSource, studioSource] = await Promise.all([
+    readFile(new URL("../app/api/tutor/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/learning-studio.tsx", import.meta.url), "utf8"),
+  ]);
 
   assert.match(routeSource, /lessonForDay\(day\)/);
   assert.match(routeSource, /TRUSTED DISPLAYED LESSON/);
@@ -316,4 +316,6 @@ test("the live tutor is grounded in the resolved displayed lesson", async () => 
   assert.match(routeSource, /KaTeX-compatible LaTeX/);
   assert.match(routeSource, /Never output raw HTML/);
   assert.match(routeSource, /authored LaTeX/);
+  assert.match(studioSource, /function isRecord\(value: unknown\)/);
+  assert.match(studioSource, /!isRecord\(payload\)/);
 });
