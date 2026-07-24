@@ -3401,7 +3401,8 @@ textarea::placeholder {
   color: #d8fff9;
 }
 
-.tutor-markdown .katex-display {
+.tutor-markdown .katex-display,
+.tutor-markdown .standalone-equation {
   overflow-x: auto;
   overflow-y: hidden;
   margin: 14px 0;
@@ -3409,6 +3410,14 @@ textarea::placeholder {
   background: #101719;
   border: 1px solid #526066;
   border-left: 4px solid #98e4dc;
+}
+
+.tutor-markdown .standalone-equation {
+  white-space: normal;
+}
+
+.tutor-markdown .standalone-equation .katex {
+  font-size: 1.05em;
 }
 
 .tutor-thinking {

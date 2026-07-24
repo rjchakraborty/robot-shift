@@ -1,6 +1,11 @@
 "use client";
 
-import { memo } from "react";
+import {
+  Children,
+  isValidElement,
+  memo,
+  type ReactNode,
+} from "react";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
@@ -26,6 +31,18 @@ function safeUrlTransform(url: string, allowedLinks?: ReadonlySet<string>): stri
   }
 
   return "";
+}
+
+function isMathOnlyParagraph(children: ReactNode) {
+  const meaningfulChildren = Children.toArray(children).filter(
+    (child) => typeof child !== "string" || child.trim().length > 0,
+  );
+  if (meaningfulChildren.length !== 1 || !isValidElement(meaningfulChildren[0])) {
+    return false;
+  }
+
+  const className = (meaningfulChildren[0].props as { className?: unknown }).className;
+  return typeof className === "string" && /\bkatex(?:-display)?\b/.test(className);
 }
 
 export const RichText = memo(function RichText({
@@ -62,6 +79,11 @@ export const RichText = memo(function RichText({
               </a>
             );
           },
+          p: ({ children }) => (
+            <p className={isMathOnlyParagraph(children) ? "standalone-equation" : undefined}>
+              {children}
+            </p>
+          ),
         }}
       >
         {content}

@@ -45,6 +45,14 @@ $$
   assert.doesNotMatch(html, /<img|tracker\.invalid/);
 });
 
+test("marks a standalone tutor equation for visual emphasis", () => {
+  const html = renderToStaticMarkup(
+    <RichText content={String.raw`$\mathbf a\cdot\mathbf b=0$`} />,
+  );
+
+  assert.match(html, /<p class="standalone-equation"><span class="katex"/);
+});
+
 test("all curated weekly formulas compile as strict, untrusted KaTeX", () => {
   assert.equal(weekLessonPacks.length, 26);
 
