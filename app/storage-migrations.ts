@@ -3,6 +3,7 @@ import {
   MISSION_TASK_PARTS,
   type MissionTaskPart,
 } from "./mission-progress";
+import { themePreferences, type ThemePreference } from "./theme";
 
 export const CURRICULUM_REVISION = 2 as const;
 export const FOUNDATION_REVISION_LAST_DAY = 14;
@@ -12,8 +13,16 @@ export const LEGACY_TRACKER_STORAGE_KEY = "robot-shift-tracker-v1";
 export const LEGACY_TRACKER_ARCHIVE_KEY = "robot-shift-tracker-v1-archive";
 
 export const TUTOR_STORAGE_KEY = "robot-shift-tutor-v2";
+export const TUTOR_ACCOUNT_STORAGE_PREFIX = "robot-shift-tutor-account-v2:";
+export const TUTOR_PRE_ACCOUNT_OWNER_KEY =
+  "robot-shift-tutor-v2-pre-account-owner";
 export const LEGACY_TUTOR_STORAGE_KEY = "robot-shift-tutor-v1";
 export const LEGACY_TUTOR_ARCHIVE_KEY = "robot-shift-tutor-v1-archive";
+
+export const ROBOT_SHIFT_BACKUP_KIND = "robot-shift-complete-backup" as const;
+export const ROBOT_SHIFT_BACKUP_VERSION = 1 as const;
+export const ROBOT_SHIFT_BACKUP_INTEGRITY_ALGORITHM = "SHA-256" as const;
+export const MAX_ROBOT_SHIFT_BACKUP_BYTES = 5_000_000;
 
 const MAX_TEXT_LENGTH = 5_000;
 const MAX_TUTOR_MESSAGE_LENGTH = 7_000;
@@ -87,10 +96,55 @@ export type TutorLoadResult = {
   archivedFoundationDays: number[];
 };
 
+export type RobotShiftBackupEnvelopeV1 = {
+  kind: typeof ROBOT_SHIFT_BACKUP_KIND;
+  backupVersion: typeof ROBOT_SHIFT_BACKUP_VERSION;
+  tracker: TrackerStateV2;
+  tutor: TutorStoreV2;
+  theme: ThemePreference;
+  trackerLegacyArchive: string | null;
+  tutorLegacyArchive: string | null;
+  exportedAt: string;
+  sourceOrigin: string;
+  integrity: {
+    algorithm: typeof ROBOT_SHIFT_BACKUP_INTEGRITY_ALGORITHM;
+    checksum: string;
+  };
+};
+
+export type CreateRobotShiftBackupInput = Omit<
+  RobotShiftBackupEnvelopeV1,
+  "kind" | "backupVersion" | "integrity" | "exportedAt"
+> & {
+  exportedAt?: string;
+};
+
+export type ParsedRobotShiftBackup =
+  | {
+      format: "complete";
+      envelope: RobotShiftBackupEnvelopeV1;
+    }
+  | {
+      format: "tracker";
+      tracker: TrackerLoadResult;
+    };
+
 export type StorageLike = {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
 };
+
+export function tutorStorageKeyForUser(uid: string): string {
+  const normalized = uid.trim();
+  if (
+    normalized.length < 1
+    || normalized.length > 128
+    || !/^[A-Za-z0-9:_-]+$/.test(normalized)
+  ) {
+    throw new TypeError("Invalid Firebase user ID for tutor storage.");
+  }
+  return `${TUTOR_ACCOUNT_STORAGE_PREFIX}${normalized}`;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -403,6 +457,288 @@ export function parseTutorBackup(raw: string): TutorLoadResult | null {
     };
   }
   return migrateLegacyTutorStore(raw);
+}
+
+function hasExactKeys(
+  value: Record<string, unknown>,
+  expectedKeys: readonly string[],
+): boolean {
+  const actualKeys = Object.keys(value).sort();
+  const expected = [...expectedKeys].sort();
+  return (
+    actualKeys.length === expected.length &&
+    actualKeys.every((key, index) => key === expected[index])
+  );
+}
+
+function jsonRoundTrip(value: unknown): unknown | null {
+  try {
+    const raw = JSON.stringify(value);
+    return typeof raw === "string" ? JSON.parse(raw) as unknown : null;
+  } catch {
+    return null;
+  }
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null) return "null";
+  if (typeof value === "string" || typeof value === "boolean") {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new TypeError("Non-finite JSON number");
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value
+      .map((item) => item === undefined ? "null" : canonicalJson(item))
+      .join(",")}]`;
+  }
+  if (isRecord(value)) {
+    return `{${Object.keys(value)
+      .filter((key) => value[key] !== undefined)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+      .join(",")}}`;
+  }
+  throw new TypeError("Value is not JSON-compatible");
+}
+
+function normalizeTrackerForCompleteBackup(
+  value: unknown,
+): TrackerStateV2 | null {
+  const roundTripped = jsonRoundTrip(value);
+  if (roundTripped === null) return null;
+
+  let raw: string;
+  try {
+    raw = JSON.stringify(roundTripped);
+  } catch {
+    return null;
+  }
+  const tracker = parseTrackerStateV2(raw);
+  if (!tracker) return null;
+
+  try {
+    return canonicalJson(roundTripped) === canonicalJson(tracker)
+      ? tracker
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeTutorForCompleteBackup(
+  value: unknown,
+): TutorStoreV2 | null {
+  const roundTripped = jsonRoundTrip(value);
+  if (roundTripped === null) return null;
+
+  let raw: string;
+  try {
+    raw = JSON.stringify(roundTripped);
+  } catch {
+    return null;
+  }
+  const tutor = parseTutorStoreV2(raw);
+  if (!tutor) return null;
+
+  try {
+    return canonicalJson(roundTripped) === canonicalJson(tutor)
+      ? tutor
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function readThemePreference(value: unknown): ThemePreference | null {
+  return typeof value === "string" &&
+    themePreferences.includes(value as ThemePreference)
+    ? value as ThemePreference
+    : null;
+}
+
+function isCanonicalIsoTimestamp(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const timestamp = new Date(value);
+  return !Number.isNaN(timestamp.getTime()) &&
+    timestamp.toISOString() === value;
+}
+
+function isCanonicalWebOrigin(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const parsed = new URL(value);
+    return (
+      (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+      parsed.username === "" &&
+      parsed.password === "" &&
+      parsed.origin === value
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isWithinBackupSizeLimit(raw: string): boolean {
+  if (raw.length > MAX_ROBOT_SHIFT_BACKUP_BYTES) return false;
+  return new TextEncoder().encode(raw).byteLength <=
+    MAX_ROBOT_SHIFT_BACKUP_BYTES;
+}
+
+type RobotShiftBackupPayloadV1 = Omit<
+  RobotShiftBackupEnvelopeV1,
+  "integrity"
+>;
+
+async function checksumForBackupPayload(
+  payload: RobotShiftBackupPayloadV1,
+): Promise<string> {
+  if (!globalThis.crypto?.subtle) {
+    throw new Error("Web Crypto is unavailable");
+  }
+  const digest = await globalThis.crypto.subtle.digest(
+    ROBOT_SHIFT_BACKUP_INTEGRITY_ALGORITHM,
+    new TextEncoder().encode(canonicalJson(payload)),
+  );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+}
+
+function normalizedBackupPayload(
+  candidate: Record<string, unknown>,
+): RobotShiftBackupPayloadV1 | null {
+  const tracker = normalizeTrackerForCompleteBackup(candidate.tracker);
+  const tutor = normalizeTutorForCompleteBackup(candidate.tutor);
+  const theme = readThemePreference(candidate.theme);
+  if (
+    candidate.kind !== ROBOT_SHIFT_BACKUP_KIND ||
+    candidate.backupVersion !== ROBOT_SHIFT_BACKUP_VERSION ||
+    !tracker ||
+    !tutor ||
+    !theme ||
+    (
+      candidate.trackerLegacyArchive !== null &&
+      typeof candidate.trackerLegacyArchive !== "string"
+    ) ||
+    (
+      candidate.tutorLegacyArchive !== null &&
+      typeof candidate.tutorLegacyArchive !== "string"
+    ) ||
+    !isCanonicalIsoTimestamp(candidate.exportedAt) ||
+    !isCanonicalWebOrigin(candidate.sourceOrigin)
+  ) return null;
+
+  return {
+    kind: ROBOT_SHIFT_BACKUP_KIND,
+    backupVersion: ROBOT_SHIFT_BACKUP_VERSION,
+    tracker,
+    tutor,
+    theme,
+    trackerLegacyArchive: candidate.trackerLegacyArchive,
+    tutorLegacyArchive: candidate.tutorLegacyArchive,
+    exportedAt: candidate.exportedAt,
+    sourceOrigin: candidate.sourceOrigin,
+  };
+}
+
+export async function createRobotShiftBackup(
+  input: CreateRobotShiftBackupInput,
+): Promise<string> {
+  const candidate: Record<string, unknown> = {
+    kind: ROBOT_SHIFT_BACKUP_KIND,
+    backupVersion: ROBOT_SHIFT_BACKUP_VERSION,
+    tracker: input.tracker,
+    tutor: input.tutor,
+    theme: input.theme,
+    trackerLegacyArchive: input.trackerLegacyArchive,
+    tutorLegacyArchive: input.tutorLegacyArchive,
+    exportedAt: input.exportedAt ?? new Date().toISOString(),
+    sourceOrigin: input.sourceOrigin,
+  };
+  const payload = normalizedBackupPayload(candidate);
+  if (!payload) {
+    throw new TypeError("Robot/Shift backup input is invalid");
+  }
+  if (!isWithinBackupSizeLimit(JSON.stringify(payload))) {
+    throw new RangeError(
+      `Robot/Shift backup exceeds ${MAX_ROBOT_SHIFT_BACKUP_BYTES} bytes`,
+    );
+  }
+
+  const envelope: RobotShiftBackupEnvelopeV1 = {
+    ...payload,
+    integrity: {
+      algorithm: ROBOT_SHIFT_BACKUP_INTEGRITY_ALGORITHM,
+      checksum: await checksumForBackupPayload(payload),
+    },
+  };
+  const raw = JSON.stringify(envelope, null, 2);
+  if (!isWithinBackupSizeLimit(raw)) {
+    throw new RangeError(
+      `Robot/Shift backup exceeds ${MAX_ROBOT_SHIFT_BACKUP_BYTES} bytes`,
+    );
+  }
+  return raw;
+}
+
+export async function parseRobotShiftBackupEnvelope(
+  raw: string,
+): Promise<RobotShiftBackupEnvelopeV1 | null> {
+  if (!isWithinBackupSizeLimit(raw)) return null;
+  const candidate = parseJson(raw);
+  if (
+    !isRecord(candidate) ||
+    !hasExactKeys(candidate, [
+      "kind",
+      "backupVersion",
+      "tracker",
+      "tutor",
+      "theme",
+      "trackerLegacyArchive",
+      "tutorLegacyArchive",
+      "exportedAt",
+      "sourceOrigin",
+      "integrity",
+    ]) ||
+    !isRecord(candidate.integrity) ||
+    !hasExactKeys(candidate.integrity, ["algorithm", "checksum"]) ||
+    candidate.integrity.algorithm !==
+      ROBOT_SHIFT_BACKUP_INTEGRITY_ALGORITHM ||
+    typeof candidate.integrity.checksum !== "string" ||
+    !/^[a-f0-9]{64}$/.test(candidate.integrity.checksum)
+  ) return null;
+
+  const payload = normalizedBackupPayload(candidate);
+  if (!payload) return null;
+
+  try {
+    const expectedChecksum = await checksumForBackupPayload(payload);
+    if (expectedChecksum !== candidate.integrity.checksum) return null;
+  } catch {
+    return null;
+  }
+
+  return {
+    ...payload,
+    integrity: {
+      algorithm: ROBOT_SHIFT_BACKUP_INTEGRITY_ALGORITHM,
+      checksum: candidate.integrity.checksum,
+    },
+  };
+}
+
+export async function parseRobotShiftBackup(
+  raw: string,
+): Promise<ParsedRobotShiftBackup | null> {
+  if (!isWithinBackupSizeLimit(raw)) return null;
+  const envelope = await parseRobotShiftBackupEnvelope(raw);
+  if (envelope) return { format: "complete", envelope };
+
+  const tracker = parseTrackerBackup(raw);
+  return tracker ? { format: "tracker", tracker } : null;
 }
 
 export function archiveLegacyPayload(

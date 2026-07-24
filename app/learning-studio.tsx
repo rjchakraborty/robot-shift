@@ -12,20 +12,23 @@ import {
 import { loadChapterContent } from "./chapter-content";
 import type { ChapterContent } from "./chapter-content-types";
 import { type CurriculumDay } from "./curriculum";
+import {
+  initializeFirebaseObservability,
+  logTutorRequestEvent,
+} from "./firebase-observability";
+import {
+  askCloudTutor,
+  clearCloudTutorThread,
+  loadActiveCloudTutorThread,
+  loadCloudTutorThread,
+} from "./firestore-data";
+import { useAuth } from "./auth/auth-context";
 import { LessonArticle } from "./lesson-article";
 import { lessonForDay } from "./lessons";
 import {
-  archiveLegacyPayload,
-  CURRICULUM_REVISION,
-  LEGACY_TUTOR_ARCHIVE_KEY,
-  LEGACY_TUTOR_STORAGE_KEY,
-  migrateLegacyTutorStore,
-  parseTutorStoreV2,
-  TUTOR_STORAGE_KEY,
   type StoredTutorMessage,
   type StoredTutorMode,
   type StoredTutorThread,
-  type TutorStoreV2,
 } from "./storage-migrations";
 
 const RichText = lazy(() => import("./rich-text").then((module) => ({
@@ -37,15 +40,10 @@ type LearningStudioProps = {
 };
 
 type TutorMode = StoredTutorMode;
-type TutorRole = "user" | "assistant";
 type TutorMessage = StoredTutorMessage;
 type TutorThread = StoredTutorThread;
-type TutorStore = TutorStoreV2;
 
 const MAX_INPUT_LENGTH = 2_000;
-const MAX_MESSAGE_LENGTH = 7_000;
-const MAX_HISTORY_ITEM_LENGTH = 2_500;
-const MAX_HISTORY_LENGTH = 10_000;
 const MAX_MESSAGES_PER_DAY = 12;
 const MAX_STORED_DAYS = 14;
 
@@ -98,18 +96,8 @@ const modeLabels: Record<TutorMode, string> = {
   story: "Memory metaphor",
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function createMessageId() {
-  if (
-    typeof window !== "undefined"
-    && typeof window.crypto?.randomUUID === "function"
-  ) {
-    return window.crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return window.crypto.randomUUID();
 }
 
 function withUpdatedThread(
@@ -132,27 +120,40 @@ function withUpdatedThread(
   );
 }
 
-function historyForRequest(messages: TutorMessage[]) {
-  const history: Array<{ role: TutorRole; content: string }> = [];
-  let totalLength = 0;
-
-  for (const message of [...messages].reverse()) {
-    const content = message.content.slice(0, MAX_HISTORY_ITEM_LENGTH);
-    if (totalLength + content.length > MAX_HISTORY_LENGTH) break;
-    history.unshift({ role: message.role, content });
-    totalLength += content.length;
+function withCanonicalThread(
+  current: Record<string, TutorThread>,
+  dayId: number,
+  thread: TutorThread | null,
+) {
+  const dayKey = String(dayId);
+  const next = { ...current };
+  if (thread) {
+    next[dayKey] = thread;
+  } else {
+    delete next[dayKey];
   }
-
-  return history;
+  return Object.fromEntries(
+    Object.entries(next)
+      .sort((a, b) => b[1].updatedAt - a[1].updatedAt)
+      .slice(0, MAX_STORED_DAYS),
+  );
 }
 
 export function LearningStudio({ day }: LearningStudioProps) {
+  const {
+    cloudLoading,
+    datasetId,
+    loading: authLoading,
+    openAuth,
+    user: authUser,
+  } = useAuth();
   const lesson = useMemo(() => lessonForDay(day), [day]);
   const [chapter, setChapter] = useState<ChapterContent | null>(null);
   const [chapterError, setChapterError] = useState<string | null>(null);
   const [threads, setThreads] = useState<Record<string, TutorThread>>({});
-  const [storageReady, setStorageReady] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [storageNotice, setStorageNotice] = useState<string | null>(null);
+  const [remainingToday, setRemainingToday] = useState<number | null>(null);
   const [mode, setMode] = useState<TutorMode>("ask");
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
@@ -160,7 +161,6 @@ export function LearningStudio({ day }: LearningStudioProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<AbortController | null>(null);
-  const skipNextTutorSaveRef = useRef(false);
   const dayKey = String(day.id);
   const messages = threads[dayKey]?.messages ?? [];
   const deepDive = chapter?.days.find((item) => item.dayId === day.id);
@@ -168,6 +168,20 @@ export function LearningStudio({ day }: LearningStudioProps) {
     () => (chapter?.sources ?? lesson.sources).map((source) => source.url),
     [chapter, lesson.sources],
   );
+  const canUseTutor = Boolean(
+    authUser?.emailVerified && datasetId && !cloudLoading,
+  );
+
+  useEffect(() => {
+    void initializeFirebaseObservability();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      requestRef.current?.abort();
+      requestRef.current = null;
+    };
+  }, [authUser?.uid]);
 
   useEffect(() => {
     let active = true;
@@ -192,78 +206,38 @@ export function LearningStudio({ day }: LearningStudioProps) {
   }, [day.week]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      try {
-        const currentRaw = window.localStorage.getItem(TUTOR_STORAGE_KEY);
-        if (currentRaw) {
-          const parsed = parseTutorStoreV2(currentRaw);
-          if (parsed) {
-            setThreads(parsed.threads);
-          } else {
-            skipNextTutorSaveRef.current = true;
-            setStorageNotice(
-              "Saved version 2 tutor history was unreadable and was not overwritten.",
-            );
-          }
-        } else {
-          const legacyRaw = window.localStorage.getItem(LEGACY_TUTOR_STORAGE_KEY);
-          if (legacyRaw) {
-            archiveLegacyPayload(
-              window.localStorage,
-              LEGACY_TUTOR_ARCHIVE_KEY,
-              legacyRaw,
-            );
-            const migration = migrateLegacyTutorStore(legacyRaw);
-            if (migration) {
-              setThreads(migration.store.threads);
-              setStorageNotice(
-                migration.archivedFoundationDays.length > 0
-                  ? "Tutor chats for revised Days 1–14 were archived; unchanged later-day chats were migrated to version 2."
-                  : "Version 1 tutor history was archived and migrated to version 2.",
-              );
-            } else {
-              skipNextTutorSaveRef.current = true;
-              setStorageNotice(
-                "Version 1 tutor history was archived but could not be migrated.",
-              );
-            }
-          }
-        }
-      } catch {
-        setStorageNotice(
-          "Tutor history is available for this visit, but this browser cannot save it.",
-        );
-      } finally {
-        setStorageReady(true);
+    let active = true;
+    void Promise.resolve().then(async () => {
+      if (!active) return;
+      setThreads({});
+      setStorageNotice(null);
+      setRemainingToday(null);
+      if (!authUser?.emailVerified || !datasetId) {
+        setHistoryLoading(false);
+        return;
       }
-    }, 0);
 
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!storageReady) return;
-    if (skipNextTutorSaveRef.current) {
-      skipNextTutorSaveRef.current = false;
-      return;
-    }
-
-    try {
-      const store: TutorStore = {
-        version: 2,
-        curriculumRevision: CURRICULUM_REVISION,
-        threads,
-      };
-      window.localStorage.setItem(TUTOR_STORAGE_KEY, JSON.stringify(store));
-    } catch {
-      const timer = window.setTimeout(() => {
-        setStorageNotice(
-          "Tutor history is available for this visit, but the browser could not save it.",
+      setHistoryLoading(true);
+      try {
+        const thread = await loadCloudTutorThread(
+          authUser.uid,
+          datasetId,
+          day.id,
         );
-      }, 0);
-      return () => window.clearTimeout(timer);
-    }
-  }, [storageReady, threads]);
+        if (!active) return;
+        setThreads(thread ? { [String(day.id)]: thread } : {});
+        setStorageNotice(null);
+      } catch {
+        if (!active) return;
+        setStorageNotice("Tutor history could not be loaded from Firestore.");
+      } finally {
+        if (active) setHistoryLoading(false);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [authUser?.emailVerified, authUser?.uid, datasetId, day.id]);
 
   useEffect(() => {
     requestRef.current?.abort();
@@ -321,14 +295,28 @@ export function LearningStudio({ day }: LearningStudioProps) {
     event.preventDefault();
     const question = draft.trim();
     if (!question || loading) return;
+    if (!authUser) {
+      openAuth("sign-in");
+      setError("Sign in before asking the AI tutor.");
+      return;
+    }
+    if (!authUser.emailVerified) {
+      openAuth("verify-email");
+      setError("Verify your email before asking the AI tutor.");
+      return;
+    }
+    if (!chapter || !deepDive) {
+      setError("The trusted lesson content is still loading. Try again shortly.");
+      return;
+    }
 
     const submittedDay = day.id;
-    const priorMessages = historyForRequest(messages);
+    const submittedMode = mode;
     const userMessage: TutorMessage = {
       id: createMessageId(),
       role: "user",
       content: question.slice(0, MAX_INPUT_LENGTH),
-      mode,
+      mode: submittedMode,
     };
 
     setThreads((current) => withUpdatedThread(
@@ -343,54 +331,103 @@ export function LearningStudio({ day }: LearningStudioProps) {
     const controller = new AbortController();
     requestRef.current?.abort();
     requestRef.current = controller;
+    const requestStartedAt = performance.now();
+    void logTutorRequestEvent({
+      dayId: submittedDay,
+      mode: submittedMode,
+      status: "started",
+    });
 
     try {
-      const response = await fetch("/api/tutor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
-        body: JSON.stringify({
-          dayId: submittedDay,
-          mode,
-          message: userMessage.content,
-          history: priorMessages,
-        }),
+      const payload = await askCloudTutor({
+        day,
+        mode: submittedMode,
+        message: userMessage.content,
+        requestId: userMessage.id,
       });
+      if (controller.signal.aborted) return;
 
-      const payload: unknown = await response.json().catch(() => null);
-      if (
-        !response.ok
-        || !isRecord(payload)
-        || typeof payload.answer !== "string"
-        || payload.answer.trim().length === 0
-      ) {
-        const apiError = isRecord(payload) && typeof payload.error === "string"
-          ? payload.error
-          : "The tutor could not answer right now.";
-        throw new Error(apiError);
-      }
-
-      const rawAnswer = payload.answer.trim();
-      const answer = rawAnswer.length > MAX_MESSAGE_LENGTH
-        ? `${rawAnswer.slice(0, MAX_MESSAGE_LENGTH - 52)}\n\n[Answer shortened to protect local storage.]`
-        : rawAnswer;
-      const assistantMessage: TutorMessage = {
-        id: createMessageId(),
-        role: "assistant",
-        content: answer,
-        mode,
-        model: typeof payload.model === "string"
-          ? payload.model.slice(0, 100)
-          : undefined,
-      };
-
-      setThreads((current) => withUpdatedThread(
+      const canonical = await loadActiveCloudTutorThread(
+        authUser.uid,
+        submittedDay,
+      );
+      if (controller.signal.aborted) return;
+      const committedAssistantId =
+        `${payload.requestId}:assistant`.slice(0, 100);
+      const canonicalHasAnswer = canonical.thread?.messages.some(
+        (message) => message.id === committedAssistantId,
+      ) === true;
+      const commitIsCurrent = (
+        payload.threadCommitted
+        && payload.requestId === userMessage.id
+        && payload.datasetId === canonical.datasetId
+        && canonicalHasAnswer
+      );
+      setThreads((current) => withCanonicalThread(
         current,
         submittedDay,
-        (currentMessages) => [...currentMessages, assistantMessage],
+        canonical.thread,
       ));
+      setRemainingToday(payload.remainingToday);
+      if (!commitIsCurrent) {
+        void logTutorRequestEvent({
+          dayId: submittedDay,
+          mode: submittedMode,
+          status: "failed",
+          latencyMs: performance.now() - requestStartedAt,
+          failureCode: "unknown",
+        });
+        setError(
+          "Course data or Tutor history changed before the answer was saved. The unsaved answer was discarded; ask again.",
+        );
+        return;
+      }
+      void logTutorRequestEvent({
+        dayId: submittedDay,
+        mode: submittedMode,
+        status: "succeeded",
+        latencyMs: performance.now() - requestStartedAt,
+      });
     } catch (caught) {
-      if (caught instanceof DOMException && caught.name === "AbortError") return;
+      const failureCode = getCallableTutorFailureCode(caught);
+      if (failureCode === "cancelled") {
+        void logTutorRequestEvent({
+          dayId: submittedDay,
+          mode: submittedMode,
+          status: "cancelled",
+          latencyMs: performance.now() - requestStartedAt,
+          failureCode,
+        });
+        return;
+      }
+      try {
+        const cloudThread = authUser
+          ? (await loadActiveCloudTutorThread(
+              authUser.uid,
+              submittedDay,
+            )).thread
+          : null;
+        setThreads((current) => withCanonicalThread(
+          current,
+          submittedDay,
+          cloudThread,
+        ));
+      } catch {
+        setThreads((current) => withUpdatedThread(
+          current,
+          submittedDay,
+          (currentMessages) => currentMessages.filter(
+            (message) => message.id !== userMessage.id,
+          ),
+        ));
+      }
+      void logTutorRequestEvent({
+        dayId: submittedDay,
+        mode: submittedMode,
+        status: "failed",
+        latencyMs: performance.now() - requestStartedAt,
+        failureCode,
+      });
       setError(
         caught instanceof Error
           ? caught.message
@@ -404,18 +441,32 @@ export function LearningStudio({ day }: LearningStudioProps) {
     }
   }
 
-  function clearChat() {
+  async function clearChat() {
+    if (!canUseTutor) return;
     requestRef.current?.abort();
     requestRef.current = null;
-    setThreads((current) => {
-      const next = { ...current };
-      delete next[String(day.id)];
-      return next;
-    });
     setLoading(false);
     setError(null);
     setMode("ask");
     setDraft("");
+    try {
+      await clearCloudTutorThread(day.id);
+      const canonical = authUser
+        ? await loadActiveCloudTutorThread(authUser.uid, day.id)
+        : null;
+      setThreads((current) => withCanonicalThread(
+        current,
+        day.id,
+        canonical?.thread ?? null,
+      ));
+      setStorageNotice(
+        canonical?.thread
+          ? "Course data changed while clearing; the active Firestore thread was reloaded."
+          : "This Firestore tutor thread was cleared.",
+      );
+    } catch {
+      setStorageNotice("Tutor history could not be cleared from Firestore.");
+    }
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }
 
@@ -450,17 +501,44 @@ export function LearningStudio({ day }: LearningStudioProps) {
             <div>
               <h3 id={`tutor-title-${day.id}`}>Ask about this lesson</h3>
             </div>
-            {messages.length > 0 || draft ? (
+            {canUseTutor && (messages.length > 0 || draft) ? (
               <button
                 type="button"
                 className="clear-chat-button"
-                onClick={clearChat}
+                onClick={() => void clearChat()}
               >
                 Clear chat
               </button>
             ) : null}
           </header>
 
+          {authLoading || cloudLoading ? (
+            <div className="tutor-access-gate" role="status">
+              <strong>Checking account access…</strong>
+            </div>
+          ) : !authUser ? (
+            <div className="tutor-access-gate">
+              <strong>Sign in to use the AI tutor</strong>
+              <p>The full curriculum stays public. Tutor requires a registered account.</p>
+              <button type="button" onClick={() => openAuth("sign-in")}>
+                Sign in or register
+              </button>
+            </div>
+          ) : !authUser.emailVerified ? (
+            <div className="tutor-access-gate">
+              <strong>Verify your email to unlock Tutor</strong>
+              <p>Open the verification link sent to {authUser.email}.</p>
+              <button type="button" onClick={() => openAuth("verify-email")}>
+                Verify or resend
+              </button>
+            </div>
+          ) : !datasetId ? (
+            <div className="tutor-access-gate" role="alert">
+              <strong>Secure Tutor data is unavailable</strong>
+              <p>The Firestore account dataset could not be loaded. Tutor remains locked.</p>
+            </div>
+          ) : (
+            <>
           <label className="tutor-mode-select" htmlFor={`tutor-mode-${day.id}`}>
             Teaching style
             <select
@@ -483,7 +561,11 @@ export function LearningStudio({ day }: LearningStudioProps) {
             aria-relevant="additions text"
             aria-busy={loading}
           >
-            {messages.length === 0 ? (
+            {historyLoading ? (
+              <div className="tutor-empty" role="status">
+                <p>Loading this tutor thread from Firestore…</p>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="tutor-empty">
                 <p>Ask about the explanation, equation, exercise, or interview connection.</p>
               </div>
@@ -548,13 +630,21 @@ export function LearningStudio({ day }: LearningStudioProps) {
             />
             <div className="tutor-form-footer">
               <span>
-                ⌘/Ctrl + Enter · recent chat stays on this device and is sent to
-                Gemini only when you ask
+                ⌘/Ctrl + Enter · chat and daily usage are secured in Firestore
+                {remainingToday === null
+                  ? ""
+                  : ` · ${remainingToday} requests left today`}
               </span>
               <button
                 type="submit"
                 className="primary-button"
-                disabled={loading || !draft.trim()}
+                disabled={
+                  loading
+                  || historyLoading
+                  || !draft.trim()
+                  || !chapter
+                  || !deepDive
+                }
               >
                 {loading ? "Thinking…" : "Ask teacher"}
               </button>
@@ -570,8 +660,31 @@ export function LearningStudio({ day }: LearningStudioProps) {
             commands directly to powered hardware without limits, an emergency
             stop, and human review.
           </p>
+            </>
+          )}
         </section>
       </details>
     </section>
   );
+}
+
+function getCallableTutorFailureCode(error: unknown): string {
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return "cancelled";
+  }
+  const code = (
+    error
+    && typeof error === "object"
+    && "code" in error
+    && typeof error.code === "string"
+  ) ? error.code : "";
+  if (code.includes("unauthenticated")) return "authentication_required";
+  if (code.includes("permission-denied")) return "email_verification_required";
+  if (code.includes("invalid-argument")) return "invalid_request";
+  if (code.includes("resource-exhausted")) return "provider_busy";
+  if (code.includes("deadline-exceeded")) return "timeout";
+  if (code.includes("unavailable")) return "network";
+  if (code.includes("failed-precondition")) return "configuration";
+  if (code.includes("cancelled")) return "cancelled";
+  return "unknown";
 }

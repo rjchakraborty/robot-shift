@@ -2,7 +2,12 @@
 
 ## Runtime
 
-Robot/Shift is a Vinext/React application with a server route for the Gemini tutor. OpenAI Sites uses the opaque project identity in `.openai/hosting.json`. No D1 or R2 binding is currently required.
+Robot/Shift is a Next.js static-export application hosted by Firebase Hosting.
+Firebase Authentication owns learner identity, Cloud Firestore owns account and
+course state, and callable Cloud Functions in `asia-south1` own privileged writes
+and the Gemini provider call. Web App Check protects callable and Firestore
+traffic. `.openai/hosting.json` identifies only the previous Sites origin needed
+for legacy export; it is not a deployment target.
 
 ## Content pipeline
 
@@ -26,21 +31,29 @@ The numeric model is the source of truth. A diagram must agree with known fixtur
 
 ## Tutor pipeline
 
-`LearningStudio` submits bounded day, mode, message, and history data to `app/api/tutor/route.ts`. The route:
+`LearningStudio` submits a bounded day, mode, question, and replay-safe request ID
+through `askCloudTutor()`. Callable Functions:
 
-- validates body size and shape;
+- require a verified Firebase identity and valid App Check token;
+- recheck the Auth user through the Admin SDK;
+- validate body size, shape, request identity, and replay hash;
 - resolves the displayed day and lesson;
 - builds a beginner-safe grounded instruction;
-- reads `GEMINI_API_KEY` only on the server;
-- enforces rate and timeout limits;
+- read `GEMINI_API_KEY` only from Secret Manager;
+- transactionally reserve per-user and global daily quota before the model call;
+- enforce one in-flight request, timeout, output, and cost limits;
 - parses provider output;
-- returns structured JSON.
+- atomically commit canonical tutor history and usage;
+- return structured JSON.
 
 The client treats the JSON payload as unknown and renders assistant output through `RichText`. Raw HTML is forbidden.
 
 ## Persistence
 
-`app/storage-migrations.ts` owns:
+Firebase Auth identity plus `users/{uid}` and the active Firestore dataset are the
+source of truth. `app/firestore-data.ts` owns callable and owner-data operations;
+`app/data/course-data-context.tsx` owns account-scoped course state and
+three-way merging; `app/storage-migrations.ts` owns:
 
 - tracker schema version 2;
 - tutor-store version 2;
@@ -48,7 +61,17 @@ The client treats the JSON payload as unknown and renders assistant output throu
 - safe parsing and migration;
 - import/export compatibility.
 
-Existing legacy fields may remain invisible but must round-trip. Never relabel revised Days 1–14 records as if they belonged to the new foundation.
+The browser never writes application course, profile, preference, or Tutor data
+to cookies or local storage. Existing legacy keys are a read-only one-time bridge
+on origins where they already exist; the old Sites origin requires explicit
+export and Firebase import. Existing legacy fields may remain invisible but must
+round-trip. Never relabel revised Days 1–14 records as if they belonged to the new
+foundation.
+
+Rules require a verified owner, active post-cutoff authentication, an unexpired
+server-issued account-access lease, and the current dataset generation.
+Entitlements, quota/budget records, tutor requests, migration archives,
+destructive-operation ledgers, and global controls are server-only.
 
 ## UI
 
@@ -68,6 +91,9 @@ The product uses a quiet Notion-like shell and Medium-like reading flow:
 - `interactive-math`: fixtures, bounds, determinism, accessible controls.
 - `rich-text`: safe Markdown and KaTeX.
 - `storage-migrations`: versioned preservation and archive behavior.
+- `cloud-persistence`: Firestore merge, access lease, import/reset, and ownership contracts.
+- `firebase-auth`: signup, verification, password, profile, and action-link contracts.
+- `tests/firebase`: isolated Auth, Firestore Rules, and callable Function emulator boundaries.
 - `rendered-html`: production shell and shipped capabilities.
 - `career-market`: dated evidence and honest role mapping.
 - `theme`: light/dark contracts and semantic contrast.

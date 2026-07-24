@@ -385,6 +385,17 @@ a {
   color: var(--signal);
 }
 
+.rail-privacy-link {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid #3a4448;
+  color: #aeb7b9;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.66rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .rail-progress {
   margin-top: auto;
   border-top: 1px solid #3a4448;
@@ -627,6 +638,7 @@ textarea::placeholder {
   background: var(--surface-muted);
   border-bottom: 1px solid var(--border-strong);
   display: flex;
+  flex-wrap: wrap;
   align-items: end;
   gap: 18px;
 }
@@ -667,6 +679,43 @@ textarea::placeholder {
   max-width: 310px;
   color: var(--fault);
   line-height: 1.4;
+}
+
+.telemetry-control {
+  max-width: 260px;
+}
+
+.telemetry-control > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+}
+
+.telemetry-control input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--signal);
+}
+
+.telemetry-control small {
+  line-height: 1.4;
+}
+
+.telemetry-control a,
+.settings-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.settings-link {
+  min-height: 42px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .view-wrap {
@@ -7553,5 +7602,173 @@ body {
 
   .lesson-article__answer {
     margin-left: 0;
+  }
+}
+
+/* Auth and tutor access */
+
+.auth-background {
+  min-height: 100vh;
+}
+
+body.auth-dialog-open {
+  overflow: hidden;
+}
+
+.account-control {
+  min-height: 34px;
+  padding: 0 10px 0 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--steel);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.account-control:hover {
+  background: var(--surface-highlight);
+  color: var(--ink);
+}
+
+.account-control:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.account-control-mark {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.tutor-access-gate {
+  min-height: 210px;
+  margin-top: 18px;
+  padding: 28px;
+  display: grid;
+  place-content: center;
+  justify-items: start;
+  border: 1px solid #4e595d;
+  background: #151b1e;
+}
+
+.tutor-access-gate strong {
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.tutor-access-gate p {
+  max-width: 520px;
+  margin: 8px 0 0;
+  color: #aeb7b9;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.tutor-access-gate button {
+  min-height: 42px;
+  margin-top: 18px;
+  padding: 0 14px;
+  border: 1px solid #98e4dc;
+  border-radius: 5px;
+  background: #0d5f68;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.tutor-history-claim {
+  margin: 18px 0;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  border: 1px solid #596569;
+  background: #2c3538;
+}
+
+.tutor-history-claim strong {
+  color: #ffffff;
+  font-size: 0.8rem;
+}
+
+.tutor-history-claim p {
+  margin: 5px 0 0;
+  color: #aeb7b9;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.tutor-history-claim button {
+  min-height: 40px;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border: 1px solid #98e4dc;
+  border-radius: 5px;
+  background: transparent;
+  color: #d8fff9;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.legacy-migration-panel {
+  max-width: 410px;
+  border: 1px solid var(--border-strong);
+  padding: 12px;
+  background: var(--surface-highlight);
+}
+
+.legacy-migration-panel p {
+  margin: 5px 0 10px;
+  color: var(--steel);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.settings-drawer button:disabled,
+.settings-drawer [aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 600px) {
+  .command-actions {
+    gap: 2px;
+  }
+
+  .account-control {
+    padding-right: 7px;
+  }
+
+  .account-control > span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .tutor-access-gate {
+    min-height: 180px;
+    padding: 22px;
+  }
+
+  .tutor-history-claim {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

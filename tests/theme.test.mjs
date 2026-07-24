@@ -1,15 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 
-import { ThemeControl } from "../app/theme-control.tsx";
 import {
   parseThemePreference,
   resolveTheme,
   THEME_INITIALIZER,
-  THEME_STORAGE_KEY,
 } from "../app/theme.ts";
 
 function contrastRatio(foreground, background) {
@@ -46,24 +42,29 @@ test("theme preferences resolve deterministically", () => {
   assert.equal(resolveTheme("dark", false), "dark");
 });
 
-test("the pre-paint initializer supports storage, system preference, and theme chrome", () => {
-  assert.ok(THEME_INITIALIZER.includes(THEME_STORAGE_KEY));
+test("the pre-paint initializer uses system preference without browser persistence", () => {
+  assert.ok(THEME_INITIALIZER.includes('const preference = "system"'));
   assert.ok(THEME_INITIALIZER.includes("prefers-color-scheme: dark"));
   assert.ok(THEME_INITIALIZER.includes("dataset.themePreference"));
   assert.ok(THEME_INITIALIZER.includes("dataset.theme"));
   assert.ok(THEME_INITIALIZER.includes("style.colorScheme"));
   assert.ok(THEME_INITIALIZER.includes('meta[name="theme-color"]'));
+  assert.doesNotMatch(THEME_INITIALIZER, /localStorage|sessionStorage|cookie/);
 });
 
-test("the theme selector is an accessible native three-choice control", () => {
-  const html = renderToStaticMarkup(createElement(ThemeControl));
-  assert.match(html, /<fieldset[^>]*class="theme-control"[^>]*aria-label="Color theme"/);
-  assert.equal((html.match(/type="radio"/g) ?? []).length, 3);
-  assert.match(html, /<input(?=[^>]*value="system")(?=[^>]*checked)[^>]*>/);
-  assert.match(html, />System</);
-  assert.match(html, />Light</);
-  assert.match(html, />Dark</);
-  assert.equal((html.match(/<svg/g) ?? []).length, 3);
+test("the theme selector remains an accessible Firestore-backed native control", async () => {
+  const source = await readFile(
+    new URL("../app/theme-control.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /<fieldset className="theme-control" aria-label="Color theme">/);
+  assert.match(source, /type="radio"/);
+  assert.match(source, /checked=\{preference === option\.value\}/);
+  assert.match(source, /saveThemePreference\(next\)/);
+  assert.match(source, /System/);
+  assert.match(source, /Light/);
+  assert.match(source, /Dark/);
+  assert.doesNotMatch(source, /localStorage|sessionStorage|document\.cookie/);
 });
 
 test("dark mode covers page surfaces and both vector teaching systems", async () => {

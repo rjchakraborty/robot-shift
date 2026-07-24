@@ -1,0 +1,371 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 12, 14, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+.dialog {
+  position: relative;
+  width: min(540px, 100%);
+  max-height: min(820px, calc(100vh - 48px));
+  overflow-y: auto;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--steel);
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.close:hover {
+  background: var(--surface-highlight);
+  color: var(--ink);
+}
+
+.header {
+  padding: 32px 42px 26px;
+  border-bottom: 1px solid var(--line);
+}
+
+.header p {
+  margin: 0 0 10px;
+  color: var(--steel);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.header h2 {
+  margin: 0;
+  max-width: 420px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.7rem, 5vw, 2.25rem);
+  line-height: 1.12;
+}
+
+.header h2:focus {
+  outline: none;
+}
+
+.header span {
+  display: block;
+  max-width: 440px;
+  margin-top: 12px;
+  color: var(--steel);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.content {
+  padding: 30px 42px 34px;
+}
+
+.form,
+.formSection {
+  display: grid;
+  gap: 15px;
+}
+
+.formSection {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.formSection h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field > span {
+  color: var(--steel);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-field);
+  color: var(--ink);
+  font: inherit;
+}
+
+.field input:focus {
+  border-color: var(--ink);
+  outline: 2px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  outline-offset: 1px;
+}
+
+.primary,
+.secondary,
+.googleButton,
+.actionStack button,
+.signOutRow button {
+  min-height: 46px;
+  padding: 0 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 760;
+}
+
+.primary {
+  border: 1px solid var(--surface-inverse);
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+}
+
+.secondary {
+  border: 1px solid var(--border-strong);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.googleButton {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.googleButton span {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  margin-right: 9px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: #1a73e8;
+  font-weight: 800;
+}
+
+.primary:disabled,
+.secondary:disabled,
+.googleButton:disabled,
+.actionStack button:disabled,
+.signOutRow button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.divider {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--steel);
+  font-size: 0.65rem;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+}
+
+.inlineActions {
+  margin-top: -4px;
+  text-align: right;
+}
+
+.inlineActions button,
+.switcher button,
+.textButton,
+.verificationWarning button {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 720;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.inlineActions button {
+  color: var(--steel);
+  font-size: 0.72rem;
+}
+
+.switcher,
+.explanation,
+.hint {
+  color: var(--steel);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.switcher {
+  margin: 20px 0 0;
+  text-align: center;
+}
+
+.explanation {
+  margin: 0 0 20px;
+}
+
+.hint {
+  margin: -7px 0 0;
+}
+
+.actionStack {
+  display: grid;
+  gap: 10px;
+}
+
+.accountFacts {
+  margin: 0;
+  display: grid;
+  gap: 11px;
+}
+
+.accountFacts > div {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.accountFacts dt {
+  color: var(--steel);
+  font-size: 0.7rem;
+}
+
+.accountFacts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.verificationWarning {
+  margin-top: 22px;
+  padding: 14px 16px;
+  border-left: 4px solid #b7791f;
+  background: rgba(183, 121, 31, 0.1);
+}
+
+.verificationWarning p {
+  margin: 5px 0 4px;
+  color: var(--steel);
+  font-size: 0.74rem;
+}
+
+.signOutRow {
+  margin-top: 30px;
+  padding-top: 22px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+}
+
+.signOutRow div {
+  display: grid;
+  gap: 4px;
+}
+
+.signOutRow span {
+  color: var(--steel);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.signOutRow button {
+  flex: 0 0 auto;
+  border: 1px solid var(--fault);
+  background: transparent;
+  color: var(--fault);
+}
+
+.error,
+.notice {
+  margin: 0 42px 30px;
+  padding: 11px 13px;
+  border-left: 4px solid var(--fault);
+  background: rgba(184, 60, 50, 0.1);
+  color: var(--fault);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.notice {
+  border-left-color: #16705f;
+  background: rgba(22, 112, 95, 0.1);
+  color: var(--ink);
+}
+
+@media (max-width: 600px) {
+  .backdrop {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .dialog {
+    width: 100%;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .header,
+  .content {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .header {
+    padding-top: 28px;
+  }
+
+  .error,
+  .notice {
+    margin-right: 24px;
+    margin-left: 24px;
+  }
+
+  .accountFacts > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .signOutRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

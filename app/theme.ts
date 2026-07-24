@@ -22,11 +22,7 @@ export function resolveTheme(
 export const THEME_INITIALIZER = `(() => {
   const root = document.documentElement;
   const media = window.matchMedia("(prefers-color-scheme: dark)");
-  let preference = "system";
-  try {
-    const stored = window.localStorage.getItem("${THEME_STORAGE_KEY}");
-    if (stored === "light" || stored === "dark" || stored === "system") preference = stored;
-  } catch {}
+  const preference = "system";
   const theme = preference === "system" ? (media.matches ? "dark" : "light") : preference;
   root.dataset.themePreference = preference;
   root.dataset.theme = theme;

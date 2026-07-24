@@ -338,28 +338,112 @@ test("adjacent topics resolve to different explanations, math, examples, and qui
   }
 });
 
-test("the live tutor is grounded in the resolved displayed lesson", async () => {
-  const [routeSource, studioSource] = await Promise.all([
-    readFile(new URL("../app/api/tutor/route.ts", import.meta.url), "utf8"),
+test("the live tutor uses the verified, quota-guarded callable boundary", async () => {
+  const [
+    cloudDataSource,
+    dataContextSource,
+    studioSource,
+    observabilitySource,
+    tutorContextSource,
+    tutorProviderSource,
+    tutorQuotaSource,
+    tutorConfigSource,
+    securitySource,
+  ] = await Promise.all([
+    readFile(new URL("../app/firestore-data.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/course-data-context.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/learning-studio.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/firebase-observability.ts", import.meta.url), "utf8"),
+    readFile(new URL("../functions/src/tutor-context.ts", import.meta.url), "utf8"),
+    readFile(new URL("../functions/src/tutor-provider.ts", import.meta.url), "utf8"),
+    readFile(new URL("../functions/src/tutor-quota.ts", import.meta.url), "utf8"),
+    readFile(new URL("../functions/src/config.ts", import.meta.url), "utf8"),
+    readFile(new URL("../functions/src/security.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(routeSource, /lessonForDay\(day\)/);
-  assert.match(routeSource, /loadChapterContent\(day\.week\)/);
-  assert.match(routeSource, /TRUSTED DISPLAYED LESSON/);
-  assert.match(routeSource, /lesson\.math\.connection|lesson\.math/);
-  assert.match(routeSource, /deepDive\.physicalExamples/);
-  assert.match(routeSource, /deepDive\.commonMistakes/);
-  assert.match(routeSource, /deepDive\.jobConnection/);
-  assert.match(routeSource, /chapter\.sources/);
-  assert.match(routeSource, /curious 12-year-old/);
-  assert.match(routeSource, /assume no prior knowledge of vectors, matrices, trigonometry, algebra, or coordinate frames/);
-  assert.match(routeSource, /thinkingLevel:\s*"low"/);
-  assert.match(routeSource, /finishReason === "MAX_TOKENS"/);
-  assert.match(routeSource, /GitHub-Flavored Markdown/);
-  assert.match(routeSource, /KaTeX-compatible LaTeX/);
-  assert.match(routeSource, /Never output raw HTML/);
-  assert.match(routeSource, /Exact-topic maths/);
-  assert.match(studioSource, /function isRecord\(value: unknown\)/);
-  assert.match(studioSource, /!isRecord\(payload\)/);
+  assert.match(cloudDataSource, /export async function askCloudTutor\(/);
+  assert.match(cloudDataSource, />\(functions,\s*"askTutor",\s*\{/);
+  assert.match(cloudDataSource, /limitedUseAppCheckTokens:\s*true/);
+  assert.match(cloudDataSource, /dayId:\s*input\.day\.id/);
+  assert.doesNotMatch(
+    cloudDataSource,
+    /firebase\/ai|@google\/genai|getAI\(|GoogleAIBackend|generateContent\(/,
+  );
+  assert.match(studioSource, /askCloudTutor\(\{/);
+  assert.doesNotMatch(studioSource, /fetch\(["']\/api\/tutor/);
+  assert.doesNotMatch(
+    studioSource,
+    /firebase\/ai|@google\/genai|getAI\(|GoogleAIBackend|generateContent\(/,
+  );
+  assert.match(studioSource, /allowedLinks=\{approvedSourceUrls\}/);
+
+  assert.match(dataContextSource, /Saved in Cloud Firestore/);
+  assert.match(
+    dataContextSource,
+    /New Robot\/Shift state is never written to browser storage/,
+  );
+  assert.doesNotMatch(dataContextSource, /localStorage\.setItem/);
+
+  assert.match(tutorContextSource, /TRUSTED CURRICULUM CONTEXT/);
+  assert.match(tutorContextSource, /context\.math\.(?:connectionMarkdown|latex)/);
+  assert.match(tutorContextSource, /context\.deepExplanation/);
+  assert.match(tutorContextSource, /context\.commonMistakes/);
+  assert.match(tutorContextSource, /context\.sources/);
+  assert.match(tutorContextSource, /curious 12-year-old/);
+  assert.match(
+    tutorContextSource,
+    /Assume no prior vectors, matrices, algebra, trigonometry, or coordinate-frame knowledge/,
+  );
+  assert.match(tutorContextSource, /GitHub-Flavored Markdown without raw HTML/);
+  assert.match(tutorContextSource, /KaTeX-compatible/);
+
+  assert.match(tutorProviderSource, /new GoogleGenAI\(\{ apiKey \}\)/);
+  assert.match(tutorProviderSource, /this\.client\.models\.countTokens\(\{/);
+  assert.match(tutorProviderSource, /this\.client\.models\.generateContent\(\{/);
+  assert.match(securitySource, /if \(!request\.auth\)/);
+  assert.match(securitySource, /request\.auth\.token\.email_verified !== true/);
+  assert.match(securitySource, /request\.app\.appId !== ROBOTSHIFT_WEB_APP_ID/);
+  assert.match(securitySource, /auth\.getUser\(request\.auth\.uid\)/);
+  assert.match(securitySource, /if \(user\.disabled\)/);
+  assert.match(securitySource, /if \(!user\.emailVerified\)/);
+
+  assert.match(tutorQuotaSource, /database\.runTransaction/);
+  assert.match(tutorQuotaSource, /usage\.attempts >= policy\.perUserDailyLimit/);
+  assert.match(tutorQuotaSource, /usage\.inFlight >= 1/);
+  assert.match(
+    tutorQuotaSource,
+    /authorizationLimitNanoUsd = Math\.min\([\s\S]*policy\.authorizationLimitNanoUsd,[\s\S]*global\.authorizationLimitNanoUsd/,
+  );
+  assert.match(
+    tutorQuotaSource,
+    /committedAfterReservation > authorizationLimitNanoUsd/,
+  );
+  assert.match(
+    tutorQuotaSource,
+    /> global\.absoluteLimitNanoUsd/,
+  );
+  assert.match(tutorQuotaSource, /requestSnapshot\.exists/);
+  assert.match(tutorQuotaSource, /inputHash/);
+  assert.match(tutorConfigSource, /perUserDailyLimit:\s*10/);
+  assert.match(tutorConfigSource, /authorizationLimitNanoUsd:\s*800_000_000/);
+  assert.match(tutorConfigSource, /absoluteLimitNanoUsd:\s*1_000_000_000/);
+
+  assert.match(observabilitySource, /"tutor_request"/);
+  assert.match(observabilitySource, /"lesson_view"/);
+  assert.match(observabilitySource, /"sign_up"/);
+  assert.match(observabilitySource, /"login"/);
+  assert.match(observabilitySource, /analytics_storage:\s*"denied"/);
+  assert.match(observabilitySource, /send_page_view:\s*false/);
+  assert.match(
+    observabilitySource,
+    /window\.location\.origin === "https:\/\/robotshift\.web\.app"/,
+  );
+  assert.match(observabilitySource, /pathname\.startsWith\("\/auth\/action"\)/);
+  assert.match(observabilitySource, /latency_bucket/);
+  assert.match(observabilitySource, /failure_code/);
+  assert.doesNotMatch(
+    observabilitySource,
+    /\b(?:email|uid|displayName|photoURL)\s*:/,
+  );
+  assert.doesNotMatch(observabilitySource, /question:\s*input|answer:\s*input|history:\s*input/);
 });

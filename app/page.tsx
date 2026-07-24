@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   curriculumDays,
@@ -9,44 +10,29 @@ import {
 } from "./curriculum";
 import { LearningStudio } from "./learning-studio";
 import { CareerView } from "./career-view";
+import { logLessonViewEvent } from "./firebase-observability";
+import { lessonPath } from "./seo";
 import {
-  archiveLegacyPayload,
-  CURRICULUM_REVISION,
-  LEGACY_TRACKER_ARCHIVE_KEY,
-  LEGACY_TRACKER_STORAGE_KEY,
-  migrateLegacyTrackerState,
-  parseTrackerBackup,
-  parseTrackerStateV2,
-  TRACKER_STORAGE_KEY,
+  MAX_ROBOT_SHIFT_BACKUP_BYTES,
   type TrackerStateV2,
 } from "./storage-migrations";
 import { ThemeControl } from "./theme-control";
+import { TelemetryControl } from "./telemetry-control";
+import { AccountControl } from "./auth/account-control";
+import { useAuth } from "./auth/auth-context";
+import { useCourseData } from "./data/course-data-context";
 
 type View = "today" | "roadmap" | "roles" | "builds" | "notebook";
 
 type TrackerState = TrackerStateV2;
 
 const MAX_TEXT_LENGTH = 5_000;
-const MAX_BACKUP_BYTES = 5_000_000;
 
 function localDate() {
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60_000;
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
-
-const defaultState: TrackerState = {
-  schemaVersion: 2,
-  curriculumRevision: CURRICULUM_REVISION,
-  completed: {},
-  bookmarks: [],
-  notes: {},
-  evidence: {},
-  projectChecks: {},
-  startedOn: "",
-  weeklyHours: 10,
-  selectedDay: 1,
-};
 
 function phaseFor(day: CurriculumDay) {
   return phases.find((phase) => phase.id === day.phaseId)!;
@@ -87,92 +73,38 @@ const navigation: { id: View; label: string }[] = [
 ];
 
 export default function Home() {
-  const [tracker, setTracker] = useState<TrackerState>(defaultState);
-  const [hydrated, setHydrated] = useState(false);
+  const { openAuth, user: authUser } = useAuth();
+  const {
+    busy: cloudBusy,
+    dirty: cloudDirty,
+    error: cloudError,
+    exportCloudBackup,
+    importCloudBackup,
+    legacyBrowserCandidate,
+    migrateLegacyBrowserData,
+    ready: hydrated,
+    reloadCloudData,
+    resetCloudData,
+    retryCloudSave,
+    status: saveStatus,
+    tracker,
+    setTracker,
+  } = useCourseData();
   const [view, setView] = useState<View>("today");
   const [query, setQuery] = useState("");
   const [phaseFilter, setPhaseFilter] = useState("all");
   const [showSettings, setShowSettings] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [announcement, setAnnouncement] = useState("");
-  const [saveStatus, setSaveStatus] = useState("Ready");
   const [storageNotice, setStorageNotice] = useState<string | null>(null);
-  const [storageError, setStorageError] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ dayId: number; nonce: number } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
-  const skipNextSaveRef = useRef(false);
   const resetDialogRef = useRef<HTMLDivElement>(null);
   const resetCancelRef = useRef<HTMLButtonElement>(null);
   const resetTriggerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      let loaded: TrackerState | null = null;
-      try {
-        const currentRaw = window.localStorage.getItem(TRACKER_STORAGE_KEY);
-        loaded = currentRaw ? parseTrackerStateV2(currentRaw) : null;
-        if (currentRaw && !loaded) {
-          skipNextSaveRef.current = true;
-          setStorageError("Stored version 2 course data was invalid and was not overwritten. Import a valid backup or reset.");
-        } else if (!currentRaw) {
-          const legacyRaw = window.localStorage.getItem(LEGACY_TRACKER_STORAGE_KEY);
-          if (legacyRaw) {
-            archiveLegacyPayload(
-              window.localStorage,
-              LEGACY_TRACKER_ARCHIVE_KEY,
-              legacyRaw,
-            );
-            const migration = migrateLegacyTrackerState(legacyRaw);
-            if (migration) {
-              loaded = migration.state;
-              const archived = [
-                migration.archivedFoundationDays.length > 0 ? "revised Days 1–14" : "",
-                migration.archivedFrameLab ? "the old FrameLab checklist" : "",
-              ].filter(Boolean).join(" and ");
-              setStorageNotice(
-                archived
-                  ? `Version 1 records for ${archived} were archived in this browser. Unchanged later-course work was migrated to version 2.`
-                  : "Version 1 course data was archived and migrated to version 2.",
-              );
-            } else {
-              skipNextSaveRef.current = true;
-              setStorageError("Stored version 1 course data was archived but could not be migrated. Import a valid backup or reset.");
-            }
-          }
-        }
-      } catch {
-        skipNextSaveRef.current = true;
-        setStorageError("Local saving is unavailable in this browser. Export backups to protect your work.");
-      }
-      const initial = loaded ?? defaultState;
-      setTracker({ ...initial, startedOn: initial.startedOn || localDate() });
-      setHydrated(true);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    if (skipNextSaveRef.current) {
-      skipNextSaveRef.current = false;
-      return;
-    }
-
-    let timer: number;
-    try {
-      window.localStorage.setItem(TRACKER_STORAGE_KEY, JSON.stringify(tracker));
-      timer = window.setTimeout(() => {
-        setSaveStatus("Saved on this device");
-        setStorageError(null);
-      }, 0);
-    } catch {
-      timer = window.setTimeout(() => {
-        setSaveStatus("Not saved");
-        setStorageError("Not saved: browser storage is unavailable or full. Export a backup now.");
-      }, 0);
-    }
-    return () => window.clearTimeout(timer);
-  }, [tracker, hydrated]);
+  const storageError = operationError ?? cloudError;
+  const persistedControlsDisabled = cloudBusy || !hydrated;
 
   useEffect(() => {
     if (!showReset) return;
@@ -216,6 +148,21 @@ export default function Home() {
   const selectedDay = curriculumDays.find((day) => day.id === tracker.selectedDay) ?? curriculumDays[0];
   const currentPhase = phaseFor(selectedDay);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    void logLessonViewEvent({
+      dayId: selectedDay.id,
+      week: selectedDay.week,
+      phaseId: selectedDay.phaseId,
+      entrySurface: "course_home",
+    });
+  }, [
+    hydrated,
+    selectedDay.id,
+    selectedDay.phaseId,
+    selectedDay.week,
+  ]);
+
   const filteredDays = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return curriculumDays.filter((day) => {
@@ -236,6 +183,7 @@ export default function Home() {
   };
 
   const openDay = (dayId: number) => {
+    if (persistedControlsDisabled) return;
     setTracker((previous) => ({ ...previous, selectedDay: dayId }));
     setView("today");
     setFocusRequest({ dayId, nonce: Date.now() });
@@ -257,6 +205,7 @@ export default function Home() {
   }, [focusRequest, tracker.selectedDay, view]);
 
   const toggleBookmark = (dayId: number) => {
+    if (persistedControlsDisabled) return;
     setTracker((previous) => ({
       ...previous,
       bookmarks: previous.bookmarks.includes(dayId)
@@ -266,87 +215,122 @@ export default function Home() {
   };
 
   const updateText = (field: "notes" | "evidence", dayId: number, value: string) => {
+    if (persistedControlsDisabled) return;
     setTracker((previous) => ({
       ...previous,
       [field]: { ...previous[field], [String(dayId)]: value },
     }));
   };
 
-  const exportProgress = () => {
-    let archivedVersion1: unknown;
+  const exportProgress = async () => {
     try {
-      const legacyRaw = window.localStorage.getItem(LEGACY_TRACKER_ARCHIVE_KEY)
-        ?? window.localStorage.getItem(LEGACY_TRACKER_STORAGE_KEY);
-      archivedVersion1 = legacyRaw ? JSON.parse(legacyRaw) as unknown : undefined;
+      setOperationError(null);
+      const payload = await exportCloudBackup(window.location.origin);
+      const url = URL.createObjectURL(
+        new Blob([payload], { type: "application/json" }),
+      );
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `robot-shift-complete-${localDate()}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setStorageNotice("Complete Firestore backup exported.");
+      setAnnouncement("Complete Firestore backup exported.");
     } catch {
-      archivedVersion1 = undefined;
+      setOperationError(
+        "Backup export failed. Sign in, verify your email, and wait for Firestore to finish loading.",
+      );
+      setAnnouncement("Backup export failed.");
     }
-    const payload = JSON.stringify({
-      ...tracker,
-      exportedAt: new Date().toISOString(),
-      ...(archivedVersion1 === undefined ? {} : { archivedVersion1 }),
-    }, null, 2);
-    const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `robot-shift-course-${localDate()}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setAnnouncement("Course backup exported.");
   };
 
   const importProgress = async (file: File | undefined) => {
     if (!file) return;
     try {
-      if (file.size > MAX_BACKUP_BYTES) throw new Error("too-large");
-      const raw = await file.text();
-      const parsed = parseTrackerBackup(raw);
-      if (!parsed) throw new Error("invalid");
-      if (parsed.migrated) {
-        try {
-          archiveLegacyPayload(
-            window.localStorage,
-            LEGACY_TRACKER_ARCHIVE_KEY,
-            raw,
-          );
-        } catch {
-          // The selected version 1 file remains the source archive if browser storage is full.
-        }
-        setStorageNotice(
-          "Imported version 1 backup was archived. Revised Days 1–14 and the old FrameLab checklist restart cleanly; unchanged later-course work was migrated.",
-        );
+      if (file.size > MAX_ROBOT_SHIFT_BACKUP_BYTES) {
+        throw new Error("too-large");
       }
-      setTracker({
-        ...parsed.state,
-        startedOn: parsed.state.startedOn || localDate(),
-      });
-      setAnnouncement(
-        parsed.migrated
-          ? "Version 1 backup safely migrated to version 2."
-          : "Course backup imported.",
-      );
+      const raw = await file.text();
+      setOperationError(null);
+      const message = await importCloudBackup(raw);
+      setStorageNotice(message);
+      setAnnouncement(message);
     } catch {
-      setAnnouncement("Import rejected. Choose a valid Robot/Shift version 1 or 2 backup under 5 MB.");
+      setOperationError(
+        "Import rejected. Use a valid Robot/Shift backup under 5 MB and a verified account.",
+      );
+      setAnnouncement(
+        "Firestore backup import rejected.",
+      );
     } finally {
       if (importRef.current) importRef.current.value = "";
     }
   };
 
-  const resetProgress = () => {
-    const clean = { ...defaultState, startedOn: localDate() };
-    setTracker(clean);
-    setShowReset(false);
-    setAnnouncement("All locally saved course data was reset.");
+  const resetProgress = async () => {
+    try {
+      setOperationError(null);
+      await resetCloudData();
+      setShowReset(false);
+      setStorageNotice("A clean Firestore dataset is now active.");
+      setAnnouncement("Cloud course data reset.");
+    } catch {
+      setShowReset(false);
+      setOperationError(
+        "Reset confirmation failed. Reload Firestore before editing because the server result may be uncertain.",
+      );
+      setAnnouncement("Cloud data reset failed.");
+    }
   };
 
-  if (!hydrated) {
-    return (
-      <main className="boot-screen" aria-live="polite">
-        <div className="boot-mark">R/S</div>
-        <p>Loading your field manual…</p>
-      </main>
-    );
-  }
+  const migrateBrowserData = async () => {
+    try {
+      setOperationError(null);
+      const result = await migrateLegacyBrowserData();
+      if (result === "retained") {
+        setStorageNotice(
+          "Existing Firestore data was kept. Browser data remains untouched.",
+        );
+        setAnnouncement("Existing cloud data kept; browser data preserved.");
+        return;
+      }
+      setStorageNotice("Legacy browser data is now secured in Firestore.");
+      setAnnouncement("Browser data migrated to Firestore.");
+    } catch {
+      setOperationError(
+        "Browser migration failed. The local source was preserved for retry.",
+      );
+      setAnnouncement("Browser data migration failed.");
+    }
+  };
+
+  const retrySave = async () => {
+    try {
+      setOperationError(null);
+      await retryCloudSave();
+      setStorageNotice("Pending changes saved to Cloud Firestore.");
+      setAnnouncement("Pending changes saved.");
+    } catch {
+      setOperationError(
+        "Cloud save retry failed. Changes remain in this tab; stay signed in and retry.",
+      );
+      setAnnouncement("Cloud save retry failed.");
+    }
+  };
+
+  const reloadData = async () => {
+    try {
+      setOperationError(null);
+      await reloadCloudData();
+      setStorageNotice("Firestore data reloaded.");
+      setAnnouncement("Firestore data reloaded.");
+    } catch {
+      setOperationError(
+        "Firestore reload failed. Persisted controls remain locked.",
+      );
+      setAnnouncement("Firestore reload failed.");
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -369,6 +353,9 @@ export default function Home() {
             </button>
           ))}
         </nav>
+        <Link className="rail-privacy-link" href="/privacy/">
+          Privacy & telemetry
+        </Link>
       </aside>
 
       <div className="work-area" aria-hidden={showReset ? true : undefined}>
@@ -377,6 +364,7 @@ export default function Home() {
             <strong>{currentPhase.number} · {currentPhase.shortTitle}</strong>
           </div>
           <div className="command-actions">
+            <AccountControl />
             <button className="utility-button" onClick={() => setShowSettings((open) => !open)} aria-expanded={showSettings}>
               Settings
             </button>
@@ -386,9 +374,19 @@ export default function Home() {
         {showSettings && (
           <section className="settings-drawer" aria-label="Curriculum controls">
             <ThemeControl />
+            <TelemetryControl />
             <div>
               <label htmlFor="start-date">Start date</label>
-              <input id="start-date" type="date" value={tracker.startedOn} onChange={(event) => setTracker((p) => ({ ...p, startedOn: event.target.value }))} />
+              <input
+                id="start-date"
+                type="date"
+                value={tracker.startedOn}
+                disabled={persistedControlsDisabled}
+                onChange={(event) => setTracker((p) => ({
+                  ...p,
+                  startedOn: event.target.value,
+                }))}
+              />
             </div>
             <div>
               <label htmlFor="weekly-hours">Weekly learning capacity</label>
@@ -399,6 +397,7 @@ export default function Home() {
                 max="30"
                 step="1"
                 value={tracker.weeklyHours}
+                disabled={persistedControlsDisabled}
                 aria-describedby="weekly-hours-help"
                 onChange={(event) => {
                   const value = event.currentTarget.valueAsNumber;
@@ -409,10 +408,89 @@ export default function Home() {
               />
               <small id="weekly-hours-help">Reflows planned dates at this weekly pace.</small>
             </div>
+            {legacyBrowserCandidate ? (
+              <div className="legacy-migration-panel">
+                <strong>Move earlier browser data to Firestore</strong>
+                <p>
+                  Found {legacyBrowserCandidate.completedItems} completed items,{" "}
+                  {legacyBrowserCandidate.notes} note days, and{" "}
+                  {legacyBrowserCandidate.tutorMessages} tutor messages.
+                  Nothing is assigned to this account until you confirm.
+                </p>
+                {legacyBrowserCandidate.unassignedTutor ? (
+                  <p>
+                    This includes tutor history created before accounts existed.
+                    Confirm only if this was your browser history.
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={persistedControlsDisabled}
+                  onClick={() => void migrateBrowserData()}
+                >
+                  {cloudBusy ? "Moving securely…" : "Move data to my account"}
+                </button>
+              </div>
+            ) : null}
             <div className="settings-actions">
-              <button onClick={exportProgress}>Export backup</button>
-              <label className="button-label">Import backup<input ref={importRef} className="sr-only" type="file" accept="application/json" onChange={(event) => importProgress(event.target.files?.[0])} /></label>
-              <button ref={resetTriggerRef} className="danger-link" onClick={() => setShowReset(true)}>Reset</button>
+              <button
+                disabled={persistedControlsDisabled || !authUser?.emailVerified}
+                onClick={() => void exportProgress()}
+              >
+                Export backup
+              </button>
+              <label
+                className="button-label"
+                aria-disabled={
+                  persistedControlsDisabled || !authUser?.emailVerified
+                }
+              >
+                Import backup
+                <input
+                  ref={importRef}
+                  className="sr-only"
+                  type="file"
+                  accept="application/json"
+                  disabled={
+                    persistedControlsDisabled || !authUser?.emailVerified
+                  }
+                  onChange={(event) => void importProgress(event.target.files?.[0])}
+                />
+              </label>
+              <button
+                ref={resetTriggerRef}
+                className="danger-link"
+                disabled={persistedControlsDisabled || !authUser?.emailVerified}
+                onClick={() => setShowReset(true)}
+              >
+                Reset
+              </button>
+              {cloudDirty ? (
+                <button
+                  type="button"
+                  disabled={persistedControlsDisabled}
+                  onClick={() => void retrySave()}
+                >
+                  Retry cloud save
+                </button>
+              ) : null}
+              {!hydrated && authUser?.emailVerified && storageError ? (
+                <button
+                  type="button"
+                  disabled={cloudBusy}
+                  onClick={() => void reloadData()}
+                >
+                  Reload cloud data
+                </button>
+              ) : null}
+              {!authUser ? (
+                <button type="button" onClick={() => openAuth("sign-in")}>
+                  Sign in to save
+                </button>
+              ) : null}
+              <Link className="settings-link" href="/privacy/">
+                Privacy
+              </Link>
             </div>
             <small className={storageError ? "storage-error" : ""} role="status">
               {storageError ?? storageNotice ?? saveStatus}
@@ -428,8 +506,9 @@ export default function Home() {
               toggleBookmark={toggleBookmark}
               updateText={updateText}
               openDay={openDay}
-              persistenceMessage={storageError ?? storageNotice ?? "Auto-saved locally"}
+              persistenceMessage={storageError ?? storageNotice ?? saveStatus}
               persistenceError={Boolean(storageError)}
+              persistedControlsDisabled={persistedControlsDisabled}
             />
           )}
 
@@ -442,6 +521,7 @@ export default function Home() {
               setPhaseFilter={setPhaseFilter}
               bookmarks={tracker.bookmarks}
               openDay={openDay}
+              persistedControlsDisabled={persistedControlsDisabled}
               clearFilters={() => { setQuery(""); setPhaseFilter("all"); }}
             />
           )}
@@ -453,11 +533,18 @@ export default function Home() {
           )}
 
           {view === "builds" && (
-            <BuildsView openDay={openDay} />
+            <BuildsView
+              openDay={openDay}
+              persistedControlsDisabled={persistedControlsDisabled}
+            />
           )}
 
           {view === "notebook" && (
-            <NotebookView tracker={tracker} openDay={openDay} />
+            <NotebookView
+              tracker={tracker}
+              openDay={openDay}
+              persistedControlsDisabled={persistedControlsDisabled}
+            />
           )}
 
         </main>
@@ -476,12 +563,22 @@ export default function Home() {
       {showReset && (
         <div className="modal-backdrop" role="presentation">
           <div ref={resetDialogRef} className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" aria-describedby="reset-description">
-            <span className="eyebrow">DESTRUCTIVE LOCAL ACTION</span>
-            <h2 id="reset-title">Reset saved course data?</h2>
-            <p id="reset-description">This removes notes, evidence, bookmarks, and legacy completion records from this browser. Export first if you may need them.</p>
+            <span className="eyebrow">DESTRUCTIVE CLOUD ACTION</span>
+            <h2 id="reset-title">Reset saved Firestore data?</h2>
+            <p id="reset-description">
+              This activates a clean dataset for notes, evidence, bookmarks,
+              project checks, and tutor history. Export first if you may need
+              the current data.
+            </p>
             <div>
               <button ref={resetCancelRef} onClick={() => setShowReset(false)}>Keep data</button>
-              <button className="danger-button" onClick={resetProgress}>Reset everything</button>
+              <button
+                className="danger-button"
+                disabled={cloudBusy}
+                onClick={() => void resetProgress()}
+              >
+                Reset everything
+              </button>
             </div>
           </div>
         </div>
@@ -498,6 +595,7 @@ function TodayView({
   openDay,
   persistenceMessage,
   persistenceError,
+  persistedControlsDisabled,
 }: {
   day: CurriculumDay;
   tracker: TrackerState;
@@ -506,6 +604,7 @@ function TodayView({
   openDay: (dayId: number) => void;
   persistenceMessage: string;
   persistenceError: boolean;
+  persistedControlsDisabled: boolean;
 }) {
   const phase = phaseFor(day);
   const date = scheduledDate(tracker.startedOn, day.id, tracker.weeklyHours);
@@ -538,6 +637,7 @@ function TodayView({
                 <input
                   type="checkbox"
                   checked={tracker.bookmarks.includes(day.id)}
+                  disabled={persistedControlsDisabled}
                   onChange={() => toggleBookmark(day.id)}
                 />
                 Keep this day in Notes
@@ -545,11 +645,11 @@ function TodayView({
             </section>
             <section>
               <label htmlFor="field-note"><strong>Notes</strong></label>
-              <textarea id="field-note" maxLength={MAX_TEXT_LENGTH} value={tracker.notes[String(day.id)] ?? ""} onChange={(event) => updateText("notes", day.id, event.target.value)} placeholder="Key idea, command, or question…" />
+              <textarea id="field-note" maxLength={MAX_TEXT_LENGTH} value={tracker.notes[String(day.id)] ?? ""} disabled={persistedControlsDisabled} onChange={(event) => updateText("notes", day.id, event.target.value)} placeholder="Key idea, command, or question…" />
             </section>
             <section>
               <label htmlFor="evidence-note"><strong>Evidence</strong></label>
-              <textarea id="evidence-note" maxLength={MAX_TEXT_LENGTH} value={tracker.evidence[String(day.id)] ?? ""} onChange={(event) => updateText("evidence", day.id, event.target.value)} placeholder="Paste a link or describe the artifact…" />
+              <textarea id="evidence-note" maxLength={MAX_TEXT_LENGTH} value={tracker.evidence[String(day.id)] ?? ""} disabled={persistedControlsDisabled} onChange={(event) => updateText("evidence", day.id, event.target.value)} placeholder="Paste a link or describe the artifact…" />
             </section>
             <div className={`autosave-line ${persistenceError ? "error" : ""}`} role="status">
               {persistenceMessage}
@@ -558,9 +658,9 @@ function TodayView({
         </details>
 
         <div className="day-navigation">
-          <button disabled={day.id === 1} onClick={() => openDay(day.id - 1)}>← Previous day</button>
+          <button disabled={persistedControlsDisabled || day.id === 1} onClick={() => openDay(day.id - 1)}>← Previous day</button>
           <span>Day {day.id} of 180</span>
-          <button disabled={day.id === 180} onClick={() => openDay(day.id + 1)}>Next day →</button>
+          <button disabled={persistedControlsDisabled || day.id === 180} onClick={() => openDay(day.id + 1)}>Next day →</button>
         </div>
       </div>
     </div>
@@ -576,6 +676,7 @@ function RoadmapView({
   bookmarks,
   openDay,
   clearFilters,
+  persistedControlsDisabled,
 }: {
   days: CurriculumDay[];
   query: string;
@@ -585,6 +686,7 @@ function RoadmapView({
   bookmarks: number[];
   openDay: (dayId: number) => void;
   clearFilters: () => void;
+  persistedControlsDisabled: boolean;
 }) {
   const weekNumbers = Array.from(new Set(days.map((day) => day.week)));
   return (
@@ -618,12 +720,23 @@ function RoadmapView({
                 </header>
                 <div className="day-rows">
                   {weekDays.map((day) => (
-                    <button className="roadmap-day" key={day.id} onClick={() => openDay(day.id)}>
+                    <a
+                      className="roadmap-day"
+                      href={lessonPath(day)}
+                      aria-disabled={persistedControlsDisabled}
+                      tabIndex={persistedControlsDisabled ? -1 : undefined}
+                      key={day.id}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        if (persistedControlsDisabled) return;
+                        openDay(day.id);
+                      }}
+                    >
                       <span className="day-code">Day {day.id}</span>
                       <strong>{day.title}</strong>
                       <small>{formatMinutes(day.minutes)} {bookmarks.includes(day.id) ? "· ★ Important" : ""}</small>
                       <span aria-hidden="true">→</span>
-                    </button>
+                    </a>
                   ))}
                 </div>
               </section>
@@ -637,7 +750,13 @@ function RoadmapView({
   );
 }
 
-function BuildsView({ openDay }: { openDay: (id: number) => void }) {
+function BuildsView({
+  openDay,
+  persistedControlsDisabled,
+}: {
+  openDay: (id: number) => void;
+  persistedControlsDisabled: boolean;
+}) {
   const phaseGateDays = [28, 56, 84, 119, 147, 175];
   return (
     <div className="view-wrap">
@@ -657,7 +776,7 @@ function BuildsView({ openDay }: { openDay: (id: number) => void }) {
               <ul className="criteria-list">
                 {criteria.map((criterion) => <li key={criterion}>{criterion}</li>)}
               </ul>
-              <button onClick={() => openDay(phaseGateDays[index])}>Open project lesson →</button>
+              <button disabled={persistedControlsDisabled} onClick={() => openDay(phaseGateDays[index])}>Open project lesson →</button>
             </article>
           );
         })}
@@ -666,7 +785,15 @@ function BuildsView({ openDay }: { openDay: (id: number) => void }) {
   );
 }
 
-function NotebookView({ tracker, openDay }: { tracker: TrackerState; openDay: (id: number) => void }) {
+function NotebookView({
+  tracker,
+  openDay,
+  persistedControlsDisabled,
+}: {
+  tracker: TrackerState;
+  openDay: (id: number) => void;
+  persistedControlsDisabled: boolean;
+}) {
   const entries = curriculumDays
     .filter((day) => tracker.notes[String(day.id)] || tracker.evidence[String(day.id)] || tracker.bookmarks.includes(day.id))
     .sort((a, b) => b.id - a.id);
@@ -685,13 +812,13 @@ function NotebookView({ tracker, openDay }: { tracker: TrackerState; openDay: (i
                 <h2>{day.title}</h2>
                 {tracker.notes[String(day.id)] && <div><small>FIELD NOTE</small><p>{tracker.notes[String(day.id)]}</p></div>}
                 {tracker.evidence[String(day.id)] && <div className="evidence-block"><small>EVIDENCE</small><p>{tracker.evidence[String(day.id)]}</p></div>}
-                <button onClick={() => openDay(day.id)}>Open day →</button>
+                <button disabled={persistedControlsDisabled} onClick={() => openDay(day.id)}>Open day →</button>
               </article>
             );
           })}
         </div>
       ) : (
-        <div className="empty-state"><h2>No notes or evidence yet.</h2><button onClick={() => openDay(tracker.selectedDay)}>Open current day</button></div>
+        <div className="empty-state"><h2>No notes or evidence yet.</h2><button disabled={persistedControlsDisabled} onClick={() => openDay(tracker.selectedDay)}>Open current day</button></div>
       )}
     </div>
   );

@@ -14,6 +14,8 @@ node -e '
 
 npm run lint
 npm test
+npm --prefix functions test
+npm run test:firebase-emulators
 git diff --check
 
 echo "Robot/Shift verification passed."

@@ -1,0 +1,137 @@
+.page {
+  min-height: 100vh;
+  padding: 32px;
+  display: grid;
+  place-items: center;
+  background: var(--canvas);
+}
+
+.panel {
+  width: min(620px, 100%);
+  background: var(--paper);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow);
+}
+
+.brand {
+  min-height: 58px;
+  padding: 0 30px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 780;
+  text-decoration: none;
+}
+
+.action {
+  padding: 50px;
+}
+
+.eyebrow {
+  margin: 0 0 13px;
+  color: var(--steel);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.action h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 7vw, 3rem);
+  line-height: 1.08;
+}
+
+.action > p:not(.eyebrow) {
+  margin: 18px 0 0;
+  color: var(--steel);
+  line-height: 1.65;
+}
+
+.form {
+  margin-top: 28px;
+  display: grid;
+  gap: 16px;
+}
+
+.form label {
+  display: grid;
+  gap: 7px;
+  color: var(--steel);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.form input {
+  min-height: 48px;
+  padding: 0 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-field);
+  color: var(--ink);
+  font: inherit;
+}
+
+.form > p {
+  margin: -8px 0 0;
+  color: var(--steel);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.form .error {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(--fault);
+  background: rgba(184, 60, 50, 0.1);
+  color: var(--fault);
+}
+
+.primary {
+  width: fit-content;
+  min-height: 46px;
+  margin-top: 24px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--surface-inverse);
+  border-radius: 6px;
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+  cursor: pointer;
+  font-weight: 760;
+  text-decoration: none;
+}
+
+.form .primary {
+  margin-top: 4px;
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .panel {
+    min-height: 100vh;
+    border: 0;
+  }
+
+  .action {
+    padding: 42px 24px;
+  }
+
+  .brand {
+    padding: 0 24px;
+  }
+}

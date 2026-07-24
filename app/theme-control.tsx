@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
-  parseThemePreference,
   resolveTheme,
-  THEME_STORAGE_KEY,
   type ThemePreference,
 } from "./theme";
+import { useAuth } from "./auth/auth-context";
+import { useCourseData } from "./data/course-data-context";
 
 const options: readonly {
   value: ThemePreference;
@@ -56,42 +56,41 @@ function applyTheme(preference: ThemePreference) {
 }
 
 export function ThemeControl() {
-  const [preference, setPreference] = useState<ThemePreference>(() => (
-    typeof document === "undefined"
-      ? "system"
-      : parseThemePreference(document.documentElement.dataset.themePreference)
-  ));
+  const { user } = useAuth();
+  const {
+    busy,
+    ready,
+    saveThemePreference,
+    theme: preference,
+  } = useCourseData();
   const [storageMessage, setStorageMessage] = useState("");
+
+  useEffect(() => {
+    applyTheme(preference);
+  }, [preference]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const onSystemChange = () => {
       if (preference === "system") applyTheme("system");
     };
-    const onStorage = (event: StorageEvent) => {
-      if (event.key !== THEME_STORAGE_KEY) return;
-      const next = parseThemePreference(event.newValue);
-      setPreference(next);
-      applyTheme(next);
-    };
-
     media.addEventListener("change", onSystemChange);
-    window.addEventListener("storage", onStorage);
     return () => {
       media.removeEventListener("change", onSystemChange);
-      window.removeEventListener("storage", onStorage);
     };
   }, [preference]);
 
   function chooseTheme(next: ThemePreference) {
-    setPreference(next);
-    applyTheme(next);
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, next);
-      setStorageMessage("");
-    } catch {
-      setStorageMessage("Theme changed for this session but could not be saved.");
+    if (!user?.emailVerified) {
+      void saveThemePreference(next);
+      setStorageMessage("Sign in with a verified account to save this theme.");
+      return;
     }
+    void saveThemePreference(next)
+      .then(() => setStorageMessage(""))
+      .catch(() => {
+        setStorageMessage("Theme changed for this session but cloud saving failed.");
+      });
   }
 
   return (
@@ -105,6 +104,7 @@ export function ThemeControl() {
               name="color-theme"
               value={option.value}
               checked={preference === option.value}
+              disabled={busy || !ready}
               onChange={() => chooseTheme(option.value)}
             />
             <span>

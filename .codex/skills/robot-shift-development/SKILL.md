@@ -1,11 +1,11 @@
 ---
 name: robot-shift-development
-description: Safely inspect, modify, test, and release the Robot/Shift private robotics curriculum. Use for curriculum sequencing, beginner teaching content, maths and KaTeX, deterministic SVG visuals, interactive exercises, Gemini tutor behavior, browser persistence and migrations, career targeting, reader-first UI, responsive QA, or private OpenAI Sites deployment in this repository.
+description: Safely inspect, modify, test, and release the Robot/Shift robotics curriculum. Use for curriculum sequencing, beginner teaching content, maths and KaTeX, deterministic SVG visuals, interactive exercises, the authenticated Gemini tutor, Cloud Firestore persistence and migrations, career targeting, reader-first UI, responsive QA, or Firebase deployment in this repository.
 ---
 
 # Robot/Shift Development
 
-Treat the course as an integrated learning product. Preserve its teaching sequence, verified visuals, local data, tutor safety, and private deployment boundary.
+Treat the course as an integrated learning product. Preserve its teaching sequence, verified visuals, account-owned data, tutor safety, and Firebase security boundary.
 
 ## Start
 
@@ -20,11 +20,11 @@ Treat the course as an integrated learning product. Preserve its teaching sequen
 
 - Curriculum or lesson: trace `curriculum.ts` through `lessonForDay()` and the relevant topic override.
 - Visual or maths: trace the verified numeric fixture, visual specification, SVG renderer, and interactive model together.
-- Tutor: trace `learning-studio.tsx` → `/api/tutor` → grounded prompt → provider response → `RichText`.
-- Persistence: trace current and legacy keys, parser, migration, archive behavior, import/export, and tests before changing any shape.
+- Tutor: trace `learning-studio.tsx` → `askCloudTutor()` → callable Function → grounded prompt → provider response → canonical Firestore commit → `RichText`.
+- Persistence: trace Firebase Auth identity, `accountAccess`, the active Firestore dataset, server-only records, legacy bridge, migration/archive behavior, import/export, and tests before changing any shape.
 - Reader UI: preserve the flat slate system, article hierarchy, compact navigation, and semantic exceptions.
 - Career content: update only from dated, traceable job evidence and keep capability claims honest.
-- Release: use the exact Sites identity in `.openai/hosting.json` and keep access private.
+- Release: use Firebase project `robotshift`, deploy Auth/Firestore/Functions/Hosting together, and preserve `.openai/hosting.json` only as the legacy export source identity.
 
 ## Implement
 
@@ -55,4 +55,4 @@ Do not treat a build, HTTP 200, screenshot, or provider request as end-to-end pr
 
 ## Release
 
-Release only when explicitly requested. Follow [qa-release.md](references/qa-release.md), push the exact verified source state, save a Sites version, deploy that version, poll to a terminal result, and recheck the private access policy.
+Release only when explicitly requested. Follow [qa-release.md](references/qa-release.md), push the exact verified source state, confirm the intended Google account and Firebase project, deploy every security-dependent Firebase surface together, and verify the live Auth, Firestore, callable Tutor, App Check, Hosting, and telemetry boundaries.

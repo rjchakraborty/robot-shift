@@ -10,8 +10,12 @@ Robot/Shift is RJ's private, reader-first 180-day robotics curriculum. It teache
 - `app/lessons.ts` and `app/topic-detail-*.ts`: resolved teaching content.
 - `app/lesson-visuals.ts` and `app/interactive-math.ts`: deterministic vector and maths models.
 - `app/learning-studio.tsx`: lesson navigation and tutor interface.
-- `app/api/tutor/route.ts`: server-only Gemini integration.
-- `app/storage-migrations.ts`: browser persistence contracts and migrations.
+- `app/firestore-data.ts` and `app/data/`: callable Functions, active Firestore dataset, and cloud persistence.
+- `functions/src/`: verified callable security, trusted Tutor context, Gemini provider, quota, and migration logic.
+- `app/firebase-client.ts`: Firebase client SDK and App Check integration.
+- `app/auth/`: Firebase Authentication, email actions, profile management, and tutor access state.
+- `app/firebase-observability.ts`: bounded Analytics and Performance Monitoring.
+- `app/storage-migrations.ts`: legacy browser schema parsing and one-time Firestore migration compatibility.
 - `app/career-market.ts` and `app/career-view.tsx`: India job evidence and role guidance.
 - `tests/`: executable curriculum, visual, storage, tutor, theme, and rendering contracts.
 
@@ -24,13 +28,14 @@ Read `.codex/skills/robot-shift-development/SKILL.md` for any curriculum, tutor,
 - Teach prerequisite concepts before using them. Explain mathematics for a learner with no vectors, matrices, algebra, trigonometry, or coordinate-frame knowledge.
 - Prefer deterministic SVG/vector diagrams and computed visual models. Never accept a visual because it merely looks plausible.
 - Keep ordinary prose unboxed. Reserve framed surfaces for equations, interactive labs, safety warnings, and meaningful diagrams.
-- Preserve local-storage keys, schema versions, archived legacy payloads, notes, evidence, bookmarks, tutor history, and import/export compatibility. Schema changes require migration tests.
-- Keep `GEMINI_API_KEY` server-only. Never expose secrets in client code, logs, screenshots, fixtures, commits, or generated artifacts.
+- Preserve legacy local-storage keys, schema versions, archived payloads, notes, evidence, bookmarks, tutor history, and import/export compatibility. New runtime state belongs in Firestore; do not reintroduce browser storage as its source of truth. Schema changes require migration tests.
+- Keep Gemini/provider credentials, service-account credentials, and App Check debug tokens out of client code, logs, screenshots, fixtures, commits, and generated artifacts. Firebase web configuration and the production reCAPTCHA site key are public app identifiers.
+- Keep the browser Tutor path behind `askCloudTutor`. Verified Auth, App Check, replay protection, per-user quota, one-in-flight enforcement, and global cost reservation belong in callable Functions, never client checks.
 - Treat generated tutor output as untrusted Markdown. Preserve sanitised React Markdown and strict KaTeX rendering; never render raw model HTML.
 - Keep teaching synthesis original. Link to authoritative sources; do not copy book chapters, transcripts, images, or videos into the repository without explicit compatible rights.
 - Preserve keyboard access, semantic headings, ARIA tabs/panels, focus management, reduced motion, and light/dark contrast.
 - Do not claim a fix from build success alone when the flow is interactive. Use the browser and exercise the affected path.
-- Deployment is private and explicit. Reuse the opaque Sites project ID from `.openai/hosting.json`; never invent or replace it. Verify access policy after deployment.
+- Firebase deployment is explicit. Use project `robotshift`; verify Authentication providers, App Check enforcement, owner-scoped active-dataset Firestore rules, client-denied server-owned Tutor/quota/migration records, indexes, and Functions; deploy only the verified static `out/` build. Preserve the opaque Sites project ID in `.openai/hosting.json` until browser-local data transfer is complete.
 
 ## Required validation
 

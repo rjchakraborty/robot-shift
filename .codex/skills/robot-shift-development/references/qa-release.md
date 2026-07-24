@@ -34,7 +34,8 @@ For tutor work, distinguish:
 
 - client/runtime success;
 - structured API error handling;
-- actual Gemini response with a configured key.
+- verified Auth/App Check/callable admission and Firestore persistence;
+- actual Gemini response with a rotated Secret Manager key.
 
 Do not claim provider end-to-end success when only the configuration error path was tested.
 
@@ -43,21 +44,35 @@ Do not claim provider end-to-end success when only the configuration error path 
 1. Confirm `git status` and preserve unrelated work.
 2. Run `npm run verify`.
 3. Run browser QA against the exact source state.
-4. Commit and push that exact state when requested.
-5. Read `.openai/hosting.json`; copy the `project_id` exactly.
+4. Confirm Firebase CLI identity is `rjchakraborty21@gmail.com` and the selected project is exactly `robotshift`.
+5. Confirm Blaze is explicitly approved, the Functions region is `asia-south1`, and the Firestore database/region are correct.
+6. Revoke any previously exposed Gemini credential and configure a dedicated rotated `GEMINI_API_KEY` through Secret Manager without printing it.
+7. Confirm Email/Password and Google providers, password policy, email-enumeration protection, authorized domains, action URL, App Check enforcement, API-key restrictions, quota, and budget controls.
+8. Commit and push that exact state when requested.
 
-## Sites release
+## Firebase release
 
-Use the installed Sites building and hosting skills. Do not hand-roll a deployment archive when the bundled packaging helper is available.
+Deploy all interdependent security surfaces from the same verified source state:
 
-1. Package the exact pushed commit.
-2. Save a new Sites version with that commit identity.
-3. Deploy only the saved version.
-4. Poll pending or publishing states to a terminal status.
-5. Verify the production URL responds through the authenticated Sites path.
-6. Verify access remains owner-only/custom as intended.
+```bash
+firebase deploy --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift
+```
 
-Never create a second Sites project for this local repository when `.openai/hosting.json` already contains the project identity.
+Do not deploy Hosting alone: the shipped client depends on matching Auth policy,
+Firestore Rules, indexes, callable Functions, App Check registration, and
+server-side quota controls.
+
+After deployment:
+
+1. Confirm every deploy target reached a terminal success state.
+2. Verify `https://robotshift.web.app` serves the exact local build identity.
+3. Exercise signup, verification, login/logout, profile, password reset/change, account-scoped course persistence, and Tutor authorization.
+4. Correlate callable response, Firestore user/request/usage records, Function logs, and Analytics signals.
+5. Verify an unverified user, stale token, invalid App Check token, cross-user read, quota overflow, duplicate request, and global-budget admission all fail closed.
+6. Keep the previous Sites deployment available only until required browser profiles have exported and imported their legacy data.
+
+Never replace or delete the opaque Sites identity in `.openai/hosting.json`; it
+remains the migration source, not the release target.
 
 ## Report
 
