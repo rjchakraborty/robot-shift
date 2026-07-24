@@ -46,6 +46,7 @@ export type DayVisualSpec = {
   fixture: NumericFixture;
   math: {
     formula: string;
+    latex: string;
     walkthrough: readonly string[];
     result: string;
   };
@@ -99,6 +100,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "||p|| = √(x² + y²)",
+      latex: String.raw`\lVert \mathbf{p} \rVert = \sqrt{x^2+y^2}`,
       walkthrough: [
         "Square each coordinate so direction does not cancel distance.",
         "Add the squared components.",
@@ -133,6 +135,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "x = l₁cosθ₁ + l₂cos(θ₁+θ₂),  y = l₁sinθ₁ + l₂sin(θ₁+θ₂)",
+      latex: String.raw`\begin{aligned}x &= l_1\cos\theta_1+l_2\cos(\theta_1+\theta_2) \\ y &= l_1\sin\theta_1+l_2\sin(\theta_1+\theta_2)\end{aligned}`,
       walkthrough: [
         "Project link one onto the base x and y axes.",
         "Add joint two to joint one because link two rotates with both joints.",
@@ -164,6 +167,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "e = r − y,  uₚ = Kₚe",
+      latex: String.raw`\begin{aligned}e &= r-y \\ u_p &= K_p e\end{aligned}`,
       walkthrough: [
         "Subtract measured output y from requested setpoint r.",
         "Multiply that error by proportional gain Kₚ.",
@@ -195,6 +199,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "deadline margin = period − compute time",
+      latex: String.raw`T_{\mathrm{margin}} = T_{\mathrm{period}}-T_{\mathrm{compute}}`,
       walkthrough: [
         "Convert rate to a period when needed: period = 1/rate.",
         "Measure worst-case work, not only the average.",
@@ -226,6 +231,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "availability = successful operations / attempted operations",
+      latex: String.raw`\mathrm{availability}=\frac{\mathrm{successful\ operations}}{\mathrm{attempted\ operations}}`,
       walkthrough: [
         "Define one operation and its pass condition.",
         "Count attempts and successes over the same interval.",
@@ -257,6 +263,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "pixel offset = fₓX/Z",
+      latex: String.raw`u-c_x=\frac{f_x X}{Z}`,
       walkthrough: [
         "Measure lateral position X and depth Z in the camera frame.",
         "Divide X by Z to get angular scale.",
@@ -288,6 +295,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "z = (x − μ) / σ",
+      latex: String.raw`z=\frac{x-\mu}{\sigma}`,
       walkthrough: [
         "Subtract the estimated mean μ from observation x.",
         "Divide by standard deviation σ.",
@@ -319,6 +327,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "straight-line distance = √((x₂−x₁)² + (y₂−y₁)²)",
+      latex: String.raw`d=\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}`,
       walkthrough: [
         "Subtract start coordinates from goal coordinates.",
         "Square and add the x and y differences.",
@@ -350,6 +359,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "elements = batch × channels × height × width",
+      latex: String.raw`N_{\mathrm{elements}}=B C H W`,
       walkthrough: [
         "Write the dimension order explicitly.",
         "Multiply each dimension once.",
@@ -381,6 +391,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "samples = sample rate × duration",
+      latex: String.raw`N_{\mathrm{samples}}=f_s t`,
       walkthrough: [
         "Choose one sample rate in hertz.",
         "Measure episode duration in seconds.",
@@ -412,6 +423,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "chunk horizon = actions per chunk / control rate",
+      latex: String.raw`t_{\mathrm{horizon}}=\frac{N_{\mathrm{actions}}}{f_{\mathrm{control}}}`,
       walkthrough: [
         "Count how many future actions the policy emits.",
         "Divide by the physical command rate.",
@@ -443,6 +455,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "stop distance = v·tᵣ + v²/(2a)",
+      latex: String.raw`d_{\mathrm{stop}}=v t_r+\frac{v^2}{2a}`,
       walkthrough: [
         "Compute distance travelled during reaction time.",
         "Add braking distance using speed and available deceleration.",
@@ -474,6 +487,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "electrical power = voltage × current",
+      latex: String.raw`P=V I`,
       walkthrough: [
         "Measure supply voltage under load.",
         "Measure or bound expected current.",
@@ -505,6 +519,7 @@ const profiles: Record<VisualKind, KindProfile> = {
     },
     math: {
       formula: "observed success rate = successes / trials",
+      latex: String.raw`\mathrm{success\ rate}=\frac{S}{N}`,
       walkthrough: [
         "Freeze the pass condition before running trials.",
         "Count every attempted trial, including interventions and setup failures.",
@@ -662,6 +677,7 @@ function fixtureForDay(day: CurriculumDay, kind: VisualKind): Pick<DayVisualSpec
       },
       math: {
         formula: "A·B = AₓBₓ + AᵧBᵧ,  cosθ = (A·B)/(||A||·||B||)",
+        latex: String.raw`\begin{aligned}\mathbf A\cdot\mathbf B &= A_xB_x+A_yB_y \\ \cos\theta &= \frac{\mathbf A\cdot\mathbf B}{\lVert\mathbf A\rVert\lVert\mathbf B\rVert}\end{aligned}`,
         walkthrough: [
           "Multiply matching components: 3×5 and 4×2.",
           "Add them: A·B = 15+8 = 23.",
@@ -691,6 +707,7 @@ function fixtureForDay(day: CurriculumDay, kind: VisualKind): Pick<DayVisualSpec
       },
       math: {
         formula: "[[0,−1],[1,0]] · [2,0]ᵀ = [0,2]ᵀ",
+        latex: String.raw`\begin{bmatrix}0&-1\\1&0\end{bmatrix}\begin{bmatrix}2\\0\end{bmatrix}=\begin{bmatrix}0\\2\end{bmatrix}`,
         walkthrough: [
           "First output: 0×2 + (−1)×0 = 0.",
           "Second output: 1×2 + 0×0 = 2.",
@@ -786,8 +803,13 @@ export function validateDayVisualSpec(
       errors.push(`${stateName} state value must be finite`);
     }
   }
-  if (!spec.math.formula.trim() || spec.math.walkthrough.length < 3 || !spec.math.result.trim()) {
-    errors.push("math visual requires a formula, at least three steps, and a result");
+  if (
+    !spec.math.formula.trim()
+    || !spec.math.latex.trim()
+    || spec.math.walkthrough.length < 3
+    || !spec.math.result.trim()
+  ) {
+    errors.push("math visual requires readable and LaTeX formulas, at least three steps, and a result");
   }
   if (spec.howToRead.length < 3 || spec.howToRead.some((step) => !step.trim())) {
     errors.push("visual requires at least three non-empty how-to-read steps");

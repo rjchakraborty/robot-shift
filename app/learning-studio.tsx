@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  lazy,
+  Suspense,
   type FormEvent,
   type KeyboardEvent,
   useEffect,
@@ -10,10 +12,15 @@ import {
 } from "react";
 import { type CurriculumDay } from "./curriculum";
 import { InteractiveMathPlayground } from "./interactive-math-playground";
+import { LessonMediaPanel } from "./lesson-media-panel";
 import { LessonVisual } from "./lesson-visual";
 import { allDayVisuals } from "./lesson-visuals";
 import { lessonForDay } from "./lessons";
 import { getMathRescue } from "./math-rescue";
+
+const RichText = lazy(() => import("./rich-text").then((module) => ({
+  default: module.RichText,
+})));
 
 type LearningStudioProps = {
   day: CurriculumDay;
@@ -232,6 +239,10 @@ function historyForRequest(messages: TutorMessage[]) {
 export function LearningStudio({ day }: LearningStudioProps) {
   const lesson = useMemo(() => lessonForDay(day), [day]);
   const mathRescue = useMemo(() => getMathRescue(day.week), [day.week]);
+  const approvedSourceUrls = useMemo(
+    () => lesson.sources.map((source) => source.url),
+    [lesson.sources],
+  );
   const visual = allDayVisuals[day.id - 1];
   const [section, setSection] = useState<LessonSection>("visual");
   const [threads, setThreads] = useState<Record<string, TutorThread>>({});
@@ -582,12 +593,23 @@ export function LearningStudio({ day }: LearningStudioProps) {
             {lesson.math.connection && (
               <div className="math-topic-connection">
                 <strong>Today’s exact-topic connection</strong>
-                <p>{lesson.math.connection}</p>
+                {lesson.math.connectionMarkdown ? (
+                  <Suspense fallback={<p>{lesson.math.connection}</p>}>
+                    <RichText content={lesson.math.connectionMarkdown} className="math-connection-markdown" />
+                  </Suspense>
+                ) : (
+                  <p>{lesson.math.connection}</p>
+                )}
               </div>
             )}
             <div className="formula-card" aria-label={`Formula: ${lesson.math.formula}`}>
               <span>WEEKLY CORE FORMULA</span>
-              <strong>{lesson.math.formula}</strong>
+              <Suspense fallback={<strong>{lesson.math.formula}</strong>}>
+                <RichText
+                  content={`$$\n${lesson.math.latex}\n$$`}
+                  className="formula-typeset"
+                />
+              </Suspense>
             </div>
             <ol className="math-steps">
               {lesson.math.steps.map((step, index) => (
@@ -724,16 +746,12 @@ export function LearningStudio({ day }: LearningStudioProps) {
         </div>
       </div>
 
-      <details className="studio-source-strip optional-panel">
-        <summary>Lesson sources</summary>
-        <nav aria-label="Sources for this lesson">
-          {lesson.sources.map((source) => (
-            <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
-              {source.label}<span aria-hidden="true"> ↗</span>
-            </a>
-          ))}
-        </nav>
-      </details>
+      <LessonMediaPanel
+        key={lesson.dayId}
+        week={lesson.week}
+        dayId={lesson.dayId}
+        sources={lesson.sources}
+      />
 
       <details className="optional-panel tutor-disclosure">
         <summary>Ask the AI teacher</summary>
@@ -773,7 +791,17 @@ export function LearningStudio({ day }: LearningStudioProps) {
                 <strong>{message.role === "user" ? "You" : "Teacher"}</strong>
                 <span>{message.mode ? modeLabels[message.mode] : "Ask"}{message.model ? ` · ${message.model}` : ""}</span>
               </div>
-              <p>{message.content}</p>
+              {message.role === "assistant" ? (
+                <Suspense fallback={<p>{message.content}</p>}>
+                  <RichText
+                    content={message.content}
+                    className="tutor-markdown"
+                    allowedLinks={approvedSourceUrls}
+                  />
+                </Suspense>
+              ) : (
+                <p>{message.content}</p>
+              )}
             </article>
           ))}
           {loading && (

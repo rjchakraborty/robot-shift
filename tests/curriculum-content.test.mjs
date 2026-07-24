@@ -32,6 +32,12 @@ test("every curriculum day has complete topic-specific teaching content", () => 
     assert.equal(lesson.title, day.title);
     assert.ok(lesson.bigIdea.length > 40, `day ${day.id} needs a useful core explanation`);
     assert.ok(lesson.math.connection?.length > 35, `day ${day.id} needs exact-topic math`);
+    assert.ok(lesson.math.connectionMarkdown?.length > 35, `day ${day.id} needs typeset exact-topic math`);
+    assert.equal(
+      lesson.simpleExplanation.some((paragraph) => paragraph.startsWith("In numbers:")),
+      false,
+      `day ${day.id} must keep dense equations in the Math tab`,
+    );
     assert.match(lesson.math.title, new RegExp(day.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.ok(lesson.pareto.length >= 4, `day ${day.id} needs an 80/20 summary`);
     assert.ok(lesson.examples.length >= 3, `day ${day.id} needs physical examples`);
@@ -212,5 +218,8 @@ test("the live tutor is grounded in the resolved displayed lesson", async () => 
   assert.match(routeSource, /lesson\.sources/);
   assert.match(routeSource, /thinkingLevel:\s*"low"/);
   assert.match(routeSource, /finishReason === "MAX_TOKENS"/);
-  assert.match(routeSource, /Return readable plain text only/);
+  assert.match(routeSource, /GitHub-Flavored Markdown/);
+  assert.match(routeSource, /KaTeX-compatible LaTeX/);
+  assert.match(routeSource, /Never output raw HTML/);
+  assert.match(routeSource, /authored LaTeX/);
 });

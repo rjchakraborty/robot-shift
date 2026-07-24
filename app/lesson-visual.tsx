@@ -1,7 +1,18 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import type { DayVisualSpec, VisualKind, VisualMode } from "./lesson-visuals";
+
+const RichText = lazy(() => import("./rich-text").then((module) => ({
+  default: module.RichText,
+})));
 
 export type LessonVisualProps = {
   spec: DayVisualSpec;
@@ -635,7 +646,12 @@ export function LessonVisual({
           {mode === "math" && (
             <section className="lesson-visual__math">
               <strong>Math example</strong>
-              <strong>{spec.math.formula}</strong>
+              <Suspense fallback={<strong>{spec.math.formula}</strong>}>
+                <RichText
+                  content={`$$\n${spec.math.latex}\n$$`}
+                  className="lesson-visual__typeset"
+                />
+              </Suspense>
               <ol>
                 {spec.math.walkthrough.map((step) => <li key={step}>{step}</li>)}
               </ol>

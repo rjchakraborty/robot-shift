@@ -30,6 +30,7 @@ test("all 180 course days have a validated exact-topic visual specification", ()
   for (const [index, visual] of allDayVisuals.entries()) {
     assert.equal(visual.topic, curriculumDays[index].title);
     assert.ok(visual.title.includes(curriculumDays[index].title));
+    assert.ok(visual.math.latex);
     assert.ok(visual.softwareBridge.analogy.length > 30);
     assert.ok(visual.softwareBridge.dangerousDifference.length > 30);
     assert.deepEqual(Object.keys(visual.states), ["nominal", "boundary", "failure"]);

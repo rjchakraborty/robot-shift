@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  lazy,
+  Suspense,
   useId,
   useMemo,
   useState,
@@ -20,6 +22,10 @@ import {
   type TimelineScene,
   type VectorScene,
 } from "./interactive-math";
+
+const RichText = lazy(() => import("./rich-text").then((module) => ({
+  default: module.RichText,
+})));
 
 export type InteractiveMathPlaygroundProps = {
   spec: DayVisualSpec;
@@ -599,7 +605,12 @@ function InteractiveMathSession({ spec }: InteractiveMathPlaygroundProps) {
         </div>
         <div className="interactive-math__formula">
           <span>FORMULA</span>
-          <strong>{model.evaluation.formula}</strong>
+          <Suspense fallback={<strong>{model.evaluation.formula}</strong>}>
+            <RichText
+              content={`$$\n${model.evaluation.formulaLatex}\n$$`}
+              className="interactive-math__typeset"
+            />
+          </Suspense>
           <code>{model.evaluation.substitution}</code>
         </div>
         <ol className="interactive-math__steps">

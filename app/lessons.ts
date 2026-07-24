@@ -14,9 +14,11 @@ export type LessonMath = {
   title: string;
   meaning: string;
   formula: string;
+  latex: string;
   steps: string[];
   check: string;
   connection?: string;
+  connectionMarkdown?: string;
 };
 
 export type DayLesson = {
@@ -49,7 +51,7 @@ const pytorch: Resource = { label: "PyTorch tutorials", url: "https://pytorch.or
 const lerobot: Resource = { label: "Hugging Face LeRobot", url: "https://huggingface.co/docs/lerobot/index" };
 const openVla: Resource = { label: "OpenVLA project", url: "https://openvla.github.io/" };
 const geminiRobotics: Resource = { label: "Google DeepMind Gemini Robotics", url: "https://deepmind.google/models/gemini-robotics/" };
-const rosLyrical: Resource = { label: "ROS 2 Lyrical Luth release", url: "https://docs.ros.org/en/kilted/Releases/Release-Lyrical-Luth.html" };
+const rosLyrical: Resource = { label: "ROS 2 Lyrical Luth release", url: "https://docs.ros.org/en/lyrical/Releases/Release-Lyrical-Luth.html" };
 const rosTesting: Resource = { label: "ROS 2 launch_testing", url: "https://docs.ros.org/en/jazzy/p/launch_testing/" };
 const openRmf: Resource = { label: "Open-RMF fleet-adapter integration", url: "https://osrf.github.io/ros2multirobotbook/integration_fleets_adapter_tutorial.html" };
 const vda5050: Resource = { label: "Official VDA 5050 specification", url: "https://github.com/VDA5050/VDA5050" };
@@ -67,6 +69,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Vector length without fear",
       meaning: "For v = [x,y], x and y are perpendicular distances in metres; ||v|| is the straight-line distance.",
       formula: "||v|| = √(x² + y²)",
+      latex: String.raw`\lVert \mathbf{v} \rVert = \sqrt{x^2 + y^2}`,
       steps: ["Square each component.", "Add the squares.", "Take the square root and keep the unit."],
       check: "For v = [3 m, 4 m], ||v|| = √(9 + 16) = 5 m.",
     },
@@ -91,6 +94,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Two-link arm position",
       meaning: "l₁,l₂ are link lengths in metres; θ₁,θ₂ are joint angles; x,y locate the tip in the base frame.",
       formula: "x=l₁cosθ₁+l₂cos(θ₁+θ₂); y=l₁sinθ₁+l₂sin(θ₁+θ₂)",
+      latex: String.raw`\begin{aligned}x &= l_1\cos\theta_1 + l_2\cos(\theta_1+\theta_2) \\ y &= l_1\sin\theta_1 + l_2\sin(\theta_1+\theta_2)\end{aligned}`,
       steps: ["Find the first link's x and y parts.", "Use θ₁+θ₂ for the second link.", "Add both link vectors."],
       check: "l₁=l₂=1 m, θ₁=0°, θ₂=90° gives x=1 m, y=1 m.",
     },
@@ -115,6 +119,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "PID one-step command",
       meaning: "e is error; Kp, Ki, Kd are gains; Δt is sample time; u is the actuator command.",
       formula: "u = Kp·e + Ki·Σ(eΔt) + Kd·(e-e_prev)/Δt",
+      latex: String.raw`u = K_p e + K_i \sum(e\,\Delta t) + K_d \frac{e-e_{\mathrm{prev}}}{\Delta t}`,
       steps: ["Compute present error.", "Update accumulated and changing error.", "Add the three terms, then clamp to a safe limit."],
       check: "Kp=2, Ki=0, Kd=0.5, e=3, e_prev=2, Δt=0.1 gives u=6+5=11 before clamping.",
     },
@@ -139,6 +144,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Queue capacity from rate",
       meaning: "r is incoming items per second; t is tolerated stall time in seconds; B is the minimum item capacity.",
       formula: "B ≥ r × t",
+      latex: String.raw`B \ge r t`,
       steps: ["Measure worst sustained input rate.", "Choose the largest tolerated processing stall.", "Multiply and round up, then define overflow behavior."],
       check: "At 100 messages/s with a 0.20 s stall, B ≥ 20 messages.",
     },
@@ -163,6 +169,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Rate and period",
       meaning: "f is frequency in hertz (messages/s); T is the time between messages in seconds.",
       formula: "T = 1 / f",
+      latex: String.raw`T = \frac{1}{f}`,
       steps: ["Write the required update rate.", "Divide one second by that rate.", "Compare the period with observed timestamps and deadline."],
       check: "At 20 Hz, T=1/20=0.05 s=50 ms.",
     },
@@ -187,6 +194,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Compose two simple translations",
       meaning: "x_AB is B's position seen from A; x_BC is C from B; x_AC is C from A.",
       formula: "x_AC = x_AB + x_BC (when axes are aligned)",
+      latex: String.raw`x_{AC} = x_{AB} + x_{BC}`,
       steps: ["Trace the frame path A→B→C.", "Express both steps along the same axis.", "Add and verify the reverse transform has opposite sign."],
       check: "Base is 2.0 m from map and tool is 0.4 m from base, so tool is 2.4 m from map.",
     },
@@ -211,6 +219,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Differential-drive motion",
       meaning: "r is wheel radius; L is wheel spacing; ωR,ωL are wheel angular speeds; v is forward speed; Ω is turn rate.",
       formula: "v=r(ωR+ωL)/2; Ω=r(ωR-ωL)/L",
+      latex: String.raw`\begin{aligned}v &= \frac{r(\omega_R+\omega_L)}{2} \\ \Omega &= \frac{r(\omega_R-\omega_L)}{L}\end{aligned}`,
       steps: ["Convert both wheel speeds to edge speeds.", "Average for forward speed.", "Use their difference over wheel spacing for turn rate."],
       check: "r=0.1 m, L=0.5 m, ωR=6, ωL=4 rad/s gives v=0.5 m/s and Ω=0.4 rad/s.",
     },
@@ -235,6 +244,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Minimum travel-time estimate",
       meaning: "d is path length in metres; v is average safe speed in m/s; t is ideal travel time in seconds.",
       formula: "t = d / v",
+      latex: String.raw`t = \frac{d}{v}`,
       steps: ["Measure planned path length.", "Choose a safe realistic average speed.", "Divide, then add a separate timeout margin for turns and recovery."],
       check: "A 6 m path at 0.5 m/s needs at least 12 s; a 5 s timeout cannot succeed.",
     },
@@ -259,6 +269,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Precision and recall",
       meaning: "TP is correct detections; FP is false alarms; FN is missed objects.",
       formula: "precision=TP/(TP+FP); recall=TP/(TP+FN)",
+      latex: String.raw`\begin{aligned}\mathrm{precision} &= \frac{TP}{TP+FP} \\ \mathrm{recall} &= \frac{TP}{TP+FN}\end{aligned}`,
       steps: ["Count correct detections.", "Count false alarms and misses separately.", "Compute both ratios; never hide one behind the other."],
       check: "TP=8, FP=2, FN=4 gives precision=80% and recall≈66.7%.",
     },
@@ -283,6 +294,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Pixel plus depth to 3D",
       meaning: "u is pixel column; cₓ is image centre; Z is depth in metres; fₓ is focal length in pixels; X is sideways metres.",
       formula: "X = (u-cₓ)Z/fₓ",
+      latex: String.raw`X = \frac{(u-c_x)Z}{f_x}`,
       steps: ["Subtract the image centre from the pixel.", "Multiply by measured depth.", "Divide by focal length and keep the camera-frame label."],
       check: "u=420, cₓ=320, Z=2 m, fₓ=500 gives X=0.4 m.",
     },
@@ -307,6 +319,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "One-dimensional Kalman update",
       meaning: "P is prior variance; R is sensor variance; K is measurement trust; x⁻ is prediction; z is measurement.",
       formula: "K=P/(P+R); x=x⁻+K(z-x⁻)",
+      latex: String.raw`\begin{aligned}K &= \frac{P}{P+R} \\ x &= x^- + K(z-x^-)\end{aligned}`,
       steps: ["Compute K from the two uncertainties.", "Find measurement surprise z-x⁻.", "Apply K times that surprise to the prediction."],
       check: "P=4, R=1, x⁻=10 m, z=12 m gives K=0.8 and x=11.6 m.",
     },
@@ -331,6 +344,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "A* priority",
       meaning: "g(n) is known cost from start; h(n) estimates cost to goal; f(n) ranks the next node.",
       formula: "f(n) = g(n) + h(n)",
+      latex: String.raw`f(n) = g(n) + h(n)`,
       steps: ["Record cost already paid.", "Estimate remaining cost without overestimating for optimal A*.", "Expand the smallest total f."],
       check: "Node A: g=4,h=5 gives f=9; B: g=6,h=2 gives f=8, so B is tried first.",
     },
@@ -355,6 +369,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Mean squared error",
       meaning: "ŷᵢ is prediction; yᵢ is target; n is example count; MSE penalizes squared numeric error.",
       formula: "MSE = Σ(ŷᵢ-yᵢ)² / n",
+      latex: String.raw`\mathrm{MSE} = \frac{1}{n}\sum_{i=1}^{n}(\hat y_i-y_i)^2`,
       steps: ["Subtract each target from prediction.", "Square errors so signs cannot cancel.", "Add and divide by count."],
       check: "Predictions [2,4], targets [3,2] give MSE=((−1)²+2²)/2=2.5.",
     },
@@ -379,6 +394,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Samples and duration",
       meaning: "N is sample count; f is sampling rate in Hz; t is episode duration in seconds.",
       formula: "t = N / f",
+      latex: String.raw`t = \frac{N}{f}`,
       steps: ["Count synchronized samples.", "Confirm the actual rate from timestamps.", "Divide and compare with video duration."],
       check: "600 samples at 20 Hz represent 30 s; a 26 s video signals timing mismatch.",
     },
@@ -403,6 +419,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Compounding step reliability",
       meaning: "p is success probability per decision; N is required decisions; pᴺ is an illustrative all-correct probability.",
       formula: "P(all correct) = pᴺ",
+      latex: String.raw`P(\text{all correct}) = p^N`,
       steps: ["Estimate per-step correctness only as a simple model.", "Count dependent decisions.", "Raise p to N and verify with actual rollouts."],
       check: "At p=0.98 for 20 decisions, 0.98²⁰≈0.668: small errors can strongly reduce full-task success.",
     },
@@ -427,6 +444,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Backlog growth under overload",
       meaning: "r_in is incoming events per second, r_out is processed events per second, t is elapsed seconds, and B is queued events.",
       formula: "B = max(0, r_in − r_out) × t",
+      latex: String.raw`B = \max(0, r_{\mathrm{in}}-r_{\mathrm{out}})\,t`,
       steps: ["Measure sustained input and processing rates.", "Subtract processing capacity from input rate.", "Multiply by time, then define a bounded overload response."],
       check: "At 200 incoming and 150 processed events/s, 60 s creates 3,000 queued events unless work is shed or capacity changes.",
     },
@@ -451,6 +469,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Illustrative stopping-distance bound",
       meaning: "v is speed, t_react is detection plus command latency, a is positive braking deceleration, and d is reaction plus braking distance before margin.",
       formula: "d = v × t_react + v² / (2a)",
+      latex: String.raw`d = v t_{\mathrm{react}} + \frac{v^2}{2a}`,
       steps: ["Measure the worst credible reaction delay.", "Add braking distance at the tested load and surface.", "Add the engineering margin required by the risk assessment and validate physically."],
       check: "At 1 m/s, 0.15 s reaction, and 1.5 m/s² deceleration, d≈0.15+0.33=0.48 m before margin.",
     },
@@ -475,6 +494,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Normalize an action",
       meaning: "a is a physical action; a_min,a_max are calibrated limits; a_norm maps it approximately to −1…1.",
       formula: "a_norm = 2(a-a_min)/(a_max-a_min) - 1",
+      latex: String.raw`a_{\mathrm{norm}} = 2\frac{a-a_{\min}}{a_{\max}-a_{\min}} - 1`,
       steps: ["Record physical minimum and maximum.", "Subtract the minimum and divide by range.", "Scale to −1…1; clip and preserve the inverse mapping."],
       check: "For a=0.75 m, range 0…1 m, a_norm=2(0.75)-1=0.5.",
     },
@@ -499,6 +519,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Why LoRA is smaller",
       meaning: "d_in,d_out are layer dimensions; r is small adapter rank; full and LoRA counts compare trainable weights.",
       formula: "full=d_in·d_out; LoRA=r(d_in+d_out)",
+      latex: String.raw`\begin{aligned}\text{full} &= d_{\mathrm{in}}d_{\mathrm{out}} \\ \text{LoRA} &= r(d_{\mathrm{in}}+d_{\mathrm{out}})\end{aligned}`,
       steps: ["Multiply dimensions for a full matrix.", "Add dimensions and multiply by rank for LoRA.", "Compare counts and verify actual framework configuration."],
       check: "For 1024×1024 and r=8: full=1,048,576; LoRA=16,384 weights, about 64× fewer.",
     },
@@ -523,6 +544,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Long-plan reliability",
       meaning: "pᵢ is the measured success rate of skill i; multiplying gives a simple independent-skill estimate.",
       formula: "P(plan success) ≈ p₁×p₂×…×pₙ",
+      latex: String.raw`P(\text{plan success}) \approx \prod_{i=1}^{n}p_i`,
       steps: ["Measure each skill on relevant conditions.", "Multiply only as a rough independence model.", "Use end-to-end trials because failures can be related."],
       check: "Four skills at 95% each give 0.95⁴≈81.5%, not 95% task success.",
     },
@@ -547,6 +569,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Stopping-distance budget",
       meaning: "v is speed; t_r is detection/reaction delay; a is positive braking deceleration; d is minimum ideal stopping distance.",
       formula: "d = v·t_r + v²/(2a)",
+      latex: String.raw`d = v t_r + \frac{v^2}{2a}`,
       steps: ["Measure worst reaction delay.", "Add distance travelled during delay.", "Add braking distance, then include a physical safety margin."],
       check: "v=1 m/s, t_r=0.2 s, a=2 m/s² gives d=0.2+0.25=0.45 m before margin.",
     },
@@ -571,6 +594,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Electrical power budget",
       meaning: "V is supply voltage in volts; I is current in amperes; P is electrical power in watts.",
       formula: "P = V × I",
+      latex: String.raw`P = V I`,
       steps: ["Use the operating voltage.", "Estimate simultaneous current including peak margin.", "Multiply and check supply, cable, fuse, and connector ratings."],
       check: "A 12 V system drawing 3 A uses 36 W; a 24 W supply is undersized.",
     },
@@ -595,6 +619,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Coverage balance",
       meaning: "nᵢ is episode count for condition i; N is all episodes; shareᵢ reveals over- or under-representation.",
       formula: "shareᵢ = nᵢ / N",
+      latex: String.raw`\mathrm{share}_i = \frac{n_i}{N}`,
       steps: ["Define meaningful condition buckets.", "Count complete reviewed episodes per bucket.", "Divide by total and collect where coverage is weak."],
       check: "10 dim-light episodes among 100 total give 10% coverage; that is weak if dim light is half of deployment.",
     },
@@ -619,6 +644,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Latency budget",
       meaning: "T_sense, T_infer, T_comm, T_control are stage times; T_total is observation-to-command delay.",
       formula: "T_total = T_sense + T_infer + T_comm + T_control",
+      latex: String.raw`T_{\mathrm{total}} = T_{\mathrm{sense}} + T_{\mathrm{infer}} + T_{\mathrm{comm}} + T_{\mathrm{control}}`,
       steps: ["Timestamp every boundary.", "Add stage times at a consistent percentile.", "Compare with task deadline and keep safety margin."],
       check: "20+80+15+10 ms gives 125 ms total, exceeding a 100 ms control deadline.",
     },
@@ -643,6 +669,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Acceptance success rate",
       meaning: "S is fully successful trials; N is frozen attempted trials; rate is evidence, not certainty.",
       formula: "success rate = S / N × 100%",
+      latex: String.raw`\mathrm{success\ rate} = \frac{S}{N}\times 100\%`,
       steps: ["Define full, partial, failed, and unsafe before testing.", "Run every frozen trial.", "Report each count and preserve evidence."],
       check: "46 successes in 50 trials is 92%; also report the four failure categories and any interventions.",
     },
@@ -667,6 +694,7 @@ export const weekLessonPacks: readonly WeekPack[] = [
       title: "Application funnel",
       meaning: "A is targeted applications; I is interviews; conversion measures whether positioning creates conversations.",
       formula: "interview conversion = I / A × 100%",
+      latex: String.raw`\mathrm{interview\ conversion} = \frac{I}{A}\times 100\%`,
       steps: ["Count only role-matched applications.", "Track recruiter and technical interviews separately.", "Change one résumé or targeting variable per batch."],
       check: "3 interviews from 20 targeted applications is 15%; compare batches, not one application.",
     },
@@ -719,12 +747,10 @@ export function lessonForDay(day: CurriculumDay): DayLesson {
     bigIdea: detail.core,
     pareto: [
       detail.core,
-      `Math connection: ${detail.mathConnection}`,
-      ...pack.pareto.slice(0, 3),
+      ...pack.pareto.slice(0, 4),
     ],
     simpleExplanation: [
       detail.core,
-      `In numbers: ${detail.mathConnection}`,
       ...pack.simpleExplanation.slice(0, 2),
       `Finally, connect the result to this week's physical build: ${day.lab}`,
     ],
@@ -733,6 +759,7 @@ export function lessonForDay(day: CurriculumDay): DayLesson {
       title: `${day.title}: exact-topic connection + weekly math spine`,
       meaning: `Start with today's exact rule or calculation, then use the weekly core formula as a second check. ${pack.math.meaning}`,
       connection: detail.mathConnection,
+      connectionMarkdown: detail.mathMarkdown,
     },
     examples: [detail.example, ...pack.examples.slice(0, 2)],
     practice: [

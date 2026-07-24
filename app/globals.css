@@ -2516,6 +2516,26 @@ textarea::placeholder {
   font-size: 0.8rem;
 }
 
+.lesson-visual__typeset {
+  margin-top: 10px;
+  overflow-x: auto;
+  padding: 12px 10px;
+  background: var(--surface-tint-soft);
+  border: 1px solid var(--line);
+}
+
+.lesson-visual__typeset .katex-display {
+  margin: 0;
+  text-align: left;
+}
+
+.lesson-visual__typeset .katex-display > .katex {
+  display: inline-block;
+  color: var(--cyan);
+  font-size: 0.84rem;
+  text-align: left;
+}
+
 .lesson-visual__math > p,
 .lesson-visual__failure > p,
 .lesson-visual__bridge > p,
@@ -2837,6 +2857,44 @@ textarea::placeholder {
   color: #98e4dc;
   font-family: var(--font-geist-mono), monospace;
   font-size: 1.05rem;
+}
+
+.formula-typeset {
+  min-width: 0;
+}
+
+.formula-typeset .katex-display {
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+  text-align: left;
+}
+
+.formula-typeset .katex-display > .katex {
+  display: inline-block;
+  color: #98e4dc;
+  font-size: 1.1rem;
+  text-align: left;
+}
+
+.math-connection-markdown > :first-child,
+.math-connection-markdown > :last-child {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.math-connection-markdown .katex {
+  color: var(--ink);
+}
+
+.math-connection-markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 12px 0 4px;
+  padding: 14px 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
 }
 
 .math-steps {
@@ -3230,13 +3288,127 @@ textarea::placeholder {
   color: #9ea8aa;
 }
 
-.chat-message p {
+.chat-message > p {
   margin: 9px 0 0;
   color: #e4e8e7;
   font-size: 0.84rem;
   line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.tutor-markdown {
+  margin-top: 10px;
+  color: #e4e8e7;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.tutor-markdown > :first-child {
+  margin-top: 0;
+}
+
+.tutor-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.tutor-markdown h2,
+.tutor-markdown h3 {
+  margin: 18px 0 8px;
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.tutor-markdown p,
+.tutor-markdown ul,
+.tutor-markdown ol,
+.tutor-markdown blockquote,
+.tutor-markdown pre,
+.tutor-markdown table {
+  margin: 10px 0;
+}
+
+.tutor-markdown p {
+  white-space: pre-wrap;
+}
+
+.tutor-markdown ul,
+.tutor-markdown ol {
+  padding-left: 1.4rem;
+}
+
+.tutor-markdown li + li {
+  margin-top: 5px;
+}
+
+.tutor-markdown strong {
+  color: #ffffff;
+}
+
+.tutor-markdown a {
+  color: #98e4dc;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tutor-markdown blockquote {
+  padding: 8px 12px;
+  color: #cbd3d2;
+  border-left: 3px solid #98e4dc;
+  background: #20282b;
+}
+
+.tutor-markdown code {
+  padding: 2px 5px;
+  color: #ffd1bf;
+  background: #111719;
+  border: 1px solid #465257;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.78rem;
+}
+
+.tutor-markdown pre {
+  overflow-x: auto;
+  padding: 12px;
+  background: #111719;
+  border: 1px solid #465257;
+}
+
+.tutor-markdown pre code {
+  padding: 0;
+  color: #e4e8e7;
+  background: transparent;
+  border: 0;
+}
+
+.tutor-markdown table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.tutor-markdown th,
+.tutor-markdown td {
+  padding: 7px 9px;
+  border: 1px solid #526066;
+  text-align: left;
+}
+
+.tutor-markdown .katex {
+  color: #d8fff9;
+}
+
+.tutor-markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 14px 0;
+  padding: 15px 16px;
+  background: #101719;
+  border: 1px solid #526066;
+  border-left: 4px solid #98e4dc;
 }
 
 .tutor-thinking {
@@ -4645,6 +4817,26 @@ textarea::placeholder {
   color: var(--cyan);
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.76rem;
+}
+
+.interactive-math__typeset {
+  min-width: 0;
+  overflow-x: auto;
+  padding: 10px 12px;
+  background: var(--surface-tint-soft);
+  border: 1px solid var(--line);
+}
+
+.interactive-math__typeset .katex-display {
+  margin: 0;
+  text-align: left;
+}
+
+.interactive-math__typeset .katex-display > .katex {
+  display: inline-block;
+  color: var(--cyan);
+  font-size: 0.82rem;
+  text-align: left;
 }
 
 .interactive-math__formula code {

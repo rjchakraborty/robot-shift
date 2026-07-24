@@ -3,6 +3,7 @@ import type { TopicDetail } from "./topic-detail-types";
 function detail(
   core: string,
   mathConnection: string,
+  mathMarkdown: string,
   exampleTitle: string,
   explanation: string,
   tryIt: string,
@@ -12,6 +13,7 @@ function detail(
   return {
     core,
     mathConnection,
+    mathMarkdown,
     example: { title: exampleTitle, explanation, tryIt },
     quiz: { question, answer },
   };
@@ -21,6 +23,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   91: detail(
     "A model card is a compact engineering record: intended use, data, test conditions, metrics, latency, known failures, and unsafe uses. It makes a trained model reviewable rather than mysterious.",
     "For predictions [2,4] versus targets [3,2], MSE=((−1)²+2²)/2=2.5; also report a topic-specific latency check such as p95=85 ms against a 100 ms deadline, because MSE cannot cover timing or rare failures.",
+    "For predictions $\\hat{\\mathbf y}=[2,4]$ and targets $\\mathbf y=[3,2]$, $$\\operatorname{MSE}=\\frac{(2-3)^2+(4-2)^2}{2}=2.5.$$ Report timing separately: a $p95$ latency of $85\\,\\mathrm{ms}$ passes a $100\\,\\mathrm{ms}$ deadline, but neither number describes rare failures or unsafe uses.",
     "Cup-position model card",
     "A camera model may have low average position error yet fail on shiny cups or answer too slowly for the controller.",
     "Using a saved prediction table, compute MSE, list the worst three errors, and time 20 inference calls; do not connect the result to powered hardware.",
@@ -30,6 +33,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   92: detail(
     "A policy maps an observation to an action. An episode is one bounded attempt, and its ordered observations and actions form a trajectory; clear reset and terminal rules keep attempts comparable.",
     "Episode duration uses t=N/f: 600 samples at 20 Hz is 30 s; the exact-topic rule still requires one reset and one terminal event, because timing does not define policy, observations, actions, or success.",
+    "With $N$ samples recorded at rate $f$, episode duration is $$t=\\frac{N}{f}=\\frac{600}{20\\,\\mathrm{Hz}}=30\\,\\mathrm{s}.$$ This checks timing only; the reset and terminal event still define the episode boundary.",
     "Tabletop sorting episode",
     "One attempt starts with three blocks in marked positions and ends at success, timeout, or safe abort; the camera and joint readings are observations, while commanded poses are actions.",
     "Act out one unpowered episode with paper blocks and write its reset, observation, action, and terminal event.",
@@ -39,6 +43,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   93: detail(
     "Teleoperation turns a human’s intent into bounded robot commands while recording demonstrations. Good collection preserves operator input, robot state, timing, task result, and intervention notes.",
     "A 10 s teleoperation episode at 20 Hz expects N=t·f=200 records; 190 means 5% missing, a useful weekly timing check that still says nothing about demonstration quality or safety.",
+    "A $10\\,\\mathrm{s}$ episode sampled at $20\\,\\mathrm{Hz}$ should contain $$N=tf=(10\\,\\mathrm{s})(20\\,\\mathrm{s}^{-1})=200$$ records. If only $190$ arrive, the missing fraction is $(200-190)/200=5\\%$; this does not score demonstration quality.",
     "Paper-arm demonstration",
     "A person guides a cardboard two-link arm between drawn waypoints while another person records joint angles and timestamps.",
     "Record a 10-second paper-arm demonstration at 2 Hz; verify that about 20 ordered samples exist and mark any pause.",
@@ -48,6 +53,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   94: detail(
     "An action space states exactly what a policy may command: joint positions, Cartesian poses, velocities, or multi-step chunks. Units, frame, limits, rate, and execution semantics are part of the contract.",
     "An 8-step chunk at 20 Hz has horizon t=N/f=0.4 s; this exact chunk-duration check does not convert a 0.2 rad joint action into Cartesian metres or guarantee either action is feasible.",
+    "For an $N=8$ step action chunk executed at $f=20\\,\\mathrm{Hz}$, $$t_{\\mathrm{horizon}}=\\frac{N}{f}=\\frac{8}{20}=0.4\\,\\mathrm{s}.$$ The result is a duration; it does not convert a joint command in radians into a Cartesian command in metres.",
     "Move a toy gripper",
     "The instruction “move 5” is meaningless until it says 5 degrees at a joint, 5 cm in a named frame, or 5 cm/s for a duration.",
     "Write four versions of one toy-gripper move—joint, Cartesian, velocity, and a three-step chunk—with units and limits; keep the toy unpowered.",
@@ -57,6 +63,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   95: detail(
     "Video, state, and commands are useful together only when timestamps share a clock story. Synchronization associates measurements from the same physical moment and makes delay visible.",
     "State with N=600 at 20 Hz spans 30 s, while a 26 s video exposes mismatch; exact synchronization then requires |t_video−t_state|≤tolerance, e.g. 15 ms, not index matching.",
+    "The state stream spans $$t_{\\mathrm{state}}=\\frac{600}{20\\,\\mathrm{Hz}}=30\\,\\mathrm{s},$$ while the video spans $26\\,\\mathrm{s}$. Pair samples by timestamp only when $$\\lvert t_{\\mathrm{video}}-t_{\\mathrm{state}}\\rvert\\le 15\\,\\mathrm{ms},$$ not merely when their array indices match.",
     "Ball-and-camera timeline",
     "A rolling ball can appear at one location in video while a delayed state sample describes an earlier location.",
     "Roll a ball slowly across a marked table, record phone video and manual timestamps, then match events within a declared tolerance.",
@@ -66,6 +73,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   96: detail(
     "A dataset schema fixes field meanings, shapes, units, frames, and required metadata. Versioned train, validation, and test splits prevent silent incompatibility and evaluation leakage.",
     "Schema validation can require duration=N/f: 600/20=30 s, and split counts might be 70/15/15 episodes; these checks do not define field semantics or prevent related-scene leakage.",
+    "A schema can verify the identity $$t=\\frac{N}{f}=\\frac{600}{20\\,\\mathrm{Hz}}=30\\,\\mathrm{s}.$$ For $100$ episodes, a $70/15/15$ split gives $70$ train, $15$ validation, and $15$ test episodes. Related frames must still remain in the same split.",
     "Versioned index cards",
     "Treat each paper card as an episode row with schema version, condition label, sample count, rate, duration, and split.",
     "Create six cards, validate t=N/f on each, then assign whole episodes—not individual frames—to train, validation, or test.",
@@ -75,6 +83,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   97: detail(
     "Dataset review searches for failed demonstrations, ambiguous labels, missing conditions, operator habits, and deployment conditions absent from training. Distribution shift means future inputs differ meaningfully from collected ones.",
     "At 20 Hz, N=100 gives t=5 s versus a 30 s task norm, so flag it for review; this weekly duration check cannot detect bad actions, lighting shift, new objects, or operator bias.",
+    "At $20\\,\\mathrm{Hz}$, an episode with $N=100$ samples lasts $$t=\\frac{100}{20}=5\\,\\mathrm{s}.$$ If the expected task duration is $30\\,\\mathrm{s}$, flag the episode for review; duration alone cannot detect bad actions or distribution shift.",
     "Lighting-shift review",
     "A block-sorting dataset collected only under bright light may fail in normal evening light even when every episode duration is valid.",
     "Lay out episode cards by lighting and outcome, flag sparse groups, and watch one short and one long recording for quality.",
@@ -84,6 +93,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   98: detail(
     "A dataset card states who collected the data, task and hardware, schema, licenses, splits, condition coverage, quality checks, limitations, and known risks. An episode inspector lets a reviewer verify those claims.",
     "Three 600-sample episodes at 20 Hz contain ΣN/f=90 s total, which belongs on the dataset card; an inspector must still verify labels, action alignment, exclusions, and licensing.",
+    "For three episodes with $600$ samples each at $20\\,\\mathrm{Hz}$, total recorded time is $$T=\\sum_{i=1}^{3}\\frac{N_i}{f_i}=3\\left(\\frac{600}{20}\\right)=90\\,\\mathrm{s}.$$ This total does not validate labels, action alignment, exclusions, or licensing.",
     "Mini episode inspector",
     "A simple page can show one video frame, state row, action row, timestamp, condition label, and outcome together.",
     "Build a static inspector from three non-sensitive sample episodes and add a card that reports rates, durations, exclusions, and limitations.",
@@ -93,6 +103,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   99: detail(
     "Behavior cloning learns a direct observation-to-action mapping from demonstrations using supervised learning. It copies the demonstrated distribution; it does not automatically recover from states the demonstrator never visited.",
     "Behavior cloning may use action MSE, e.g. errors 0.1 and −0.1 give 0.01, while pᴺ shows compounding: 0.98²⁰≈0.668; neither number replaces closed-loop rollouts.",
+    "For two scalar action errors $0.1$ and $-0.1$, $$\\operatorname{MSE}=\\frac{0.1^2+(-0.1)^2}{2}=0.01.$$ A rough independent-step model gives $p^N=0.98^{20}\\approx0.668$. Both are diagnostics; closed-loop rollout success remains the real test.",
     "Copying a block-placement teacher",
     "A learner predicts the teacher’s next move from each pictured block layout but may be confused after its own small mistake changes the scene.",
     "Train or simulate a lookup-table policy on paper examples, then test one familiar and one slightly shifted block position.",
@@ -102,6 +113,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   100: detail(
     "Covariate shift occurs when rollout observations differ from training observations. A small early action error can move the robot into unfamiliar states, causing larger later errors.",
     "The rough pᴺ model shows compounding: even p=0.98 yields only about 0.67 for 20 all-correct decisions. Real decisions are correlated, so measure actual rollouts rather than treating pᴺ as a prediction.",
+    "If each of $N=20$ decisions were independently correct with probability $p=0.98$, then $$P(\\text{all correct})=p^N=0.98^{20}\\approx0.668.$$ Robot decisions are correlated, so use this only as intuition for compounding error and measure actual rollouts.",
     "Line-following drift",
     "A policy trained only on centered views may make one small turn error and then see off-center images it never learned to correct.",
     "Draw a path and a sequence of camera boxes; add one early offset and trace how the later observations change.",
@@ -111,6 +123,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   101: detail(
     "Temporal context gives a policy recent history, while action chunking predicts several future actions together. Both can reduce jitter and ambiguity, but long chunks react more slowly to new events.",
     "Twenty single decisions at p=0.98 give pᴺ≈0.668, while five chunk decisions give 0.98⁵≈0.904 only under independence; chunk horizon, correlation, and responsiveness still need direct tests.",
+    "Under the simplifying independence assumption, $$0.98^{20}\\approx0.668\\qquad\\text{and}\\qquad0.98^5\\approx0.904.$$ Fewer chunk-level decisions can reduce compounding opportunities, but longer chunks may react more slowly; test horizon and responsiveness directly.",
     "Reaching through a moving window",
     "A short action chunk can react when a safe target shifts; a long preplanned chunk may continue toward an outdated location.",
     "Move a paper pointer toward a coin while a partner shifts the coin; compare replanning every step versus committing to four steps.",
@@ -120,6 +133,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   102: detail(
     "ACT predicts coherent action sequences from observations and temporal context, commonly using a transformer-style sequence model and a latent variable for demonstration variation. It still needs bounded execution and measured rollouts.",
     "For 20 required decisions, 0.98²⁰≈0.668 illustrates sequence fragility; ACT’s exact sequence check is predicted chunk shape H×A, e.g. 10×7=70 values, not the pᴺ formula.",
+    "An ACT output with horizon $H=10$ and action dimension $A=7$ has shape $H\\times A$ and contains $$HA=10\\times7=70$$ values. The separate quantity $0.98^{20}\\approx0.668$ only illustrates sequence fragility; it does not define ACT.",
     "Two ways to grasp",
     "Demonstrations may approach a cup from the left or right; a sequence model should produce one coherent approach rather than alternate between both.",
     "Arrange paper arrows for two valid grasp trajectories and identify why averaging their step directions would be inconsistent.",
@@ -129,6 +143,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   103: detail(
     "Offline validation measures predictions on recorded data; rollout evaluation measures closed-loop task behavior. They answer different questions because rollout actions change future observations.",
     "Per-step p=0.98 over N=20 suggests pᴺ≈0.668, while observed rollout success might be 12/20=60%; compare both because independence and offline accuracy cannot model recovery.",
+    "A rough offline intuition gives $$p^N=0.98^{20}\\approx0.668,$$ while measured rollout success could be $$\\frac{12}{20}=0.60=60\\%.$$ The measured rollout includes closed-loop effects that the independent-step estimate cannot represent.",
     "Same score, different rollout",
     "Two paper policies can match 98 of 100 recorded actions, yet one may correct deviations while the other repeats them.",
     "Create two tiny rule policies with equal errors on a fixed table, then manually roll them out from an offset state.",
@@ -138,6 +153,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   104: detail(
     "A policy inference loop must acquire a fresh observation, infer before its deadline, validate and bound the action, execute briefly, and fall back safely on stale data, exceptions, or low confidence.",
     "Reliability intuition 0.99²⁰≈0.818 must be paired with deadline-miss rate, e.g. 3 late outputs/100=3%; pᴺ does not measure latency or define the safe fallback.",
+    "An independent-step reliability estimate is $0.99^{20}\\approx0.818$. Timing is separate: $$r_{\\mathrm{late}}=\\frac{3}{100}=3\\%.$$ A late action must be rejected by the deadline gate even when its predicted value looks correct.",
     "Late-command gate",
     "A correct steering prediction that arrives after the scene changed can be unsafe, so the executor should reject stale output and stop or hold safely.",
     "In a simulator, attach timestamps to five mock predictions, reject those older than a chosen deadline, and log the fallback.",
@@ -147,6 +163,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   105: detail(
     "A fair policy comparison freezes tasks, seeds, initial states, hardware or simulator version, success rules, intervention policy, and trial count before either policy runs.",
     "Policy A observed 18/20=90% success versus B 16/20=80%; pᴺ may contextualize per-step rates, but a fair ranking must use these frozen rollout counts plus latency, smoothness, and failure categories.",
+    "On the same frozen suite, $$S_A=\\frac{18}{20}=90\\%,\\qquad S_B=\\frac{16}{20}=80\\%.$$ The observed difference is $10$ percentage points. Keep trial conditions identical and report latency, interventions, and failure categories beside success.",
     "Blind paper-policy trial",
     "Label two rule sets A and B, run both on the same shuffled block layouts, and score without changing the layouts after seeing failures.",
     "Run ten manual trials per rule set and record success, steps, corrections, and failure type in one fixed table.",
@@ -156,6 +173,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   106: detail(
     "Robot actions are multimodal when several distinct actions are valid for one observation, such as reaching around an obstacle on either side. A single mean prediction can fall between valid modes and be invalid.",
     "With valid modes a_old=−1 and a_new=1, w=0.5 gives blended a=0, possibly straight into the obstacle; this numeric warning illustrates averaging, not the full multimodal distribution.",
+    "For two valid action modes $a_1=-1$ and $a_2=1$, their equal-weight mean is $$\\bar a=0.5a_1+0.5a_2=0.$$ The mean can lie between both safe modes and represent an invalid action, such as moving directly toward an obstacle.",
     "Walk left or right",
     "Two safe routes around a chair are valid, but averaging their first moves could point directly at the chair.",
     "Draw two safe arrow paths around a book and calculate the midpoint of their first action vectors.",
@@ -165,6 +183,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   107: detail(
     "A diffusion policy begins from noisy action candidates and repeatedly denoises them, conditioned on observations, toward coherent action sequences. It represents multiple possible actions better than one averaged output.",
     "A simple contrast step from a_old=0.8 toward a_new=0.4 with w=0.25 gives 0.7; real diffusion uses learned timestep updates and noise schedules, so this blend is only denoising intuition.",
+    "A simple interpolation toward a cleaner value is $$a_{\\mathrm{next}}=(1-w)a_{\\mathrm{old}}+wa_{\\mathrm{target}}=0.75(0.8)+0.25(0.4)=0.7.$$ This is only denoising intuition; a diffusion policy uses learned timestep-dependent updates and a noise schedule.",
     "Cleaning a noisy route",
     "Imagine a scribbled path becoming a smooth route around a cup over several correction rounds.",
     "Draw a clean three-step route, add small random offsets on paper, and iteratively move each point halfway back toward the clean path.",
@@ -174,6 +193,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   108: detail(
     "Flow matching learns a continuous velocity field that transports simple random action samples toward the demonstrated action distribution, then generates actions by integrating that field.",
     "One Euler flow step is a_next=a+vΔt: 0+1·0.2=0.2, numerically matching a blend with old=0,new=1,w=0.2; flow matching learns v(a,t), not a fixed blend.",
+    "One Euler integration step through a learned velocity field is $$a_{k+1}=a_k+v(a_k,t_k)\\,\\Delta t.$$ With $a_k=0$, $v=1$, and $\\Delta t=0.2$, the next sample is $a_{k+1}=0.2$. Flow matching learns $v(a,t)$; it is not a fixed blend.",
     "Arrows through action space",
     "Paper arrows can guide scattered starting dots toward two valid grasp clusters without forcing both clusters into one average.",
     "Draw random dots and two goal clusters; add local arrows that move each dot toward its nearer cluster over three steps.",
@@ -183,6 +203,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   109: detail(
     "An observation window supplies recent context; an action horizon specifies how far a policy predicts. Larger windows may resolve motion, while longer horizons improve coherence but increase compute and stale-action risk.",
     "For overlapping predictions 0.2 and 0.6, w=0.75 gives a=0.5; a 4-frame window at 20 Hz spans 4/20=0.2 s, while neither number proves the chosen horizon is safe.",
+    "A four-frame window sampled at $20\\,\\mathrm{Hz}$ spans $$t=\\frac{4}{20}=0.2\\,\\mathrm{s}.$$ Blending overlapping scalar predictions with newer weight $w=0.75$ gives $a=(1-w)(0.2)+w(0.6)=0.5$. Horizon safety still needs direct tests.",
     "Passing-ball history",
     "One image shows where a rolling ball is; several images reveal direction, while a very old window may describe motion that has already changed.",
     "Slide three paper frames across a drawn timeline and mark which predicted actions overlap when the window advances.",
@@ -192,6 +213,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   110: detail(
     "Fine-tuning adapts a pretrained policy to a specific robot, camera, task, or environment. It needs compatible schemas, normalization, conservative learning settings, held-out evaluation, and a retained baseline.",
     "If baseline output is 0.2 and adapted output 0.6, a diagnostic w=0.25 blend gives 0.3; fine-tuning quality should instead use held-out delta, e.g. 16/20−12/20=20 points, not hide behind blending.",
+    "A diagnostic blend is $(1-0.25)(0.2)+0.25(0.6)=0.3$. The held-out improvement is more meaningful: $$\\Delta S=\\frac{16}{20}-\\frac{12}{20}=0.20,$$ or $20$ percentage points. Retain both models so regressions remain visible.",
     "Adapt a sorting rule",
     "A pretrained color sorter may need examples from a new camera angle, but retraining on only new scenes can erase older behavior.",
     "Using saved outputs, compare baseline and adapted predictions on old and new paper cases; do not command a robot.",
@@ -201,6 +223,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   111: detail(
     "At runtime, overlapping action chunks can be temporally ensembled for smoother commands. The system must also budget inference latency and discard predictions that are stale or conflict with limits.",
     "For a_old=0.2,a_new=0.6,w=0.75, temporal ensemble a=0.5; if the old prediction is 150 ms old against a 100 ms deadline, discard rather than blend.",
+    "With newer prediction weight $w=0.75$, $$a=(1-w)a_{\\mathrm{old}}+wa_{\\mathrm{new}}=0.25(0.2)+0.75(0.6)=0.5.$$ If $a_{\\mathrm{old}}$ is $150\\,\\mathrm{ms}$ old and the deadline is $100\\,\\mathrm{ms}$, discard it instead of blending.",
     "Overlap two paper routes",
     "Two chunks predict the next pointer position; weighting the newer prediction more makes the route respond faster, while weighting the older one more smooths changes.",
     "Choose two scalar predictions, calculate blends for w=0.25 and 0.75, and compare movement without driving hardware.",
@@ -210,6 +233,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   112: detail(
     "Policy comparison should report frozen rollout success plus smoothness, latency, interventions, and failure categories. Smooth output is not useful if it is wrong, late, or unsafe.",
     "Smoothness can be mean |a_t−a_{t−1}|: changes 0.1 and 0.3 average 0.2; a blend with w changes that value, but success such as 18/20 must remain a separate metric.",
+    "One simple action-smoothness metric is $$J_{\\mathrm{smooth}}=\\frac{1}{T-1}\\sum_{t=2}^{T}\\lvert a_t-a_{t-1}\\rvert.$$ For changes $0.1$ and $0.3$, the mean is $0.2$. Report task success, such as $18/20=90\\%$, separately.",
     "Smooth but wrong",
     "One paper path changes direction gently but misses the target; another is slightly less smooth yet reaches safely.",
     "Score two recorded trajectories for success, average step-to-step action change, and maximum latency using fixed rules.",
@@ -219,6 +243,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   113: detail(
     "An MDP models states, actions, transition uncertainty, rewards, and a policy. Return sums future rewards, while a value function estimates expected return from a state or state-action pair.",
     "For rewards [1,2,3] and γ=0.5, G=1+1+0.75=2.75; an MDP still separately defines states, actions, transitions, and terminal conditions.",
+    "The discounted return from time $0$ is $$G_0=\\sum_{t=0}^{T-1}\\gamma^t r_{t+1}.$$ For rewards $[1,2,3]$ and $\\gamma=0.5$, $G_0=1+0.5(2)+0.5^2(3)=2.75$.",
     "Grid-world delivery",
     "A token moves between paper squares, receiving a small step cost, a collision penalty, and a goal reward.",
     "Make a 4×4 paper grid, define states, actions, rewards, terminal cells, and calculate G for one short trajectory.",
@@ -228,6 +253,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   114: detail(
     "Exploration gathers information by trying uncertain actions; credit assignment decides which earlier actions contributed to later outcomes. Both are difficult when rewards are delayed or unsafe actions are possible.",
     "A reward 1 arriving two steps later contributes γ²=0.25 when γ=0.5; that numeric link shows delayed credit but does not identify which earlier action caused it or justify real-world exploration.",
+    "A reward $r=1$ received two steps later contributes $$\\gamma^2r=(0.5)^2(1)=0.25$$ to the current return. Discounting shows how delayed rewards shrink; it does not identify which earlier action caused the outcome.",
     "Paper maze exploration",
     "A token must find a hidden reward in a paper maze; tried paths can be marked without risking hardware.",
     "Compare a rule that always follows the known path with one that explores one unvisited safe branch, then calculate both returns.",
@@ -237,6 +263,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   115: detail(
     "PPO improves a policy using sampled rollouts while limiting how far each update moves from the previous policy. Clipping aims for stable updates, not guaranteed safe behavior.",
     "If PPO probability ratio is 1.3 with ε=0.2, clipping limits it to 1.2; return G=2.75 can help form an advantage target, but return alone is not PPO.",
+    "PPO uses the probability ratio $r_t=\\pi_{\\mathrm{new}}(a_t\\mid s_t)/\\pi_{\\mathrm{old}}(a_t\\mid s_t)$. With $r_t=1.3$ and $\\epsilon=0.2$, $$\\operatorname{clip}(r_t,1-\\epsilon,1+\\epsilon)=\\operatorname{clip}(1.3,0.8,1.2)=1.2.$$ Clipping limits an update; it is not a physical safety guarantee.",
     "Cart-position simulator",
     "A simulated cart gets reward for staying near a marked center and penalties for leaving bounds.",
     "In a tiny simulator or spreadsheet, compare returns for three trajectories and explain which one PPO should prefer before any update.",
@@ -246,6 +273,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   116: detail(
     "Reward hacking occurs when a policy maximizes the written reward through behavior that violates the real intent. Safety constraints and independent outcome checks must not rely on the same flawed reward.",
     "A hacked policy may collect ten +1 move rewards for G≈10 when γ=1 yet achieve true success 0/1; coded return must be checked against independent task and safety outcomes.",
+    "With $\\gamma=1$, ten rewards of $+1$ produce $$G=\\sum_{t=1}^{10}1=10.$$ If independent task success is $0/1$, the high return exposes a reward mismatch: the written reward was optimized while the real task failed.",
     "Fast but careless sorter",
     "A policy rewarded only for items moved might sweep all pieces off the table and score well while failing the true task.",
     "Write a toy reward for paper sorting, invent two loopholes, then add independent success and safety criteria.",
@@ -255,6 +283,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   117: detail(
     "Domain randomization varies simulated parameters so a policy experiences plausible deployment diversity. System identification instead estimates real parameters; useful transfer often combines both.",
     "System-ID error can be |μ_pred−μ_measured|: |0.4−0.6|=0.2; return G then compares policies across a randomized μ range, but cannot identify that range itself.",
+    "For predicted friction coefficient $\\mu_{\\mathrm{pred}}=0.4$ and measured value $\\mu_{\\mathrm{meas}}=0.6$, $$e_\\mu=\\lvert\\mu_{\\mathrm{pred}}-\\mu_{\\mathrm{meas}}\\rvert=0.2.$$ Use measurements to choose a plausible randomization range; policy return cannot identify that range by itself.",
     "Sliding-card friction",
     "Paper and cloth surfaces create different drag, illustrating why one fixed simulated friction value may transfer poorly.",
     "Slide the same card gently on two surfaces, record distance, and design a simulated friction range that includes both; keep powered robots out of the test.",
@@ -264,6 +293,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   118: detail(
     "Simulation fidelity is valuable only for task-relevant effects. Transfer gaps arise from wrong dynamics, sensing, latency, contacts, or scene variation; hybrid systems can keep learned perception while using classical safety and control.",
     "Transfer gap can be success_sim−success_real=0.9−0.6=0.3; comparing G distributions supports the check, but locating the gap requires trajectory, timing, contact, and sensor evidence.",
+    "Define the observed transfer gap under matched tests as $$\\Delta S=S_{\\mathrm{sim}}-S_{\\mathrm{real}}=0.9-0.6=0.3.$$ This $30$-percentage-point gap says transfer failed, but trajectories, timing, contacts, and sensor logs are needed to locate why.",
     "Toy-car rehearsal",
     "A simulator with perfect grip predicts tight turns, while a real toy car on smooth paper slides wider.",
     "Compare a recorded real or tabletop path with a simulated path at matched commands; mark where they first diverge without modifying powered hardware.",
@@ -273,6 +303,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   119: detail(
     "Choose classical control when dynamics and goals are well specified, behavior cloning when good demonstrations cover the task, and RL when interaction and a defensible reward make trial-based optimization worthwhile.",
     "Method gate can compare frozen success: classical 19/20=95%, BC 16/20=80%, so RL needs a justified unmet objective; if used, G defines its reward target but does not choose the method.",
+    "On a frozen suite, $$S_{\\mathrm{classical}}=\\frac{19}{20}=95\\%,\\qquad S_{\\mathrm{BC}}=\\frac{16}{20}=80\\%.$$ A more complex RL method needs a clearly measured requirement that these simpler methods do not meet; return $G$ alone does not choose the method.",
     "Method-selection cards",
     "Line following may suit classical control, a dexterous demonstrated routine may suit cloning, and a safe simulated strategy problem may justify RL.",
     "Classify three paper task descriptions by assumptions, available data, safety, and measurable objective before choosing a method.",
@@ -282,6 +313,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   120: detail(
     "A VLM interprets images and language, a VLA also produces robot actions, and an embodied-reasoning model may plan, use tools, inspect state, and revise actions; the names describe capabilities, not safety guarantees.",
     "Capability rule: VLM→text, VLA→action, embodied reasoner→plan/tool loop; for a 0–1 m joint range, the week’s a_norm=2(a-a_min)/(a_max-a_min)-1 maps 0.75 m to 0.5, but normalization does not turn a VLM into a VLA.",
+    "Normalize a physical action $a$ from $[a_{\\min},a_{\\max}]$ into $[-1,1]$ with $$a_{\\mathrm{norm}}=2\\frac{a-a_{\\min}}{a_{\\max}-a_{\\min}}-1.$$ For $a=0.75\\,\\mathrm{m}$ in $[0,1]$ metres, $a_{\\mathrm{norm}}=0.5$. Normalization does not change a model’s capabilities.",
     "Three labelled boxes",
     "A photo-question answer belongs to the VLM box, a grasp command to VLA, and a monitored multi-skill plan to embodied reasoning.",
     "Sort six paper input/output cards into the three boxes and explain every boundary without running a robot.",
@@ -291,6 +323,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   121: detail(
     "A VLA pipeline encodes pixels, combines visual features with language tokens, and decodes bounded actions. Every interface needs shapes, timing, normalization, frames, and physical units.",
     "Shape check: 224×224×3 image → encoder tokens + L language tokens → H×D action values; if one physical action is 0.75 in a 0–1 range, a_norm=0.5, while that weekly normalization says nothing about encoder quality.",
+    "A $224\\times224\\times3$ image is encoded and fused with $L$ language tokens before producing an action tensor of shape $H\\times D$. For a physical action $a=0.75$ in range $[0,1]$, $$a_{\\mathrm{norm}}=2\\frac{0.75-0}{1-0}-1=0.5.$$ Shape and range checks do not measure semantic correctness.",
     "Picture-to-arrow pipeline",
     "A photo of a red block plus “move red left” becomes visual tokens, instruction tokens, then a limited leftward action.",
     "Trace one paper image and sentence through labelled encoder, fusion, decoder, and limit-check boxes.",
@@ -300,6 +333,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   122: detail(
     "Cross-embodiment learning mixes data from robots with different bodies so shared visual and task patterns transfer, while embodiment-specific observations and actions remain explicitly identified.",
     "Common-scale check: robot A’s 0.75 m on 0–1 m maps to a_norm=0.5, while robot B’s 1.5 rad on 0–2 rad also maps to 0.5; equal normalized values aid mixing but do not mean equal physical motion.",
+    "Robot A maps $0.75\\,\\mathrm{m}$ from $[0,1]$ metres to $a_{\\mathrm{norm}}=0.5$. Robot B maps $1.5\\,\\mathrm{rad}$ from $[0,2]$ radians to the same value: $$2\\frac{1.5-0}{2-0}-1=0.5.$$ Equal normalized values do not mean equal physical motions.",
     "Two different arms",
     "A short gripper and a long arm may both “place the cup,” yet their joints, reach, cameras, and action semantics differ.",
     "Make two paper robot cards with different limits, normalize one action from each, then retain an embodiment ID beside both.",
@@ -309,6 +343,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   123: detail(
     "Discrete actions choose tokens, continuous actions output numbers, and diffusion or flow models generate distributions of continuous sequences. The representation changes training and decoding, not the need for limits.",
     "For K=5 discrete bins, bin width over a_norm∈[-1,1] is 2/(K-1)=0.5; the weekly normalization maps physical actions into that range, while diffusion and flow still require their own generation equations.",
+    "For $K=5$ evenly spaced action values over $[-1,1]$, adjacent bin centres are separated by $$\\Delta a=\\frac{1-(-1)}{K-1}=\\frac{2}{4}=0.5.$$ Discretization loses distinctions smaller than the bin spacing unless the decoder provides another representation.",
     "Five steering choices",
     "Left-hard through right-hard can be five tokens, while a continuous controller selects any bounded steering value.",
     "Place five arrow cards on a -1 to 1 line and compare token selection with choosing 0.3 continuously.",
@@ -318,6 +353,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   124: detail(
     "Language grounding connects words to perceived entities, relations, and admissible skills. Instruction diversity varies wording and structure without silently changing task meaning.",
     "Paraphrase coverage = distinct valid phrasings tested/target phrasings; 8/10=80%. The week’s action normalization checks decoded motion scale, but it cannot prove “the mug beside the plate” was grounded correctly.",
+    "Measure paraphrase coverage as $$C=\\frac{N_{\\mathrm{valid\\ phrasings\\ tested}}}{N_{\\mathrm{target\\ phrasings}}}=\\frac{8}{10}=80\\%.$$ This checks language-test coverage, not whether a phrase was grounded to the correct physical object.",
     "Same task, three phrasings",
     "“Pick the red block,” “lift the crimson cube,” and “take the red object” may share intent if the scene makes the referent unambiguous.",
     "Write five paraphrases for one paper-block task, then add one deliberately ambiguous instruction and mark it for clarification.",
@@ -327,6 +363,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   125: detail(
     "Generalization means succeeding on deliberately held-out objects, scenes, poses, or robot bodies—not replaying near-duplicates of training examples.",
     "Stratified success for unseen scenes is S_unseen/N_unseen; 7/10=70% versus 10/10 seen reveals a gap. a_norm keeps command ranges comparable, but it does not establish generalization.",
+    "Report seen and unseen conditions separately: $$S_{\\mathrm{unseen}}=\\frac{7}{10}=70\\%,\\qquad S_{\\mathrm{seen}}=\\frac{10}{10}=100\\%.$$ The $30$-percentage-point gap would be hidden by one combined average.",
     "Held-out cup and background",
     "A policy trained on blue cups on a plain table is tested on a red cup and patterned mat without retraining.",
     "Create seen and unseen paper scene cards before testing, then score them separately.",
@@ -336,6 +373,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   126: detail(
     "An architecture review traces one timestamped request from pixels and words through preprocessing, encoders, fusion, policy output, decoding, validation, and command—plus every failure path.",
     "Trace rule: t_total=Σ stage times; 20+60+10+10=100 ms. The week’s a_norm inverse-decodes 0.5 in a 0–1 m range to 0.75 m, but neither calculation validates semantics or safety.",
+    "End-to-end latency is the sum of stage times: $$t_{\\mathrm{total}}=\\sum_i t_i=20+60+10+10=100\\,\\mathrm{ms}.$$ Inverting normalization gives $a=a_{\\min}+(a_{\\mathrm{norm}}+1)(a_{\\max}-a_{\\min})/2=0.75\\,\\mathrm{m}$ for $a_{\\mathrm{norm}}=0.5$ and range $[0,1]$ metres.",
     "One-command trace",
     "A reviewer follows “move the red block” from camera frame to a rejected or accepted typed action.",
     "Draw the pipeline, attach one example value and timestamp at every boundary, and stop at the validator.",
@@ -345,6 +383,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   127: detail(
     "OpenVLA combines vision and language representations with tokenized robot actions, treating action prediction similarly to next-token generation before robot-specific decoding.",
     "With K=256 bins, token q≈round((a_norm+1)(K-1)/2), so a_norm=0 maps near 128; the week’s LoRA count r(d_in+d_out) estimates adaptation size, not token meaning.",
+    "For $K=256$ bins, encode a normalized scalar with $$q=\\operatorname{round}\\left(\\frac{(a_{\\mathrm{norm}}+1)(K-1)}{2}\\right).$$ At $a_{\\mathrm{norm}}=0$, $q=\\operatorname{round}(127.5)=128$. Robot metadata must still decode that token into the correct units and dimension.",
     "Action-token ruler",
     "A bounded gripper command can be placed into one of many numbered bins, predicted as a token, then decoded.",
     "Draw eight bins from -1 to 1 and encode/decode three safe paper commands.",
@@ -354,6 +393,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   128: detail(
     "Open X-Embodiment combines many robot datasets; mixing weights decide how often each source contributes. Schema alignment, licenses, task balance, and embodiment IDs matter as much as size.",
     "Mixture allocation is N_i=w_iN: with N=1,000 and w_A=0.7, source A supplies 700 samples. LoRA=r(d_in+d_out) separately budgets adapter weights; it does not choose data weights.",
+    "For total sampled examples $N$ and source weight $w_i$, planned allocation is $$N_i=w_iN.$$ With $N=1000$ and $w_A=0.7$, source A contributes $N_A=700$ samples. Check observed sampling too, because rounding and filtering can change the final mix.",
     "Mixed card deck",
     "A deck with 90 cards from one robot and 10 from another will mostly teach the first unless sampling is reweighted.",
     "Build a 20-card mock mix with declared weights, task labels, and robot IDs, then count the actual share.",
@@ -363,6 +403,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   129: detail(
     "Checkpoint loading must match architecture, tokenizer, parameter names, shapes, dtype, normalization statistics, and adapter/base pairing. A successful file read is not a valid policy.",
     "Shape rule: a 1024×1024 full layer has 1,048,576 weights; rank-8 LoRA expects 8(1024+1024)=16,384 adapter weights. A mismatched count flags loading trouble but cannot prove inference correctness.",
+    "A dense $1024\\times1024$ layer has $$1024^2=1{,}048{,}576$$ weights. A rank-$8$ LoRA update for the same layer has $$r(d_{\\mathrm{in}}+d_{\\mathrm{out}})=8(1024+1024)=16{,}384$$ weights. Matching counts is necessary metadata validation, not proof of correct inference.",
     "Parts-list check",
     "Loading a model is like matching a kit’s exact parts and revision before assembly.",
     "Inspect saved metadata and compare expected names, shapes, dtype, tokenizer, and normalization without sending outputs to hardware.",
@@ -372,6 +413,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   130: detail(
     "LoRA freezes base weights and learns low-rank update matrices, reducing trainable parameters and memory while preserving the base checkpoint for comparison.",
     "For d_in=d_out=1024 and rank r=8, LoRA uses r(d_in+d_out)=16,384 weights versus 1,048,576 full weights—64× fewer; rank is a capacity choice, not a quality guarantee.",
+    "For $d_{\\mathrm{in}}=d_{\\mathrm{out}}=1024$ and rank $r=8$, $$N_{\\mathrm{LoRA}}=r(d_{\\mathrm{in}}+d_{\\mathrm{out}})=16{,}384.$$ A full update has $1024\\times1024=1{,}048{,}576$ weights, so this adapter uses $64$ times fewer trainable weights.",
     "Thin correction layers",
     "Instead of rewriting a large paper grid, attach two narrow strips whose product describes a constrained update.",
     "Calculate full and LoRA counts for a 512×256 layer at ranks 4 and 16, then compare.",
@@ -381,6 +423,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   131: detail(
     "Robot-specific normalization maps physical observations and actions into model ranges; decoding reverses the map, restores units, then validates dimension order, frames, and hard limits.",
     "Inverse rule is a=a_min+(a_norm+1)(a_max-a_min)/2; for [-2,2] rad and a_norm=0.5, a=1 rad. LoRA’s parameter count only describes adaptation size and cannot validate this decoding.",
+    "Decode a normalized action with $$a=a_{\\min}+\\frac{a_{\\mathrm{norm}}+1}{2}(a_{\\max}-a_{\\min}).$$ For range $[-2,2]$ radians and $a_{\\mathrm{norm}}=0.5$, $a=-2+0.75(4)=1\\,\\mathrm{rad}$. Then verify dimension order, frame, and hard limits.",
     "Decode before moving",
     "The same normalized 0.5 becomes different physical commands on joints with different calibrated limits.",
     "Decode 0.5 for two paper joints with different ranges and reject one value using a written soft limit.",
@@ -390,6 +433,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   132: detail(
     "Generalization tests deliberately vary prompts and scenes beyond training, while OOD handling detects or bounds uncertainty and chooses clarification, fallback, or rejection.",
     "OOD failure rate=F_ood/N_ood; 6 failures/20 prompts=30%. LoRA=r(d_in+d_out) records adaptation capacity, but adapter size does not measure OOD robustness.",
+    "For $F_{\\mathrm{OOD}}=6$ failures in $N_{\\mathrm{OOD}}=20$ out-of-distribution prompts, $$r_{\\mathrm{OOD}}=\\frac{F_{\\mathrm{OOD}}}{N_{\\mathrm{OOD}}}=\\frac{6}{20}=30\\%.$$ Report categories and safe rejections separately; adapter size does not measure robustness.",
     "Unfamiliar instruction cards",
     "A model trained on direct commands receives polite paraphrases, negation, irrelevant text, and an ambiguous object reference.",
     "Freeze 12 prompt cards by category, run them without tuning, and record accept, clarify, reject, or wrong action.",
@@ -399,6 +443,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   133: detail(
     "An adaptation report states base checkpoint, adapter configuration, data versions, compute, metrics, regressions, latency, licenses, safety limits, and deployment risks.",
     "Budget check: rank-8 1024×1024 LoRA is 16,384 weights; at 2 bytes each that is 32,768 bytes before optimizer state. This weekly formula quantifies adapter size, not data quality or risk.",
+    "A rank-$8$ adapter on a $1024\\times1024$ layer has $16{,}384$ weights. At $2$ bytes per stored weight, $$M=16{,}384\\times2=32{,}768\\ \\text{bytes}=32\\ \\text{KiB}.$$ Optimizer state and framework overhead are additional; this storage count says nothing about model quality.",
     "One-page change record",
     "A reviewer should see exactly what changed, what it cost, where it improved, and where it regressed.",
     "Fill a report from a dry-run experiment with explicit unknowns and a go/no-go decision; do not claim unrun tests.",
@@ -408,6 +453,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   134: detail(
     "Hierarchical planning breaks a goal into ordered, typed skills with dependencies, preconditions, effects, recovery routes, and a stop condition.",
     "For three required skills with measured rates 0.9, 0.8, 0.95, the weekly estimate P(plan)≈∏p_i=0.684. It exposes chain fragility but assumes independence and does not create the decomposition.",
+    "If three required skills had independent success rates $0.9$, $0.8$, and $0.95$, then $$P(\\mathrm{plan})\\approx\\prod_i p_i=(0.9)(0.8)(0.95)=0.684.$$ This rough estimate exposes chain fragility; real skill outcomes and recovery branches are not independent.",
     "Make-tea plan on cards",
     "Cards for locate cup, place cup, and pour can be reordered only when their preconditions remain true.",
     "Arrange a harmless tabletop task into skill cards, then add one failed precondition and a safe branch.",
@@ -417,6 +463,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   135: detail(
     "A robot skill exposed as a tool needs typed arguments, units, frame, preconditions, postconditions, timeout, cancellation, and structured errors; the planner proposes calls but an executor validates them.",
     "Eligibility rule is allowed=preconditions∧limits∧fresh_state: true∧false∧true=false. Multiplying empirical skill rates estimates plan success, but cannot replace this per-call validation.",
+    "A call is eligible only when every required guard is true: $$\\mathrm{allowed}=\\mathrm{preconditions}\\land\\mathrm{limits}\\land\\mathrm{fresh\\ state}.$$ For $\\mathrm{true}\\land\\mathrm{false}\\land\\mathrm{true}$, the result is false, so the executor must reject the call.",
     "Typed move card",
     "“Move there” becomes move_to(target_pose, frame, speed_limit) and is rejected when the target frame is unknown.",
     "Write one JSON-like tool contract and evaluate three paper calls: valid, missing frame, and outside workspace.",
@@ -426,6 +473,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   136: detail(
     "World state is the current verified scene, episodic memory stores past events, and retrieval selects relevant evidence. Every memory item needs source, timestamp, scope, and confidence.",
     "Retrieval precision@3=correct retrieved/3; 2 useful memories gives 2/3. Treating retrieval as a plan step with p=2/3 reduces the weekly product, but retrieval quality is not independent of later skills.",
+    "Precision among the top three retrieved memories is $$P@3=\\frac{\\text{relevant items in top 3}}{3}=\\frac{2}{3}\\approx66.7\\%.$$ This measures relevance within three results; it does not measure freshness, truth, or downstream plan success.",
     "Labelled memory drawer",
     "A note that a cup was left on a shelf yesterday must not override a fresh camera observation today.",
     "Create current-state and past-event cards, retrieve three for a query, and discard stale or unverified claims.",
@@ -435,6 +483,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   137: detail(
     "Grounding binds planner references to perceived entities with identity, pose, frame, timestamp, attributes, and confidence; unresolved or ambiguous references must not become actions.",
     "For two boxes, IoU=intersection/union; 60/100 pixels=0.6 is one grounding check. The weekly ∏p_i can include grounding success, but it does not prove entity identity.",
+    "For predicted box $A$ and reference box $B$, $$\\operatorname{IoU}(A,B)=\\frac{\\lvert A\\cap B\\rvert}{\\lvert A\\cup B\\rvert}=\\frac{60}{100}=0.6.$$ IoU measures spatial overlap; it does not prove that the box belongs to the intended physical entity.",
     "Which red block?",
     "Two red paper blocks require IDs or spatial descriptions before “pick the red block” is executable.",
     "Lay out similar objects, assign detections and timestamps, then make the planner clarify one ambiguous reference.",
@@ -444,6 +493,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   138: detail(
     "Execution compares expected and observed state after every skill. A mismatch triggers bounded retry, re-perception, replan, handoff, or abort instead of blindly continuing.",
     "Progress error can be e=expected-observed; if expected 3 completed steps and observed 2, e=1 triggers review. The weekly success product estimates a fixed chain, while replanning creates conditional branches that need measured rates.",
+    "Define a simple progress mismatch as $$e=n_{\\mathrm{expected}}-n_{\\mathrm{observed}}=3-2=1.$$ A nonzero mismatch triggers state review; it does not by itself identify whether the cause is perception, execution, or stale state.",
     "Missing-block recovery",
     "After a paper “place” step, the block remains at source, so the executor re-observes rather than marking success.",
     "Run a five-card plan, secretly remove one expected effect, and follow a written retry/replan budget.",
@@ -453,6 +503,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   139: detail(
     "Timeouts bound waiting, idempotency makes safe retries predictable, rollback compensates reversible effects, and human handoff transfers context when automation cannot proceed safely.",
     "Idempotency rule f(f(x))=f(x): setting a light OFF twice still yields OFF, unlike “toggle.” The weekly ∏p_i shows long chains are fragile but does not guarantee transactional recovery.",
+    "An idempotent operation satisfies $$f(f(x))=f(x).$$ For example, applying `set OFF` twice leaves the same OFF state. A `toggle` operation is not idempotent because applying it twice changes state twice.",
     "Safe retry cards",
     "“Set marker at A” can be idempotent; “move marker 5 cm” repeats the motion and needs a request ID or state check.",
     "Classify five harmless paper operations as idempotent or not, then design timeout and compensation for one.",
@@ -462,6 +513,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   140: detail(
     "A credible long-horizon demo records the original goal, plan versions, tool calls, world-state changes, timings, retries, interventions, and final verified outcome in one correlated trace.",
     "If five independent skill rates are [0.9,0.95,0.8,0.9,1], ∏p_i≈0.616; the trace must also compute observed duration and branch outcomes because the product is only a rough forecast.",
+    "Under an independence approximation, five skill rates give $$P(\\mathrm{plan})\\approx(0.9)(0.95)(0.8)(0.9)(1)=0.6156\\approx61.6\\%.$$ Use the correlated trace to measure actual duration, retries, branches, and final outcome.",
     "Uncut card-run trace",
     "A camera records a paper-task run while each skill and state change is logged with the same run ID.",
     "Perform one harmless multi-step tabletop run without edits and reconstruct every decision from its trace.",
@@ -471,6 +523,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   141: detail(
     "Semantic planning decides what should happen; safety-critical control deterministically enforces what may happen now. The control boundary must remain effective even if model output is wrong.",
     "Safety rule is permit=semantic_request∧validated_limits; a true request with false limits yields false. At v=1 m/s, t_r=0.2 s, a=2 m/s², the weekly stopping distance is 0.45 m before margin.",
+    "For speed $v$, reaction delay $t_r$, and braking deceleration magnitude $a$, an idealized stopping distance is $$d_{\\mathrm{stop}}=vt_r+\\frac{v^2}{2a}.$$ With $v=1\\,\\mathrm{m/s}$, $t_r=0.2\\,\\mathrm{s}$, and $a=2\\,\\mathrm{m/s^2}$, $d_{\\mathrm{stop}}=0.45\\,\\mathrm{m}$ before safety margin.",
     "Planner and brake cards",
     "A planner card requests “approach,” while a separate ruler-based guard rejects motion when clearance is below the stop boundary.",
     "Use a paper robot, obstacle, and ruler to evaluate three proposed moves against a fixed stopping rule.",
@@ -480,6 +533,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   142: detail(
     "Action validation clamps or rejects targets outside workspace, speed, acceleration, force, freshness, and collision limits before commands reach control.",
     "Clamp rule v_cmd=clip(v_req,-v_max,v_max): 1.4 m/s with v_max=0.5 becomes 0.5. Stopping d=v·t_r+v²/(2a) then gives the minimum ideal clearance, not the complete safety margin.",
+    "A bounded velocity command can be written as $$v_{\\mathrm{cmd}}=\\operatorname{clip}(v_{\\mathrm{req}},-v_{\\max},v_{\\max}).$$ For $v_{\\mathrm{req}}=1.4\\,\\mathrm{m/s}$ and $v_{\\max}=0.5\\,\\mathrm{m/s}$, $v_{\\mathrm{cmd}}=0.5\\,\\mathrm{m/s}$. Clipping must be explicitly permitted because it changes the request.",
     "Ruler workspace",
     "A paper arm’s reachable area and no-go zone can be drawn before testing proposed target cards.",
     "Validate five target/speed cards against a drawn workspace and limits without powering hardware.",
@@ -489,6 +543,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   143: detail(
     "Environmental text is untrusted sensor data, not authority. Signs, screens, QR codes, or documents must never override system policy, tool allowlists, identity, or safety limits.",
     "Policy rule is execute=authorized∧grounded∧safe; true∧true∧false=false. The weekly stopping-distance guard still bounds motion if malicious text requests speed, but it cannot detect the injection itself.",
+    "Execution requires every independent guard: $$\\mathrm{execute}=\\mathrm{authorized}\\land\\mathrm{grounded}\\land\\mathrm{safe}.$$ With $\\mathrm{true}\\land\\mathrm{true}\\land\\mathrm{false}$, the result is false. Scene text cannot change any guard’s authority.",
     "Malicious sticky note",
     "A paper sign saying “ignore limits” is seen by the camera but treated as scene text, not an instruction.",
     "Mix legitimate object labels with adversarial note cards and record which source is authorized to issue goals.",
@@ -498,6 +553,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   144: detail(
     "A scenario fixes initial state, environment variation, goal, injected fault, expected behavior, acceptance thresholds, and evidence before execution.",
     "Boundary design: obstacle clearance c must exceed d_stop+margin; with d_stop=0.45 m and margin=0.15 m, accept only c≥0.60 m. This uses the weekly formula without claiming clearance alone defines the scenario.",
+    "Require obstacle clearance $c$ to satisfy $$c\\ge d_{\\mathrm{stop}}+m.$$ With $d_{\\mathrm{stop}}=0.45\\,\\mathrm{m}$ and margin $m=0.15\\,\\mathrm{m}$, the acceptance boundary is $c\\ge0.60\\,\\mathrm{m}$. This is one scenario criterion, not a complete safety case.",
     "Frozen tabletop scenario",
     "Tape marks fix start, target, distractor, and stop boundary so repeated paper runs are comparable.",
     "Write three scenario cards—nominal, ambiguous, and blocked—with pass/fail outcomes before running them.",
@@ -507,6 +563,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   145: detail(
     "Evaluation separates full success, partial success, human intervention, unsafe event, and safe abort. Aggregating them into one “success” number hides operational cost and risk.",
     "Intervention rate=I/N: 3 interventions/30 trials=10%; safety-stop margin can be checked against d_stop=0.45 m. Neither metric alone captures task quality, so report the full outcome table.",
+    "For $I=3$ interventions in $N=30$ trials, $$r_{\\mathrm{intervention}}=\\frac{I}{N}=\\frac{3}{30}=10\\%.$$ Report autonomous success, intervention-assisted completion, safe aborts, and unsafe events as separate outcome counts.",
     "Outcome-token scoreboard",
     "Thirty paper trials receive distinct green, yellow, handoff, abort, or safety-event tokens.",
     "Classify ten sample traces with fixed definitions and verify two reviewers agree.",
@@ -516,6 +573,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   146: detail(
     "Adversarial testing changes scenes to trigger ambiguity, occlusion, stale state, misleading text, blocked paths, and recovery limits while preserving independent safety controls.",
     "Place one obstacle at 0.7 m and one at 0.4 m when d_stop=0.45 m before margin; the second must trigger rejection. The equation tests one physical boundary, not all adversarial behavior.",
+    "With idealized stopping distance $d_{\\mathrm{stop}}=0.45\\,\\mathrm{m}$ before margin, a clearance of $0.7\\,\\mathrm{m}$ may pass that single boundary, while $$0.4\\,\\mathrm{m}<0.45\\,\\mathrm{m}$$ must be rejected. Other adversarial conditions need their own acceptance rules.",
     "Distractor scene",
     "Similar paper objects, a false label, and a moved target test grounding and recovery without moving hardware.",
     "Run a frozen set of paper adversarial scenes and record detect, clarify, recover, abort, or unsafe result.",
@@ -525,6 +583,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   147: detail(
     "An evaluation report over 30 frozen scenarios presents scenario coverage, outcome counts, interventions, latency, recovery, safety margins, representative traces, and unresolved failures.",
     "With 27 safe outcomes, safe-outcome rate=27/30=90%; verify every moving scenario also respects d≥v·t_r+v²/(2a)+margin. These checks complement rather than replace failure analysis.",
+    "With $27$ safe outcomes among $30$ frozen scenarios, $$r_{\\mathrm{safe}}=\\frac{27}{30}=90\\%.$$ For moving scenarios also require $d\\ge vt_r+v^2/(2a)+m$, using measured units and a declared margin $m$. The three remaining outcomes still need trace-backed analysis.",
     "Thirty-card evidence wall",
     "Each scenario card links inputs, trace, outcome, timing, and failure category so totals are auditable.",
     "Create a report from mock traces and make every chart total exactly 30 without relabeling failures.",
@@ -534,6 +593,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   148: detail(
     "Choose hardware backward from the task: payload, reach, precision, speed, sensing, environment, support, repairability, interfaces, power, and enforceable safety—not from headline specifications.",
     "Capacity margin=(rated-required)/required: a 1.5 kg rating for a 1.0 kg need gives 50%, while P=V·I gives 12 V×3 A=36 W. Neither check covers reach, duty cycle, support, or safe stopping.",
+    "Payload capacity margin is $$m_c=\\frac{m_{\\mathrm{rated}}-m_{\\mathrm{required}}}{m_{\\mathrm{required}}}=\\frac{1.5-1.0}{1.0}=50\\%.$$ Electrical power is $P=VI=(12\\,\\mathrm{V})(3\\,\\mathrm{A})=36\\,\\mathrm{W}$. Neither calculation covers reach, duty cycle, support, or safety.",
     "Hardware score cards",
     "Two unpowered product cutouts can be compared against one frozen task requirement sheet rather than personal preference.",
     "Make a weighted table for two documented platforms and mark every unknown as unknown, not pass.",
@@ -543,6 +603,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   149: detail(
     "Motors create motion, encoders measure it, buses carry commands and feedback, and power systems must tolerate normal, peak, and fault loads. Physical and software limits must agree.",
     "Electrical power is P=V·I: a 12 V motor at 2 A uses 24 W; two may need 48 W before margin. Torque, heat, peak current, bus rate, and mechanics still require separate specifications.",
+    "For one motor, $$P=VI=(12\\,\\mathrm{V})(2\\,\\mathrm{A})=24\\,\\mathrm{W}.$$ Two identical motors draw $48\\,\\mathrm{W}$ at that operating point before design margin. Peak current, heat, torque, wiring, and supply limits still need documented checks.",
     "Unpowered actuator map",
     "A disconnected motor, encoder, controller, fuse, supply, and stop input can be traced as separate energy and information paths.",
     "With power disconnected, draw the path and calculate documented nominal power; never energize unidentified hardware.",
@@ -552,6 +613,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   150: detail(
     "Deterministic startup discovers expected devices, verifies identities and firmware, loads known configuration, establishes safe state, and refuses motion on missing, duplicated, or incompatible components.",
     "Startup budget T=Σt_i: discovery 0.4 s + checks 0.3 s + calibration load 0.2 s =0.9 s; if startup draws 2 A at 12 V, P=24 W. Timing and power checks do not prove device identity.",
+    "Startup time is the sum of bounded stages: $$T=\\sum_i t_i=0.4+0.3+0.2=0.9\\,\\mathrm{s}.$$ At $12\\,\\mathrm{V}$ and $2\\,\\mathrm{A}$, startup power is $P=VI=24\\,\\mathrm{W}$. These checks do not prove device identity or firmware compatibility.",
     "Device manifest rehearsal",
     "Paper device cards with serial, firmware, bus ID, and required state reveal missing or duplicate components.",
     "Shuffle the cards, remove one, and verify a dry-run startup checklist stops before “enable.”",
@@ -561,6 +623,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   151: detail(
     "Calibration maps raw sensor readings to physical joint coordinates, then frame verification checks sign, zero, order, and transform direction against known poses.",
     "Calibration can use q=s(raw-zero): with raw=1100, zero=1000, s=0.001 rad/count, q=0.1 rad. P=V·I only checks electrical load and cannot validate coordinates.",
+    "A linear encoder calibration can use $$q=s(n-n_0).$$ With raw count $n=1100$, zero $n_0=1000$, and scale $s=0.001\\,\\mathrm{rad/count}$, $q=0.1\\,\\mathrm{rad}$. Known-pose tests must still verify sign, joint order, and frame convention.",
     "Cardboard joint zero",
     "A cardboard hinge with angle marks makes a visible reference for zero, positive direction, and limits.",
     "Compare three mock encoder counts with marked angles and reject a reversed sign before any powered test.",
@@ -570,6 +633,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   152: detail(
     "First motion should be teleoperated, single-axis, low-speed, small-range, observable, and immediately stoppable after static checks; increase scope only after predicted and observed direction agree.",
     "Step bound Δx=v_maxΔt: 0.02 m/s for 0.5 s permits 0.01 m. Monitoring P=V·I during the test may expose abnormal load, but power cannot confirm direction or collision safety.",
+    "Bound the commanded displacement by $$\\Delta x=v_{\\max}\\Delta t=(0.02\\,\\mathrm{m/s})(0.5\\,\\mathrm{s})=0.01\\,\\mathrm{m}.$$ This $1\\,\\mathrm{cm}$ bound limits one test step; observation, limits, clearance, and an immediate stop path remain mandatory.",
     "Simulator-first jog",
     "A virtual joint moves one small positive step while expected sign, endpoint, stop path, and log are watched.",
     "Rehearse the complete jog and stop in simulation; on hardware follow manufacturer procedures and use qualified supervision.",
@@ -579,6 +643,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   153: detail(
     "An emergency stop removes or inhibits hazardous actuation through a trusted path; a watchdog reaches a safe state when heartbeats expire; shutdown orders motion disable, state preservation, and power handling.",
     "Watchdog rule age=now-last_heartbeat: 0.35 s>0.20 s timeout must stop. If a 12 V branch draws 3 A, P=36 W shows what is being interrupted, not whether the stop architecture is sufficient.",
+    "Heartbeat age is $$t_{\\mathrm{age}}=t_{\\mathrm{now}}-t_{\\mathrm{last}}.$$ Since $0.35\\,\\mathrm{s}>0.20\\,\\mathrm{s}$, the watchdog must enter its defined safe state. A $12\\,\\mathrm{V}$, $3\\,\\mathrm{A}$ branch carries $P=36\\,\\mathrm{W}$, but watts do not validate the stop architecture.",
     "Stop-state tabletop drill",
     "A lamp or simulator indicator represents enable state while a missing heartbeat changes it to safe-disabled without moving machinery.",
     "Test normal, expired-heartbeat, and shutdown sequences in simulation or a certified low-energy trainer.",
@@ -588,6 +653,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   154: detail(
     "Hardware acceptance freezes a repeatable checklist for inspection, identity, firmware, calibration, limits, communications, stop behavior, logs, and known defects; an uncut video links claims to one run.",
     "Checklist pass rate=passed/required: 18/20=90%, which is still a fail if either missing item is safety-critical. Record P=V·I at idle and bounded load, but do not infer safety from watts.",
+    "Checklist completion is $$r_{\\mathrm{pass}}=\\frac{18}{20}=90\\%.$$ Acceptance still fails when either missing item is a mandatory safety gate. Report electrical measurements such as $P=VI$ separately; a power value cannot prove safe behavior.",
     "Acceptance evidence board",
     "Each unpowered or simulated check has expected result, observed result, timestamp, artifact, and owner.",
     "Run a mock checklist without skipping failed rows and produce one uncut screen recording of the safe simulation.",
@@ -597,6 +663,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   155: detail(
     "A capstone task needs a useful user outcome, fixed initial and terminal conditions, bounded workspace, exclusions, measurable success, timeout, intervention rules, and a safe abort.",
     "Task success=S/N: 8/10=80% under one frozen condition; the week’s coverage share n_i/N then shows whether important conditions are represented, so neither number alone defines the task.",
+    "Under one frozen condition, task success is $$r_{\\mathrm{success}}=\\frac{S}{N}=\\frac{8}{10}=80\\%.$$ Condition coverage is $c_i=n_i/N$. Report both, because a high success rate on one easy condition does not prove broad task readiness.",
     "Block-to-tray contract",
     "Success means one named block is fully inside a tray within 30 seconds without collision or human touch.",
     "Write the contract for a paper-block task and let another person classify five edge cases.",
@@ -606,6 +673,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   156: detail(
     "Variation design enumerates deployment-relevant object poses, scenes, lighting, clutter, distractors, and starts, then samples them deliberately rather than accidentally.",
     "A full grid with 3 object poses×2 lighting levels×2 starts has 12 cells; share_i=n_i/N checks actual coverage, e.g. 1/20=5% in one cell. The grid, not the share formula alone, defines variation.",
+    "A Cartesian coverage grid with $3$ poses, $2$ lighting levels, and $2$ starts has $$3\\times2\\times2=12$$ cells. If one cell receives $1$ of $20$ trials, its share is $1/20=5\\%$. Mark unsafe or impossible cells explicitly rather than silently omitting them.",
     "Twelve scene cards",
     "Paper cards combine pose, background, lighting label, and start position before data collection.",
     "Create the 12-cell grid, mark unsafe or impossible cells, and set target counts for the rest.",
@@ -615,6 +683,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   157: detail(
     "A recording workflow synchronizes teleoperation, video, robot state, commands, task metadata, outcome, and operator events, while exposing dropped samples and allowing safe cancel and discard.",
     "Drop rate=(expected-recorded)/expected: 600 expected and 588 recorded gives 2%. The week’s share_i tracks condition balance; neither metric verifies semantic alignment without timestamp inspection.",
+    "For $N_{\\mathrm{expected}}=600$ and $N_{\\mathrm{recorded}}=588$, $$r_{\\mathrm{drop}}=\\frac{600-588}{600}=0.02=2\\%.$$ Counts reveal missing samples, while timestamp inspection is still required to verify cross-stream alignment.",
     "Dry-run recorder",
     "A phone video, keyboard event log, and paper state table begin and end on one visible clap marker.",
     "Record a harmless 10-second tabletop demonstration, reconcile counts and timestamps, then practice cancel/discard.",
@@ -624,6 +693,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   158: detail(
     "A balanced first batch covers task conditions and outcomes enough to reveal gaps; balance is task-driven, not necessarily equal across every category.",
     "Coverage share_i=n_i/N: with 40 episodes and 4 dim-light cases, share=10%; if deployment expects 40%, the batch is under-covered by 30 percentage points.",
+    "Condition share is $$c_i=\\frac{n_i}{N}=\\frac{4}{40}=10\\%.$$ If dim light represents $40\\%$ of expected deployment, the batch is under-covered by $40\\%-10\\%=30$ percentage points.",
     "Colored episode tokens",
     "Tokens represent condition combinations, making an overfilled easy condition and empty hard condition visible.",
     "Allocate 30 mock episodes across the frozen coverage grid, then compare actual and target shares before collecting more.",
@@ -633,6 +703,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   159: detail(
     "Failure review groups episodes by causal, actionable categories, inspects traces, and collects targeted corrections; deleting every failed attempt can erase the recovery states a policy needs.",
     "Failure share_i=n_i/N: 12 occlusion failures among 60 episodes is 20%; after adding data, compare the same frozen metric. The share locates a gap but does not prove its cause.",
+    "For $12$ occlusion failures among $60$ reviewed episodes, $$c_{\\mathrm{occlusion}}=\\frac{12}{60}=20\\%.$$ Compare the same frozen definition after changes. The percentage identifies a large category but does not establish its cause.",
     "Failure-card wall",
     "Cards labeled perception, demonstration, timing, action limit, or ambiguous cause prevent one vague “failed” bucket.",
     "Classify ten mock traces, allow an unknown category, and choose one data-coverage repair tied to evidence.",
@@ -642,6 +713,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   160: detail(
     "Train data fits the policy, validation supports model selection, and held-out scenes provide final evidence. Related frames, episodes, objects, or scenes must stay grouped to prevent leakage.",
     "For N=100 episodes, a 70/15/15 split gives 70,15,15; share_i verifies these proportions. Grouping by scene may change counts, and independence matters more than exact percentages.",
+    "For $N=100$ episodes, a $70/15/15$ target gives $$N_{\\mathrm{train}}=70,\\quad N_{\\mathrm{val}}=15,\\quad N_{\\mathrm{test}}=15.$$ Group whole related scenes before splitting, even if that makes the final percentages slightly uneven.",
     "Scene-envelope split",
     "All cards from one physical setup go into one envelope before envelopes are assigned to splits.",
     "Group 20 mock episodes by scene and operator, then assign groups without opening them to chase desired results.",
@@ -651,6 +723,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   161: detail(
     "Freezing dataset v1 means immutable files and splits, checksums, schema and tooling versions, a dataset card, visual examples, quality metrics, licenses, and a documented path to v2.",
     "Quality completeness=valid required fields/required fields: 9,800/10,000=98%; condition share_i exposes coverage. Checksums and review are still needed because these numbers cannot detect all corruption.",
+    "Required-field completeness is $$C=\\frac{N_{\\mathrm{valid\\ required}}}{N_{\\mathrm{required}}}=\\frac{9800}{10000}=98\\%.$$ This metric cannot detect semantically wrong values or changed files, so retain checksums, schema validation, and visual review.",
     "Sealed dataset box",
     "A manifest lists every mock file, checksum, split, exclusion, and known limitation before the box is labelled v1.",
     "Freeze a tiny non-sensitive sample, alter one file, and verify its checksum and version check fail.",
@@ -660,6 +733,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   162: detail(
     "A baseline is the simplest reproducible system to beat; an experiment hypothesis names one change, expected measurable effect, fixed evaluation, and decision threshold before training.",
     "Hypothesis delta=metric_new-metric_base: target success improvement is 0.80-0.65=0.15. Also budget T_total=T_sense+T_infer+T_comm+T_control≤100 ms; latency is a separate deployment constraint.",
+    "The target success improvement is $$\\Delta S=S_{\\mathrm{new}}-S_{\\mathrm{base}}=0.80-0.65=0.15.$$ Independently require $T_{\\mathrm{total}}=T_{\\mathrm{sense}}+T_{\\mathrm{infer}}+T_{\\mathrm{comm}}+T_{\\mathrm{control}}\\le100\\,\\mathrm{ms}$.",
     "Sealed prediction card",
     "Write the expected change and go/no-go threshold, seal it, then compare with results rather than rewriting the story.",
     "Draft one baseline, one independent change, one frozen metric, and one stop rule using mock data.",
@@ -669,6 +743,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   163: detail(
     "The first policy training run proves the pipeline and reveals data or optimization failures. Learning curves compare train and validation loss while rollout gates remain separate.",
     "Generalization gap=L_val-L_train: 0.18-0.08=0.10 may signal overfit. Deployment still needs T_total; 20+70+15+10=115 ms fails a 100 ms deadline even if loss improves.",
+    "A simple loss gap is $$\\Delta L=L_{\\mathrm{val}}-L_{\\mathrm{train}}=0.18-0.08=0.10.$$ End-to-end latency is $20+70+15+10=115\\,\\mathrm{ms}$, which exceeds a $100\\,\\mathrm{ms}$ deadline despite any loss improvement.",
     "Curve inspection",
     "Two hand-drawn curves can show underfitting, healthy learning, or validation degradation without needing a robot.",
     "Plot a small saved or mock loss table, mark the selected checkpoint before rollout, and write one evidence-based diagnosis.",
@@ -678,6 +753,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   164: detail(
     "Inference integration owns model loading, observation preprocessing, timestamps, action decoding, validation, lifecycle, cancellation, health, and structured errors within the robot process.",
     "Pipeline latency is T_total=Σstages: 18 ms sensing+72 inference+12 communication+8 control=110 ms. An exact topic check is deadline slack=100-110=-10 ms, so output must not be treated as current.",
+    "Pipeline latency is $$T_{\\mathrm{total}}=18+72+12+8=110\\,\\mathrm{ms}.$$ Against a $100\\,\\mathrm{ms}$ deadline, slack is $100-110=-10\\,\\mathrm{ms}$. Negative slack means the output is late and must follow the defined fallback path.",
     "Shadow-mode process",
     "The model reads recorded observations and logs proposed actions while the trusted controller ignores them.",
     "Run a replay in shadow mode, verify units and timestamps, inject one model exception, and observe safe containment.",
@@ -687,6 +763,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   165: detail(
     "Commands need position, velocity, acceleration, force, and workspace bounds; latency needs deadlines and staleness checks; a watchdog transitions to a verified safe state when updates stop.",
     "Age rule: if now-t_obs=140 ms exceeds a 100 ms deadline, reject. T_total=25+60+10+15=110 ms confirms the budget failure; clamping alone cannot make stale commands safe.",
+    "Observation age is $$t_{\\mathrm{age}}=t_{\\mathrm{now}}-t_{\\mathrm{obs}}=140\\,\\mathrm{ms}>100\\,\\mathrm{ms}.$$ The pipeline total $25+60+10+15=110\\,\\mathrm{ms}$ also misses budget. Range clamping cannot make stale data current.",
     "Stale-command simulator",
     "Mock actions arrive with fresh, late, and missing timestamps while a visible state changes to hold or stop.",
     "Test boundary values just below, at, and above every limit in simulation, including watchdog expiry.",
@@ -696,6 +773,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   166: detail(
     "Held-out evaluation runs the frozen model once on untouched scenes using predefined criteria. Failures are recorded, not used to tune until the evaluation version is closed.",
     "Held-out success=S/N: 14/20=70%, with no exclusions after viewing. Report T_total per trial too—for example 95 ms median and 140 ms worst—because average success hides deadline risk.",
+    "Held-out success is $$S_{\\mathrm{heldout}}=\\frac{14}{20}=70\\%.$$ Keep all $20$ attempted trials in the denominator. Report the latency distribution too: a $95\\,\\mathrm{ms}$ median can coexist with a deadline-breaking $140\\,\\mathrm{ms}$ worst case.",
     "Sealed test envelopes",
     "Scene cards remain closed until the model and thresholds are frozen, then every opened card stays in the denominator.",
     "Run a mock held-out table and resist changing one failed label or threshold.",
@@ -705,6 +783,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   167: detail(
     "Improve the system from causal failure categories: add targeted data for coverage gaps, repair interfaces for system faults, or change the policy for consistent modeling errors—one controlled change at a time.",
     "Priority score=count×severity: 8 grasp misses×2=16 versus 2 unsafe-limit events×10=20, so safety wins. T_total locates latency failures, e.g. 20+120+10+10=160 ms.",
+    "A simple triage score is $$P=N_{\\mathrm{failures}}\\times\\mathrm{severity}.$$ Eight grasp misses at severity $2$ score $16$; two unsafe-limit events at severity $10$ score $20$. The scoring scale must be defined in advance and cannot replace mandatory safety gates.",
     "Failure-to-change map",
     "Each failure card links evidence, likely layer, proposed single change, and a test that could disprove the diagnosis.",
     "Sort mock failures, choose the highest risk-adjusted category, and write one bounded experiment rather than changing everything.",
@@ -714,6 +793,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   168: detail(
     "Freezing model v1 packages immutable weights, code, preprocessing, normalization, data lineage, configuration, checksums, limits, and a table of frozen evaluation results and failures.",
     "Evaluation row includes success=S/N, e.g. 42/50=84%, and T_total=20+75+12+8=115 ms versus a 120 ms budget. These numbers need versioned conditions and failure categories.",
+    "A frozen evaluation row can report $$S=\\frac{42}{50}=84\\%,$$ and $T_{\\mathrm{total}}=20+75+12+8=115\\,\\mathrm{ms}$. The latency is within a $120\\,\\mathrm{ms}$ budget by $5\\,\\mathrm{ms}$, but only for the exact recorded versions and conditions.",
     "Model release manifest",
     "A paper manifest points to one exact artifact and refuses a changed checksum or missing normalization file.",
     "Create a mock v1 manifest and evaluation table, then demonstrate that changing one dependency creates v2 rather than silently replacing v1.",
@@ -723,6 +803,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   169: detail(
     "Natural-language goals should compile into typed, allowlisted skills with grounded arguments; deterministic validation separates semantic intent from executable calls.",
     "Parse validity=valid typed plans/requests: 18/20=90%; the week’s success S/N then scores completed frozen trials. A high parse rate does not prove grounding or safe execution.",
+    "Typed-plan validity is $$r_{\\mathrm{parse}}=\\frac{N_{\\mathrm{valid\\ typed\\ plans}}}{N_{\\mathrm{requests}}}=\\frac{18}{20}=90\\%.$$ Grounding, authorization, limit checks, and task success remain separate gates after parsing.",
     "Sentence-to-skill cards",
     "“Put the red block in tray A” becomes locate(object_id), grasp(object_id), and place(tray_id), not raw motor values.",
     "Translate five harmless paper goals into typed calls and reject ambiguous, missing, or non-allowlisted arguments.",
@@ -732,6 +813,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   170: detail(
     "Perception grounding links plan symbols to fresh world entities; world-state inspection shows the evidence, timestamp, frame, confidence, and changes used in each decision.",
     "Grounding accuracy=correct bindings/attempts: 17/20=85%; conditional task success S_grounded/N_grounded should be reported too. Neither metric excuses stale or ambiguous state.",
+    "Grounding accuracy is $$A_g=\\frac{N_{\\mathrm{correct\\ bindings}}}{N_{\\mathrm{attempts}}}=\\frac{17}{20}=85\\%.$$ Also report conditional task success $S_{\\mathrm{grounded}}/N_{\\mathrm{grounded}}$ so binding errors and later execution errors remain distinguishable.",
     "Inspectable scene table",
     "Paper objects have IDs and positions, while the planner must point to the exact row used for “the cup left of plate.”",
     "Create three scenes with ambiguity and stale timestamps, then require clarify, refresh, or reject.",
@@ -741,6 +823,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   171: detail(
     "Recovery policy distinguishes retry, re-perceive, replan, abort, and human handoff using failure type, retry budget, risk, and remaining state validity.",
     "Recovery rate=resolved failures/failures: 6/8=75%; autonomous success still uses S/N and excludes human-completed trials. Budgets prevent that rate from hiding endless retries.",
+    "Recovery rate is $$r_{\\mathrm{recovery}}=\\frac{N_{\\mathrm{resolved\\ failures}}}{N_{\\mathrm{failures}}}=\\frac{6}{8}=75\\%.$$ Report retries and handoffs separately; human-completed trials do not count as autonomous success.",
     "Recovery decision tree",
     "A missing paper block triggers re-perception; a blocked path triggers replan; unknown state triggers handoff or abort.",
     "Walk ten failure cards through a frozen decision tree and count retries, handoffs, safe aborts, and unresolved cases.",
@@ -750,6 +833,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   172: detail(
     "Traces correlate goals, observations, plan versions, skill calls, timings, outputs, errors, interventions, videos, and replay inputs under one run ID.",
     "Trace completeness=present required events/required events: 9/10=90%, so replay evidence is incomplete. The week’s S/N scores outcomes, while traces explain why those outcomes occurred.",
+    "Trace completeness is $$C_{\\mathrm{trace}}=\\frac{N_{\\mathrm{present\\ required\\ events}}}{N_{\\mathrm{required\\ events}}}=\\frac{9}{10}=90\\%.$$ One missing required event means the trace is incomplete even when the visible task outcome looks successful.",
     "Replayable paper run",
     "A phone video and numbered event cards share timestamps so another person can reconstruct one tabletop task.",
     "Remove one event from a mock trace, attempt replay, then identify exactly which missing record blocks diagnosis.",
@@ -759,6 +843,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   173: detail(
     "Robustness testing freezes unseen object poses, lighting, backgrounds, and distractors, keeps them out of tuning, and reports results by condition rather than only in aggregate.",
     "Stratified success: dim light 7/10=70% and bright light 10/10=100%, while total S/N=17/20=85%. The aggregate hides the deployment gap.",
+    "Stratified results are $$S_{\\mathrm{dim}}=\\frac{7}{10}=70\\%,\\qquad S_{\\mathrm{bright}}=\\frac{10}{10}=100\\%.$$ The combined $17/20=85\\%$ hides a $30$-percentage-point lighting gap.",
     "Unseen paper scene deck",
     "New block locations and patterned backgrounds are sealed before the model version is frozen.",
     "Run a mock policy against condition cards and produce both total and per-condition tables without tuning.",
@@ -768,6 +853,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   174: detail(
     "A frozen 50-trial suite fixes scenario identities, order or seed, resets, criteria, intervention rules, model, and denominator; every attempted trial remains auditable.",
     "Success rate=S/N×100: 46/50=92%. One extra hidden rerun cannot replace a failure; report 4 failures, interventions, safe aborts, and confidence limits separately.",
+    "For $S=46$ successes in $N=50$ frozen trials, $$r_{\\mathrm{success}}=\\frac{S}{N}\\times100=92\\%.$$ The remaining four trials stay in the ledger; hidden reruns cannot replace failures outside a predefined invalid-trial rule.",
     "Fifty numbered trial cards",
     "Each card has a unique setup and outcome row, preventing convenient reruns or discarded failures.",
     "Simulate filling a 50-row ledger with mock outcomes and verify every category sums to 50.",
@@ -777,6 +863,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   175: detail(
     "Uncut demos show continuity, while honest failure analysis states setup, observed behavior, causal evidence, impact, containment, unresolved uncertainty, and next experiment.",
     "Failure rate=F/N: 4/50=8%; category counts such as grounding 2, timeout 1, grasp 1 must sum to 4. The week’s S/N gives the complement only when outcomes are mutually defined.",
+    "Failure rate is $$r_{\\mathrm{failure}}=\\frac{F}{N}=\\frac{4}{50}=8\\%.$$ Category counts must reconcile: $2$ grounding $+1$ timeout $+1$ grasp $=4$ failures. Success is the complement only when outcome categories are mutually exclusive and complete.",
     "Success and failure reel",
     "One untouched successful paper run and one untouched failed run link to the same trace format and criteria.",
     "Publish a mock two-run page that explains the failure without trimming, relabeling, or claiming an unverified cause.",
@@ -786,6 +873,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   176: detail(
     "A portfolio homepage should state the target role, show three runnable evidence-backed projects, and let a reviewer reach architecture, metrics, demos, failures, and code quickly.",
     "Evidence coverage=projects with demo+metrics+failure story/3: 2/3=67%. Interview conversion I/A later measures market response—3/20=15%—but cannot identify which page element caused it.",
+    "If two of three projects include a demo, metrics, and a failure story, $$C_{\\mathrm{evidence}}=\\frac{2}{3}\\approx66.7\\%.$$ Separately, interview conversion is $I/A=3/20=15\\%$. Neither metric identifies which page element caused a hiring response.",
     "Ten-second reviewer test",
     "A colleague uses printed homepage cards to point to role, strongest proof, and failure story without explanation.",
     "Time the test, record where the reviewer hesitates, and fix only the missing evidence path.",
@@ -795,6 +883,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   177: detail(
     "A capstone case study explains architecture boundaries, major tradeoffs, one real incident, evidence-based diagnosis, correction, verification, and remaining risk.",
     "Incident impact can be failed runs/affected runs: 3/12=25% before and 1/20=5% after the fix. Interview conversion I/A can compare case-study versions only as weak market feedback, not causal proof.",
+    "Before the fix, incident rate is $3/12=25\\%$; after the fix it is $1/20=5\\%$. The observed change is $$\\Delta r=5\\%-25\\%=-20\\ \\text{percentage points}.$$ Different denominators and conditions mean the trace-backed cause and frozen verification still matter.",
     "Incident timeline cards",
     "Cards for symptom, trace, hypothesis, decisive evidence, fix, and verification reveal missing causal links.",
     "Build a timeline from a real or mock incident and label fact, inference, and unknown separately.",
@@ -804,6 +893,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   178: detail(
     "A robotics résumé translates ten years of software depth into platform, systems, integration, reliability, and ML evidence, while projects supply direct robotics proof and quantified outcomes.",
     "Evidence ratio=claims with proof/robotics claims: 8/10=80%. Interview conversion I/A=3/20=15% measures response to targeted applications, not résumé truth or technical readiness.",
+    "Evidence-backed claim ratio is $$r_{\\mathrm{evidence}}=\\frac{8}{10}=80\\%.$$ Application-to-interview conversion is $I/A=3/20=15\\%$. Conversion measures market response; it does not verify that an unsupported résumé claim is true.",
     "Claim-to-proof mapping",
     "Each résumé bullet card must point to code, a demo, metric, architecture decision, or production result.",
     "Rewrite three bullets as action+system+constraint+measured result, then remove any unsupported robotics claim.",
@@ -813,6 +903,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   179: detail(
     "Interview drills should require explanation, implementation, debugging, and tradeoff reasoning across C++, ROS 2, systems, controls, and ML—not memorized definitions.",
     "Drill accuracy=correct with reasoning/attempts: 16/20=80%, tracked by domain. Interview conversion I/A measures applications reaching interviews; it does not measure readiness inside those interviews.",
+    "Reasoned-answer accuracy is $$A_{\\mathrm{drill}}=\\frac{N_{\\mathrm{correct\\ with\\ reasoning}}}{N_{\\mathrm{attempts}}}=\\frac{16}{20}=80\\%.$$ Track this ratio by domain so a high overall average cannot hide a controls, ROS 2, C++, or ML gap.",
     "Whiteboard robot fault",
     "A mock interviewer presents a late ROS message, oscillating controller, or leaking C++ resource and asks for evidence-first diagnosis.",
     "Record five timed answers, then score correctness, assumptions, tests, and clarity using a fixed rubric.",
@@ -822,6 +913,7 @@ export const topicDetails2: Record<number, TopicDetail> = {
   180: detail(
     "The readiness audit checks role fit, foundational skills, two or three credible projects, code quality, demos, metrics, failure stories, interview performance, and a scheduled application-feedback loop.",
     "Readiness coverage=passed mandatory gates/mandatory gates: 18/20=90%, but a missing safety or runnable-project gate still blocks. Plan conversion target I/A=4/25=16% for the next batch, reviewed weekly.",
+    "Readiness coverage is $$C_{\\mathrm{ready}}=\\frac{18}{20}=90\\%.$$ Mandatory safety and runnable-project gates are Boolean blockers, not averageable points. For the next batch, the response target is $I/A=4/25=16\\%$, reviewed with actual weekly evidence.",
     "Thirty-day application board",
     "Paper columns track targeted company, role fit, evidence match, contact, application, interview, feedback, and next portfolio repair.",
     "Schedule four weekly batches with explicit application and improvement tasks; do not count untargeted bulk submissions as progress.",

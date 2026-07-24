@@ -116,6 +116,7 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     ["real-world application examples", "Real-life examples"],
     ["teach-back and quiz practice", "Quiz / teach-back"],
     ["inline AI teacher", "Ask the AI teacher"],
+    ["collapsed official learning media", "Watch / explore"],
     ["device-local tutor history", "robot-shift-tutor-v1"],
     ["original source synthesis notice", "Original teaching synthesis"],
   ];

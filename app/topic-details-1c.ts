@@ -3,6 +3,7 @@ import type { TopicDetail } from "./topic-detail-types";
 function detail(
   core: string,
   mathConnection: string,
+  mathMarkdown: string,
   exampleTitle: string,
   explanation: string,
   tryIt: string,
@@ -12,6 +13,7 @@ function detail(
   return {
     core,
     mathConnection,
+    mathMarkdown,
     example: { title: exampleTitle, explanation, tryIt },
     quiz: { question, answer },
   };
@@ -21,6 +23,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   61: detail(
     "An object detector returns class, image region, and confidence. The confidence threshold trades false alarms against misses and must be chosen on representative validation data, not from one attractive image.",
     "At threshold 0.6, TP=8,FP=2,FN=4 gives precision=8/10=80% and recall=8/12≈66.7%; raising the threshold may improve precision and reduce recall, but these metrics do not measure pose or safety.",
+    "At threshold $0.6$, with $TP=8$, $FP=2$, and $FN=4$, $$\\mathrm{precision}=\\frac{8}{8+2}=80\\%,\\qquad \\mathrm{recall}=\\frac{8}{8+4}\\approx66.7\\%.$$ Raising the threshold may improve precision and reduce recall, but neither metric measures pose or safety.",
     "Colored-block detector",
     "A phone image of paper blocks produces candidate boxes, including one uncertain reflection that changes when the threshold moves.",
     "Run a detector on non-sensitive tabletop images, sweep three thresholds, and tabulate TP, FP, and FN.",
@@ -30,6 +33,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   62: detail(
     "Tracking associates detections across time, survives short occlusions, and manages track birth and deletion. Labels must distinguish missed detection, false positive, ID switch, and genuine disappearance.",
     "Association IoU=intersection/union: 60/100=0.6 may match two boxes; detector precision/recall still score TP,FP,FN, but cannot reveal an ID switch when both boxes are detected.",
+    "Intersection over union is $$\\mathrm{IoU}=\\frac{\\text{intersection area}}{\\text{union area}}=\\frac{60}{100}=0.6.$$ That value may associate two boxes. Detector precision and recall score $TP$, $FP$, and $FN$, but cannot reveal an identity switch when both boxes remain detected.",
     "Two crossing tokens",
     "Two colored coins cross and one passes behind a card, making identity harder than frame-by-frame detection.",
     "Move paper tokens through ten drawn frames, assign track IDs, and mark occlusion, miss, false alarm, and ID switch separately.",
@@ -39,6 +43,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   63: detail(
     "Vision evaluation freezes images, labels, matching rules, thresholds, hardware, and timing method. It reports precision, recall, latency distribution, and representative success and failure examples.",
     "With TP=45,FP=5,FN=10, precision=90% and recall≈81.8%; if 95th-percentile latency is 85 ms against a 70 ms deadline, the detector still fails timing despite good accuracy.",
+    "With $TP=45$, $FP=5$, and $FN=10$, $$\\mathrm{precision}=\\frac{45}{50}=90\\%,\\qquad \\mathrm{recall}=\\frac{45}{55}\\approx81.8\\%.$$ A $95$th-percentile latency of $85\\,\\mathrm{ms}$ exceeds the $70\\,\\mathrm{ms}$ deadline, so the detector still fails its timing requirement.",
     "Evidence contact sheet",
     "Correct detections, false alarms, misses, and slow cases appear together instead of showing only best examples.",
     "Score a small saved image set, time repeated inference, and build a labelled contact sheet without using private images.",
@@ -48,6 +53,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   64: detail(
     "Depth cameras estimate distance using stereo disparity, projected structured light, or time-based sensing. Range, texture, lighting, reflectivity, edges, and interference create characteristic missing or biased measurements.",
     "Stereo depth Z=fB/disparity: f=500 px,B=0.1 m,d=25 px gives Z=2 m; then the week’s back-projection X=(u-cₓ)Z/fₓ maps pixel 420 with cₓ=320 to X=0.4 m, but neither equation models reflective failure.",
+    "Stereo depth is $$Z=\\frac{fB}{d}=\\frac{(500\\,\\mathrm{px})(0.1\\,\\mathrm{m})}{25\\,\\mathrm{px}}=2\\,\\mathrm{m}.$$ Back-projecting pixel $u=420\\,\\mathrm{px}$ with $c_x=320\\,\\mathrm{px}$ and $f_x=500\\,\\mathrm{px}$ gives $X=(u-c_x)Z/f_x=0.4\\,\\mathrm{m}$. Neither equation models reflective-surface failure.",
     "Two-eye parallax",
     "Viewing a finger against a background from each eye shows disparity shrinking as distance grows.",
     "Use two phone photos of stationary paper shapes from a measured baseline; reason about disparity without controlling machinery.",
@@ -57,6 +63,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   65: detail(
     "A point cloud stores 3D samples in a named frame. Voxel filtering groups nearby points to reduce density, and transforms must preserve units, axes, timestamp, and sensor-to-robot calibration.",
     "Voxel index is floor(X/s): X=0.42 m with s=0.10 m enters bin 4; X came from back-projection, e.g. (420−320)·2/500=0.4 m. Voxelization reduces samples but cannot fix a wrong frame.",
+    "For coordinate $X=0.42\\,\\mathrm{m}$ and voxel size $s=0.10\\,\\mathrm{m}$, $$i=\\left\\lfloor\\frac{X}{s}\\right\\rfloor=\\lfloor4.2\\rfloor=4.$$ A back-projected coordinate example is $(420-320)\\times2/500=0.4\\,\\mathrm{m}$. Voxelization reduces samples but cannot fix a wrong frame.",
     "3D graph-paper bins",
     "Paper points placed on a grid show several samples collapsing into one representative voxel.",
     "Generate a small synthetic cloud, filter at two voxel sizes, and verify a known transform on one point.",
@@ -66,6 +73,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   66: detail(
     "Plane segmentation finds points consistent with a plane model, often using RANSAC, so a tabletop can be separated from objects. Threshold, orientation, and inlier requirements must match sensor noise and scene geometry.",
     "Point-to-plane distance is |ax+by+cz+d|/√(a²+b²+c²); for z=0 plane and point z=0.012 m, distance=0.012 m, inside a 0.02 m threshold. Back-projection creates the 3D point but does not choose the plane.",
+    "Point-to-plane distance is $$d=\\frac{|ax+by+cz+d_0|}{\\sqrt{a^2+b^2+c^2}}.$$ For the plane $z=0$ and a point at $z=0.012\\,\\mathrm{m}$, the distance is $0.012\\,\\mathrm{m}$, inside the $0.02\\,\\mathrm{m}$ threshold. Back-projection creates the 3D point; it does not choose the plane.",
     "Table and block points",
     "Dots drawn near one horizontal line represent table inliers while raised dots represent objects.",
     "Fit a line or plane to synthetic points, change the inlier threshold, and inspect which object points are wrongly absorbed.",
@@ -75,6 +83,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   67: detail(
     "A 3D bounding box summarizes object extent and orientation; pose estimation predicts position and rotation in a frame. Both need uncertainty, symmetry handling, and validation against physical constraints.",
     "Box volume=length·width·height: 0.20·0.10·0.05=0.001 m³; its center X may use (u-cₓ)Z/fₓ=0.4 m. Volume and back-projection do not resolve rotational symmetry.",
+    "Box volume is $$V=lwh=(0.20)(0.10)(0.05)=0.001\\,\\mathrm{m^3}.$$ Its center coordinate may be back-projected with $X=(u-c_x)Z/f_x=0.4\\,\\mathrm{m}$. Volume and back-projection do not resolve rotational symmetry.",
     "Shoebox pose",
     "A small box has visible dimensions and a labelled axis, while a cylinder demonstrates ambiguous rotation around its axis.",
     "Measure a stationary box, draw its 3D axes, calculate volume, and list poses that look identical for a symmetric object.",
@@ -84,6 +93,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   68: detail(
     "Extrinsic calibration estimates the rigid transform between sensor and robot frames. It must be time-consistent, observable from varied poses, versioned, and verified on points not used for fitting.",
     "For aligned axes, x_base=x_camera+t: 0.40+0.20=0.60 m; x_camera may come from (420−320)·2/500=0.4 m. This translation check does not cover rotation or calibration uncertainty.",
+    "For aligned axes, $$x_{\\mathrm{base}}=x_{\\mathrm{camera}}+t=0.40+0.20=0.60\\,\\mathrm{m},$$ where the camera coordinate can come from $(420-320)\\times2/500=0.4\\,\\mathrm{m}$. This translation-only check does not cover rotation or calibration uncertainty.",
     "Camera-on-cardboard-base",
     "A phone outline offset from a cardboard base makes the sensor-to-base transform visible and measurable.",
     "Measure the static offset, transform three paper points, and verify one held-out known point.",
@@ -93,6 +103,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   69: detail(
     "Occlusion hides surfaces, reflective or transparent materials corrupt active sensing, and range or angle limits create missing depth. Missing values are observations about sensor validity, not zero distance.",
     "Missing-depth rate=missing/total: 240/2,000=12%; back-projection X=(u-cₓ)Z/fₓ is undefined when Z is missing, so the pipeline must mask rather than substitute Z=0.",
+    "The missing-depth rate is $$\\frac{N_{\\mathrm{missing}}}{N_{\\mathrm{total}}}=\\frac{240}{2000}=12\\%.$$ Back-projection $X=(u-c_x)Z/f_x$ is undefined when depth $Z$ is missing, so the pipeline must mask that sample rather than substitute $Z=0$.",
     "Hidden and reflective surfaces",
     "A card hides part of a block while foil reflects a phone light differently from matte paper.",
     "Capture stationary tabletop depth or use recorded data, label missing regions, and compare valid-mask behavior without commanding a robot.",
@@ -102,6 +113,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   70: detail(
     "A 3D target pipeline validates depth, back-projects pixels, filters points, transforms frames, segments support surfaces, estimates target pose, overlays results, and exposes bad cases and rejection reasons.",
     "Position error=√((Δx)²+(Δy)²+(Δz)²): errors [0.03,0.04,0] m give 0.05 m; one coordinate may use X=(420−320)·2/500=0.4 m. Neither value proves the full pipeline is robust.",
+    "For coordinate errors $[0.03,0.04,0]\\,\\mathrm{m}$, position error is $$e=\\sqrt{(\\Delta x)^2+(\\Delta y)^2+(\\Delta z)^2}=\\sqrt{0.03^2+0.04^2}=0.05\\,\\mathrm{m}.$$ A coordinate may be back-projected as $X=(420-320)\\times2/500=0.4\\,\\mathrm{m}$. Neither value proves the whole pipeline is robust.",
     "Trace one paper target",
     "A colored mark moves through cards for pixel, depth, camera point, base point, segmented object, and accepted or rejected target.",
     "Run a recorded or synthetic example through every stage and save overlays for one success and three distinct bad cases.",
@@ -111,6 +123,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   71: detail(
     "State is the hidden quantity the system needs, observation is a noisy measurement, the process model predicts state change, and uncertainty records how little confidence the estimator should have.",
     "A constant-velocity prediction is x⁻=x+vΔt: 10+1·0.5=10.5 m; with P=4,R=1,z=12, the week’s K=0.8 updates to 11.7 m. The model and update are distinct assumptions.",
+    "The constant-velocity prediction is $$x^-=x+v\\Delta t=10+(1)(0.5)=10.5\\,\\mathrm{m}.$$ With $P=4$, $R=1$, and measurement $z=12\\,\\mathrm{m}$, $K=P/(P+R)=0.8$ and $x=x^-+K(z-x^-)=11.7\\,\\mathrm{m}$. Prediction and update use distinct assumptions.",
     "Hidden token position",
     "A token moves behind a paper screen while a motion rule predicts it and occasional peeks provide noisy observations.",
     "Predict three steps, reveal one measured position, and explain how confidence should change.",
@@ -120,6 +133,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   72: detail(
     "A probability distribution describes plausible values; mean summarizes center and covariance describes spread and how dimensions vary together. Covariance is not a physical error bar unless assumptions are stated.",
     "For errors [−1,0,1], mean=0 and population variance=(1+0+1)/3≈0.667; larger prior P relative to measurement R makes K=P/(P+R) larger, but covariance validity needs calibration checks.",
+    "For errors $[-1,0,1]$, the mean is $0$ and the population variance is $$\\sigma^2=\\frac{(-1)^2+0^2+1^2}{3}=\\frac{2}{3}\\approx0.667.$$ In $K=P/(P+R)$, a larger prior uncertainty $P$ relative to measurement uncertainty $R$ gives a larger gain. Covariance still needs calibration checks.",
     "Cloud of paper dots",
     "Tightly clustered dots show low uncertainty, while a tilted oval shows correlated x and y uncertainty.",
     "Draw two point clouds with the same mean but different covariance and explain which directions are uncertain.",
@@ -129,6 +143,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   73: detail(
     "A Bayes filter alternates prediction from the process model and update from new evidence. Prediction usually increases uncertainty; a consistent informative measurement usually reduces it.",
     "Discrete Bayes uses posterior∝likelihood×prior: 0.8×0.5=0.4 versus 0.2×0.5=0.1, normalizing to 0.8 and 0.2. The weekly Kalman K is the linear-Gaussian version, not the general Bayes rule.",
+    "Discrete Bayes uses $$p(x\\mid z)\\propto p(z\\mid x)p(x).$$ The unnormalized weights are $0.8\\times0.5=0.4$ and $0.2\\times0.5=0.1$; dividing by their sum $0.5$ gives posterior probabilities $0.8$ and $0.2$. Kalman gain is a linear-Gaussian specialization, not the general Bayes rule.",
     "Two-cup belief",
     "A hidden token is equally likely under two cups until a noisy clue favors one.",
     "Compute one predict and update cycle with paper probabilities, then normalize them to sum to one.",
@@ -138,6 +153,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   74: detail(
     "A Kalman filter combines linear prediction and measurement using uncertainty; an EKF linearizes nonlinear models around the current estimate. Both can be confidently wrong when models, timing, or noise assumptions are wrong.",
     "With P=4,R=1,x⁻=10,z=12, K=4/5=0.8 and x=10+0.8·2=11.6; updated covariance is (1−K)P=0.8. These numbers assume compatible units, frame, time, and model.",
+    "With $P=4$, $R=1$, $x^-=10$, and $z=12$, $$K=\\frac{P}{P+R}=\\frac45=0.8,\\qquad x=x^-+K(z-x^-)=10+0.8(2)=11.6.$$ Updated covariance is $(1-K)P=0.8$. The calculation assumes compatible units, frame, time, and model.",
     "Weighted position guesses",
     "A trusted ruler reading pulls a predicted paper position more strongly than a deliberately noisy estimate.",
     "Calculate two updates with R=1 and R=16, then compare how far each moves the state.",
@@ -147,6 +163,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   75: detail(
     "Wheel odometry estimates motion but drifts; an IMU measures angular rate and acceleration with bias and noise. Fusion uses their complementary information only after frames, time, bias, and covariance are credible.",
     "IMU heading increment is Δθ=ωΔt: 0.2 rad/s·0.5 s=0.1 rad; then a scalar update with P=4,R=1 gives K=0.8. Kalman weighting cannot repair a wrong IMU axis or timestamp.",
+    "The IMU heading increment is $$\\Delta\\theta=\\omega\\Delta t=(0.2\\,\\mathrm{rad/s})(0.5\\,\\mathrm{s})=0.1\\,\\mathrm{rad}.$$ A scalar update with $P=4$ and $R=1$ gives $K=P/(P+R)=0.8$. Kalman weighting cannot repair a wrong IMU axis or timestamp.",
     "Two heading cards",
     "One paper arrow follows wheel ticks and another follows gyro increments, showing different drift and noise.",
     "Fuse synthetic odometry and IMU headings in a spreadsheet, then inject a sign error and observe the inconsistency.",
@@ -156,6 +173,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   76: detail(
     "Localization drift is accumulating estimate error; outliers are measurements inconsistent with the model; dropout removes updates. Robust systems gate outliers, grow uncertainty during dropout, and recover without jumps.",
     "Innovation is y=z−x⁻: 20−10=10 m; if gate is 3 m, reject it. With no update, P might grow 4→5; when data returns, K=5/(5+1)≈0.833, but recovery still needs freshness and outlier checks.",
+    "Innovation is $$y=z-x^-=20-10=10\\,\\mathrm{m},$$ so a $3\\,\\mathrm{m}$ gate rejects it. If prediction-only uncertainty grows from $P=4$ to $P=5$, then on return $K=5/(5+1)\\approx0.833$. Recovery still requires freshness and outlier checks.",
     "Missing-clue walk",
     "A paper position estimate advances through several hidden steps, widening its uncertainty band until a plausible clue returns.",
     "Plot prediction-only uncertainty, one extreme outlier, and a valid recovery measurement using synthetic data.",
@@ -165,6 +183,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   77: detail(
     "An estimator report pairs numeric error with predicted uncertainty, timing, drift, outlier handling, dropout recovery, and examples. Small average error is not enough if confidence is miscalibrated.",
     "RMSE=√(Σe²/n): errors [1,−1,2] m give √2≈1.414 m; a sample update K=0.8 explains one correction, while coverage—e.g. 92/100 errors inside the claimed 95% interval—checks uncertainty honesty.",
+    "For errors $[1,-1,2]\\,\\mathrm{m}$, $$\\mathrm{RMSE}=\\sqrt{\\frac{\\sum_i e_i^2}{n}}=\\sqrt{\\frac{1+1+4}{3}}=\\sqrt2\\approx1.414\\,\\mathrm{m}.$$ A gain $K=0.8$ explains one correction, while coverage such as $92/100$ errors inside a claimed $95\\%$ interval checks uncertainty honesty.",
     "Error-and-band chart",
     "A line of true and estimated positions with an uncertainty band reveals both misses and overconfidence.",
     "Build a chart from synthetic data with nominal, outlier, and dropout segments; label the recovery time.",
@@ -174,6 +193,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   78: detail(
     "Configuration space represents every robot configuration; obstacles become forbidden configuration regions. Collision checking asks whether the robot geometry at a configuration or along an edge intersects them.",
     "For a 2-joint sample q=[0.2,0.4] and obstacle boundary q_b=[0.3,0.5], distance ||q−q_b||=√0.02≈0.141 rad. A* f=g+h can search free configurations but cannot define collision geometry.",
+    "For joint vectors $\\mathbf q=[0.2,0.4]$ and $\\mathbf q_b=[0.3,0.5]$, $$\\lVert\\mathbf q-\\mathbf q_b\\rVert=\\sqrt{(0.2-0.3)^2+(0.4-0.5)^2}=\\sqrt{0.02}\\approx0.141\\,\\mathrm{rad}.$$ A* can search free configurations using $f=g+h$, but it does not define collision geometry.",
     "Rotating paper arm",
     "A cardboard two-link arm near a book shows how many joint-angle pairs collide even though the joint values are just points.",
     "Mark a small angle grid as free or colliding using the unpowered arm, then trace a collision-free sequence.",
@@ -183,6 +203,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   79: detail(
     "Dijkstra expands the lowest known path cost; A* adds a heuristic estimate to the goal. An admissible heuristic does not overestimate remaining cost, preserving optimality under standard assumptions.",
     "A* uses f=g+h: node A has 4+5=9 and B has 6+2=8, so B expands first. Dijkstra is the special case h=0; edge costs must remain nonnegative.",
+    "A* scores a node with $$f(n)=g(n)+h(n).$$ Node $A$ has $f(A)=4+5=9$, while node $B$ has $f(B)=6+2=8$, so $B$ expands first. Dijkstra is the special case $h=0$, and edge costs must remain nonnegative.",
     "Weighted paper grid",
     "Squares have travel costs, and a priority list shows how Dijkstra and A* choose the next square.",
     "Solve one small grid with h=0 and Manhattan h, count expansions, and verify both path costs.",
@@ -192,6 +213,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   80: detail(
     "RRT samples configurations, connects each sample from a nearby tree node by a bounded step, and keeps only collision-free edges. It explores high-dimensional spaces quickly but is not inherently optimal.",
     "Nearest distance is ||q_rand−q_near||: from [0,0] to [3,4] is 5; with step η=1, add a node one-fifth along the vector. Unlike A* f=g+h, basic RRT has no grid heuristic or shortest-path guarantee.",
+    "From $\\mathbf q_{\\mathrm{near}}=[0,0]$ to $\\mathbf q_{\\mathrm{rand}}=[3,4]$, $$\\lVert\\mathbf q_{\\mathrm{rand}}-\\mathbf q_{\\mathrm{near}}\\rVert=5.$$ With step $\\eta=1$, the new node lies one-fifth of the way along that vector. Unlike A* with $f=g+h$, basic RRT has no grid heuristic or shortest-path guarantee.",
     "Random-dot tree",
     "Dots on paper are sampled around blocked regions and connected by short collision-free line segments.",
     "Grow a small RRT by hand with a ruler and reject any edge crossing a drawn obstacle.",
@@ -201,6 +223,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   81: detail(
     "A geometric path says where to go; a trajectory adds time, velocity, and acceleration. Tracking uses feedback to follow it within error and actuator limits while handling delay and disturbances.",
     "Segment velocity v=Δx/Δt: 0.4 m/0.8 s=0.5 m/s; acceleration from 0.2 to 0.5 m/s over 0.3 s is 1 m/s². A* f=g+h selects a path but does not time-parameterize or track it.",
+    "Segment velocity is $$v=\\frac{\\Delta x}{\\Delta t}=\\frac{0.4\\,\\mathrm{m}}{0.8\\,\\mathrm{s}}=0.5\\,\\mathrm{m/s}.$$ Changing from $0.2$ to $0.5\\,\\mathrm{m/s}$ over $0.3\\,\\mathrm{s}$ gives $a=(0.5-0.2)/0.3=1\\,\\mathrm{m/s^2}$. A* with $f=g+h$ selects a path; it does not time-parameterize or track it.",
     "Timed ruler path",
     "Marks along a ruler at unequal time intervals show speed and acceleration even on the same geometric line.",
     "Create two time schedules for one paper path, calculate velocities, and reject one exceeding a written limit.",
@@ -210,6 +233,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   82: detail(
     "A finite-state machine has explicit states and event-driven transitions; a behavior tree ticks conditions and actions that return running, success, or failure. Both need bounded retries and observable state.",
     "FSM transition coverage=tested valid transitions/defined transitions: 8/10=80%; a tree with three sequential stages expands only after prior success. A* f=g+h plans graph paths, but does not define execution-state semantics.",
+    "FSM transition coverage is $$\\frac{N_{\\mathrm{tested\\ valid}}}{N_{\\mathrm{defined}}}=\\frac{8}{10}=80\\%.$$ A tree with three sequential stages advances only after prior success. A* with $f=g+h$ plans graph paths but does not define execution-state semantics.",
     "Task-state cards",
     "Cards move through idle, perceive, act, verify, recover, and abort based on event tokens.",
     "Run success, timeout, repeated failure, and cancel sequences; ensure no event creates an undefined state.",
@@ -219,6 +243,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   83: detail(
     "A safety envelope defines allowed workspace, speed, acceleration, force, freshness, and proximity. Commands are clamped or rejected by trusted code, while emergency stop uses an independently engineered path.",
     "Clamp rule v_cmd=clip(0.8,−0.3,0.3)=0.3 m/s; if a planned node has A* f=8, that low cost cannot override a failed safety check. Planning quality and command bounds are separate gates.",
+    "The velocity clamp is $$v_{\\mathrm{cmd}}=\\operatorname{clip}(0.8,-0.3,0.3)=0.3\\,\\mathrm{m/s}.$$ Even if an A* node has cost $f=8$, that low planning cost cannot override a failed safety check. Planning quality and command bounds are separate gates.",
     "Drawn safe workspace",
     "A paper robot target inside, on, and outside a marked envelope demonstrates accept, boundary handling, and reject.",
     "Test boundary values in simulation and rehearse stop-state transitions without energizing machinery.",
@@ -228,6 +253,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   84: detail(
     "An autonomy-loop acceptance test freezes varied scenes and verifies perception, estimation, planning, control, monitoring, recovery, cancellation, and final state as one closed loop.",
     "Full-loop success=S/N: 17/20=85%; path-cost overhead=(g_actual−g_best)/g_best=(12−10)/10=20%. A* f=g+h helps explain planning choices but cannot prove perception or recovery.",
+    "Full-loop success is $$\\frac{S}{N}=\\frac{17}{20}=85\\%.$$ Path-cost overhead is $$(g_{\\mathrm{actual}}-g_{\\mathrm{best}})/g_{\\mathrm{best}}=(12-10)/10=20\\%.$$ A* with $f=g+h$ explains planning choices but cannot prove perception or recovery.",
     "Twenty-scene card suite",
     "Nominal, blocked, noisy, stale, and ambiguous scene cards drive the same simulated task and outcome ledger.",
     "Run or manually trace the frozen suite, keep every failure, and link each result to one decisive artifact.",
@@ -237,6 +263,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   85: detail(
     "A tensor has shape, dtype, device, and layout. Autograd records differentiable operations, while numerical checks catch silent broadcasting, device mismatch, non-finite values, and incorrect gradients.",
     "A tensor [batch=4,channels=3,height=32,width=32] has 4·3·32·32=12,288 elements; for targets [3,2] and predictions [2,4], MSE=2.5. Loss math does not prove tensor shapes are correct.",
+    "A tensor with shape $[4,3,32,32]$ contains $$4\\times3\\times32\\times32=12{,}288\\ \\text{elements}.$$ For targets $[3,2]$ and predictions $[2,4]$, $\\mathrm{MSE}=((2-3)^2+(4-2)^2)/2=2.5$. Correct loss arithmetic does not prove tensor shapes are correct.",
     "Shape cards",
     "Index cards labelled batch, channel, height, and width expose which operations preserve or change dimensions.",
     "Trace shapes through a tiny PyTorch model and compare one autograd value with a finite-difference check.",
@@ -246,6 +273,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   86: detail(
     "A dataset returns one defined example, transforms apply documented preprocessing, a dataloader forms shuffled or ordered batches, and train/validation splits remain independent and reproducible.",
     "With N=103 and batch size 16, ceil(N/16)=7 batches, last size 7; an example regression batch can yield MSE=2.5. MSE evaluates predictions but cannot detect split leakage or wrong transforms.",
+    "With $N=103$ examples and batch size $16$, $$\\left\\lceil\\frac{N}{16}\\right\\rceil=7\\ \\text{batches},$$ and the final batch contains $103-6(16)=7$ examples. A regression batch may have $\\mathrm{MSE}=2.5$, but MSE cannot detect split leakage or wrong transforms.",
     "Episode-envelope loader",
     "Paper examples stay grouped by episode before envelopes are assigned to train or validation.",
     "Build a tiny non-sensitive loader, print shapes and IDs, and assert no group appears in both splits.",
@@ -255,6 +283,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   87: detail(
     "An MLP mixes numeric features through dense layers; a convolution shares local filters across an image to build spatial features. Encoder output shape and receptive field must fit the robot prediction task.",
     "Dense parameters=(d_in+1)d_out: (10+1)·8=88; a 3×3 conv from 3 to 16 channels has (3·3·3+1)·16=448. MSE may train numeric outputs but does not choose architecture.",
+    "A dense layer has $$(d_{\\mathrm{in}}+1)d_{\\mathrm{out}}=(10+1)(8)=88\\ \\text{parameters}.$$ A $3\\times3$ convolution from $3$ to $16$ channels has $(3\\times3\\times3+1)\\times16=448$ parameters. MSE may train numeric outputs, but it does not choose the architecture.",
     "Sliding paper window",
     "A small square moved across a grid reuses the same local pattern detector like a convolution.",
     "Calculate output shapes and parameter counts for one tiny MLP and convolution before running them.",
@@ -264,6 +293,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   88: detail(
     "A loss defines the training signal, an optimizer updates parameters, a schedule changes learning rate, and a checkpoint preserves exact model and training state. Each serves a different role.",
     "SGD update θ_new=θ−ηg: 1.0−0.1·0.4=0.96; MSE for prediction 2 versus target 3 is 1. A lower training loss does not prove the optimizer, schedule, or checkpoint generalizes.",
+    "The SGD update is $$\\theta_{\\mathrm{new}}=\\theta-\\eta g=1.0-(0.1)(0.4)=0.96.$$ For one prediction $2$ and target $3$, $\\mathrm{MSE}=(2-3)^2=1$. Lower training loss does not prove that the optimizer, schedule, or checkpoint generalizes.",
     "Hill-descent cards",
     "A token moves down a drawn loss curve with large and small step sizes, showing overshoot and slow progress.",
     "Run a tiny saved-data experiment, checkpoint, resume, and verify the next loss matches an uninterrupted run.",
@@ -273,6 +303,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   89: detail(
     "Overfitting learns training-specific patterns, leakage lets evaluation information influence training, augmentation adds plausible variation, and a simple baseline reveals whether complexity earns its cost.",
     "Generalization gap=MSE_val−MSE_train=0.30−0.05=0.25; a baseline MSE of 0.28 means the complex model’s 0.30 is worse. MSE alone still needs rollout and bad-case inspection.",
+    "The generalization gap is $$\\mathrm{MSE}_{\\mathrm{val}}-\\mathrm{MSE}_{\\mathrm{train}}=0.30-0.05=0.25.$$ A baseline MSE of $0.28$ is lower than the complex model’s $0.30$. MSE alone still requires rollout and bad-case inspection.",
     "Background shortcut cards",
     "If every red block appears on one background, a model may learn the background instead of the block.",
     "Create a tiny paper dataset with and without the shortcut, split by scene, and compare a simple baseline.",
@@ -282,6 +313,7 @@ export const topicDetails1c: Record<number, TopicDetail> = {
   90: detail(
     "Experiment tracking records code, data, configuration, environment, seed, metrics, artifacts, and decisions. Seeds improve repeatability but do not make nondeterministic systems or one trial conclusive.",
     "Across MSE runs [2.4,2.5,2.9], mean=2.6 and range=0.5; recording only the best 2.4 is misleading. The weekly MSE defines each result, while seed variation quantifies reproducibility.",
+    "Across MSE runs $[2.4,2.5,2.9]$, $$\\bar x=\\frac{2.4+2.5+2.9}{3}=2.6,\\qquad \\mathrm{range}=2.9-2.4=0.5.$$ Reporting only the best result, $2.4$, is misleading; variation across seeds quantifies reproducibility.",
     "Three sealed run cards",
     "Identical configuration cards differ only by seed and retain every result, including the worst.",
     "Run a tiny CPU experiment with three seeds, save configs and outputs, and verify one seed replays within declared tolerance.",

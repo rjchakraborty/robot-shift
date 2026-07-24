@@ -102,6 +102,7 @@ export type MathScene =
 
 export type InteractiveMathEvaluation = {
   formula: string;
+  formulaLatex: string;
   substitution: string;
   steps: readonly string[];
   result: string;
@@ -301,6 +302,7 @@ function evaluateCoordinate(
 
     return {
       formula: "A·B = AₓBₓ + AᵧBᵧ; cosθ = (A·B)/(||A||·||B||)",
+      formulaLatex: String.raw`\begin{aligned}\mathbf A\cdot\mathbf B &= A_xB_x+A_yB_y \\ \cos\theta &= \frac{\mathbf A\cdot\mathbf B}{\lVert\mathbf A\rVert\lVert\mathbf B\rVert}\end{aligned}`,
       substitution: `(${formatMathNumber(ax)}×${formatMathNumber(bx)}) + (${formatMathNumber(ay)}×${formatMathNumber(by)})`,
       steps: [
         `Multiply matching components: ${formatMathNumber(ax * bx)} and ${formatMathNumber(ay * by)}.`,
@@ -344,6 +346,7 @@ function evaluateCoordinate(
 
     return {
       formula: "x′ = cosθ·x − sinθ·y; y′ = sinθ·x + cosθ·y",
+      formulaLatex: String.raw`\begin{aligned}x' &= x\cos\theta-y\sin\theta \\ y' &= x\sin\theta+y\cos\theta\end{aligned}`,
       substitution: `θ=${formatMathNumber(angleDegrees)}°, v=(${formatMathNumber(x)}, ${formatMathNumber(y)})`,
       steps: [
         `Convert ${formatMathNumber(angleDegrees)}° to ${formatMathNumber(angleRadians)} rad for the trigonometric functions.`,
@@ -377,6 +380,7 @@ function evaluateCoordinate(
 
   return {
     formula: "||p|| = √(x² + y²)",
+    formulaLatex: String.raw`\lVert \mathbf p\rVert=\sqrt{x^2+y^2}`,
     substitution: `√(${formatMathNumber(x)}² + ${formatMathNumber(y)}²)`,
     steps: [
       `Square x: ${formatMathNumber(x)}² = ${formatMathNumber(x ** 2)}.`,
@@ -432,6 +436,7 @@ const definitions = {
 
       return {
         formula: "x = l₁cosθ₁ + l₂cos(θ₁+θ₂); y = l₁sinθ₁ + l₂sin(θ₁+θ₂)",
+        formulaLatex: String.raw`\begin{aligned}x &= l_1\cos\theta_1+l_2\cos(\theta_1+\theta_2) \\ y &= l_1\sin\theta_1+l_2\sin(\theta_1+\theta_2)\end{aligned}`,
         substitution: `l₁=${formatMathNumber(link1)} m, l₂=${formatMathNumber(link2)} m, θ₁=${formatMathNumber(theta1)}°, θ₂=${formatMathNumber(theta2)}°`,
         steps: [
           `Joint one is (${formatMathNumber(jointX)}, ${formatMathNumber(jointY)}) m in the base frame.`,
@@ -475,6 +480,7 @@ const definitions = {
 
       return {
         formula: "e = r − y; uₚ = Kₚe; u = clamp(uₚ, −1, 1)",
+        formulaLatex: String.raw`\begin{aligned}e &= r-y \\ u_p &= K_p e \\ u &= \operatorname{clamp}(u_p,-1,1)\end{aligned}`,
         substitution: `e=${formatMathNumber(values.setpoint)}−${formatMathNumber(values.measurement)}; uₚ=${formatMathNumber(values.gain)}×e`,
         steps: [
           `Tracking error e = ${formatMathNumber(error)}.`,
@@ -528,6 +534,7 @@ const definitions = {
 
       return {
         formula: "margin = period − worst-case compute time",
+        formulaLatex: String.raw`T_{\mathrm{margin}}=T_{\mathrm{period}}-T_{\mathrm{compute,worst}}`,
         substitution: `${formatMathNumber(values.period)} ms − ${formatMathNumber(values.compute)} ms`,
         steps: [
           `The controller gets ${formatMathNumber(values.period)} ms for one cycle.`,
@@ -560,6 +567,7 @@ const definitions = {
       const rate = values.successes / values.attempts * 100;
       return {
         formula: "availability = successful operations / attempted operations",
+        formulaLatex: String.raw`\mathrm{availability}=\frac{\mathrm{successful\ operations}}{\mathrm{attempted\ operations}}`,
         substitution: `${formatMathNumber(values.successes)} / ${formatMathNumber(values.attempts)}`,
         steps: [
           `Use the same operation definition for all ${formatMathNumber(values.attempts)} attempts.`,
@@ -591,6 +599,7 @@ const definitions = {
       const pixelOffset = values.focal * values.lateral / values.depth;
       return {
         formula: "pixel offset = fₓX/Z",
+        formulaLatex: String.raw`u-c_x=\frac{f_x X}{Z}`,
         substitution: `${formatMathNumber(values.focal)} px × ${formatMathNumber(values.lateral)} m / ${formatMathNumber(values.depth)} m`,
         steps: [
           `The lateral-to-depth ratio is ${formatMathNumber(values.lateral / values.depth)}.`,
@@ -627,6 +636,7 @@ const definitions = {
       const absoluteZ = Math.abs(zScore);
       return {
         formula: "z = (x − μ) / σ",
+        formulaLatex: String.raw`z=\frac{x-\mu}{\sigma}`,
         substitution: `(${formatMathNumber(values.observation)} − ${formatMathNumber(values.mean)}) / ${formatMathNumber(values.sigma)}`,
         steps: [
           `Residual x−μ = ${formatMathNumber(residual)} m.`,
@@ -669,6 +679,7 @@ const definitions = {
       const distance = Math.hypot(dx, dy);
       return {
         formula: "d = √((x₂−x₁)² + (y₂−y₁)²)",
+        formulaLatex: String.raw`d=\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}`,
         substitution: `√((${formatMathNumber(values.goalX)}−${formatMathNumber(startX)})² + (${formatMathNumber(values.goalY)}−${formatMathNumber(startY)})²)`,
         steps: [
           `Coordinate difference Δx = ${formatMathNumber(dx)} m.`,
@@ -707,6 +718,7 @@ const definitions = {
       const maxElements = 32 * 8 * 512 * 512;
       return {
         formula: "elements = B×C×H×W; float32 MB = elements×4/1,000,000",
+        formulaLatex: String.raw`\begin{aligned}N_{\mathrm{elements}} &= B C H W \\ \mathrm{MB}_{\mathrm{float32}} &= \frac{4N_{\mathrm{elements}}}{1{,}000{,}000}\end{aligned}`,
         substitution: `${formatMathNumber(values.batch)}×${formatMathNumber(values.channels)}×${formatMathNumber(values.side)}×${formatMathNumber(values.side)}`,
         steps: [
           `One image has ${formatMathNumber(values.channels * values.side * values.side)} channel values.`,
@@ -757,6 +769,7 @@ const definitions = {
       ];
       return {
         formula: "samples = sample rate × duration; sample period = 1/rate",
+        formulaLatex: String.raw`\begin{aligned}N_{\mathrm{samples}} &= f_s t \\ T_s &= \frac{1}{f_s}\end{aligned}`,
         substitution: `${formatMathNumber(values.rate)} Hz × ${formatMathNumber(values.duration)} s`,
         steps: [
           `Expected aligned samples = ${formatMathNumber(samples)}.`,
@@ -797,6 +810,7 @@ const definitions = {
       const reference = Math.max(horizon, 1);
       return {
         formula: "chunk horizon = actions per chunk / control rate",
+        formulaLatex: String.raw`t_{\mathrm{horizon}}=\frac{N_{\mathrm{actions}}}{f_{\mathrm{control}}}`,
         substitution: `${formatMathNumber(values.chunk)} actions / ${formatMathNumber(values.rate)} Hz`,
         steps: [
           `One command interval is ${formatMathNumber(actionPeriod * 1_000, 1)} ms.`,
@@ -842,6 +856,7 @@ const definitions = {
       const stopDistance = reactionDistance + brakingDistance;
       return {
         formula: "stop distance = v·tᵣ + v²/(2a)",
+        formulaLatex: String.raw`d_{\mathrm{stop}}=v t_r+\frac{v^2}{2a}`,
         substitution: `${formatMathNumber(values.speed)}×${formatMathNumber(values.reaction)} + ${formatMathNumber(values.speed)}²/(2×${formatMathNumber(values.deceleration)})`,
         steps: [
           `Reaction travel = v·tᵣ = ${formatMathNumber(reactionDistance)} m.`,
@@ -883,6 +898,7 @@ const definitions = {
       const power = values.voltage * values.current;
       return {
         formula: "electrical power P = voltage V × current I",
+        formulaLatex: String.raw`P=V I`,
         substitution: `${formatMathNumber(values.voltage)} V × ${formatMathNumber(values.current)} A`,
         steps: [
           `The supply provides ${formatMathNumber(values.voltage)} joules per coulomb.`,
@@ -919,6 +935,7 @@ const definitions = {
       const rate = values.successes / values.trials * 100;
       return {
         formula: "observed success rate = successful trials / all frozen trials",
+        formulaLatex: String.raw`\hat p=\frac{S}{N}`,
         substitution: `${formatMathNumber(values.successes)} / ${formatMathNumber(values.trials)}`,
         steps: [
           `Keep all ${formatMathNumber(values.trials)} frozen trials in the denominator.`,
@@ -1040,6 +1057,7 @@ export function validateInteractiveMathDefinitions(
     const evaluation = model.evaluation;
     if (
       !evaluation.formula.trim() ||
+      !evaluation.formulaLatex.trim() ||
       !evaluation.substitution.trim() ||
       evaluation.steps.length !== 3 ||
       evaluation.steps.some((step) => !step.trim()) ||

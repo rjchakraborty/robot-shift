@@ -3,6 +3,7 @@ import type { TopicDetail } from "./topic-detail-types";
 function detail(
   core: string,
   mathConnection: string,
+  mathMarkdown: string,
   title: string,
   explanation: string,
   tryIt: string,
@@ -12,6 +13,7 @@ function detail(
   return {
     core,
     mathConnection,
+    mathMarkdown,
     example: { title, explanation, tryIt },
     quiz: { question, answer },
   };
@@ -21,6 +23,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   11: detail(
     "A joint constrains relative motion between links; each independent joint coordinate contributes a degree of freedom, and all coordinates together form configuration space.",
     "A planar arm with two revolute joints has q=(θ₁,θ₂), so two independently chosen angles mean 2 DOF; q=(0°,90°) in the week’s two-link formula gives tip (1,1) m for unit links, but that workspace point does not describe configuration-space limits, topology, or collisions.",
+    "The configuration is the pair of joint angles: $$q=(\\theta_1,\\theta_2),\\qquad \\operatorname{DOF}=2$$ For unit links at $q=(0^\\circ,90^\\circ)$, forward kinematics gives the tool position $p=(1,1)\\ \\mathrm{m}$.",
     "Cardboard two-joint arm",
     "Two pinned cardboard links need two angles to describe their shape, even when different angle pairs place the tip at the same point.",
     "Pin two strips safely with paper fasteners, mark both angles, and find two shapes that place the tip near one target.",
@@ -30,6 +33,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   12: detail(
     "Forward kinematics deterministically maps known joint values and link geometry to the end-effector pose.",
     "For l₁=l₂=1 m, θ₁=0°, θ₂=90°, x=1cos0+1cos90=1 m and y=1sin0+1sin90=1 m; this is the week’s formula used directly, but a complete serial-arm pose also needs orientation, frame conventions, and every joint transform.",
+    "For a planar two-link arm, $$x=l_1\\cos\\theta_1+l_2\\cos(\\theta_1+\\theta_2),\\qquad y=l_1\\sin\\theta_1+l_2\\sin(\\theta_1+\\theta_2)$$ With $l_1=l_2=1\\ \\mathrm{m}$ and $(\\theta_1,\\theta_2)=(0^\\circ,90^\\circ)$, the result is $(x,y)=(1,1)\\ \\mathrm{m}$.",
     "Desk-lamp prediction",
     "A hinged lamp is a serial chain: its segment lengths and hinge angles determine where the bulb ends up.",
     "Measure two lamp segments with power disconnected, sketch a safe pose, and compare a hand calculation with the measured tip location.",
@@ -39,6 +43,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   13: detail(
     "A Jacobian locally relates small joint-rate changes to end-effector velocity; numerical inverse kinematics repeatedly uses that local relationship to reduce pose error.",
     "Near θ₁=θ₂=0 for unit links, increasing θ₂ by Δθ=0.01 rad changes y from 0 to about sin0.01≈0.01 m, so ∂y/∂θ₂≈0.01/0.01=1 m/rad; this finite difference comes from the week’s forward-kinematics formula, but one local derivative does not guarantee global IK convergence.",
+    "Estimate one Jacobian entry with a finite difference: $$\\frac{\\partial y}{\\partial\\theta_2}\\approx\\frac{\\Delta y}{\\Delta\\theta_2}=\\frac{0.01\\ \\mathrm{m}}{0.01\\ \\mathrm{rad}}=1\\ \\mathrm{m/rad}$$ This is a local slope near the chosen configuration, not a global convergence guarantee.",
     "Small elbow nudge",
     "A tiny elbow rotation moves the hand approximately along a local direction predicted by one Jacobian column.",
     "In a browser arm simulation, change one joint by 0.01 rad, record tip displacement, and divide by 0.01 without moving physical hardware.",
@@ -48,6 +53,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   14: detail(
     "A trustworthy two-link solver shows convergence, respects joint limits, identifies unreachable targets, and records residual error rather than displaying only successful poses.",
     "With unit links, target (3,0) m is unreachable because maximum reach is l₁+l₂=2 m; for target (1,1) and solution (0°,90°), the week’s formula predicts exactly (1,1), giving residual ||target-prediction||=0 m, but zero position error alone does not prove collision safety.",
+    "The outer reach limit is $$r_{\\max}=l_1+l_2=2\\ \\mathrm{m}$$ so a target at $(3,0)\\ \\mathrm{m}$ is unreachable. For the reachable target, the position residual is $$e_p=\\lVert p_{\\text{target}}-p_{\\text{predicted}}\\rVert=0\\ \\mathrm{m}.$$",
     "Reachable circles",
     "A two-link arm can reach only points between its folded and fully extended radii, subject to joint limits.",
     "Draw circles of radii |l₁-l₂| and l₁+l₂ on paper; classify five target points before testing them in simulation.",
@@ -57,6 +63,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   15: detail(
     "Position says where, velocity says how fast position changes, acceleration says how fast velocity changes, force pushes linearly, and torque twists around an axis.",
     "Moving from x=1 m to 3 m in 2 s gives average v=(3-1)/2=1 m/s; changing from 1 to 3 m/s in 1 s gives a=2 m/s², while τ=F·r means a 5 N perpendicular force at 0.2 m gives 1 N·m—the week’s PID formula may command motion from error but does not define these physical quantities.",
+    "Keep each physical quantity and unit distinct: $$\\bar v=\\frac{3-1}{2}=1\\ \\mathrm{m/s},\\qquad a=\\frac{3-1}{1}=2\\ \\mathrm{m/s^2},\\qquad \\tau=Fr=5(0.2)=1\\ \\mathrm{N\\,m}$$",
     "Toy-car motion table",
     "Timed positions of a toy car can be converted into velocity and then acceleration without powering any actuator.",
     "Roll a toy car by hand, mark position every second, and calculate interval velocities with units.",
@@ -66,6 +73,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   16: detail(
     "Mass resists linear acceleration, inertia resists angular acceleration, friction opposes motion, and actuator limits cap the force, torque, speed, or current available.",
     "For rotational dynamics τ=Iα, I=0.5 kg·m² and requested α=4 rad/s² need τ=2 N·m; a 1.2 N·m actuator must saturate, so the motion cannot follow the request—the week’s PID formula can produce u, but dynamics and limits decide the resulting motion.",
+    "Rotational dynamics gives $$\\tau=I\\alpha=(0.5\\ \\mathrm{kg\\,m^2})(4\\ \\mathrm{rad/s^2})=2\\ \\mathrm{N\\,m}$$ Because $2\\ \\mathrm{N\\,m}>1.2\\ \\mathrm{N\\,m}$, the actuator cannot supply the requested torque.",
     "Door inertia comparison",
     "The same push turns a light narrow door more easily than a heavy door because their rotational inertias differ.",
     "With no powered mechanism, push two safe doors gently at equal handle distance and describe the qualitative acceleration and friction differences.",
@@ -75,6 +83,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   17: detail(
     "Open-loop control sends a planned command without measuring the result; closed-loop control measures output, computes error, and corrects repeatedly.",
     "For target 10 cm and measured 8 cm, closed-loop error is e=10-8=2 cm and a P-only rule with Kp=0.5 command/cm gives u=1 command unit; the week’s PID equation formalizes feedback, whereas open loop has no measured e to correct disturbances.",
+    "Closed-loop control first computes error, then a command: $$e=r-y=10-8=2\\ \\mathrm{cm},\\qquad u=K_p e=(0.5\\ \\mathrm{command/cm})(2\\ \\mathrm{cm})=1\\ \\mathrm{command}$$",
     "Blind versus observed placement",
     "Placing a block with eyes closed resembles open loop; looking after each small move adds feedback.",
     "Move a paper token toward a mark once with eyes closed and once with visual corrections; measure final error.",
@@ -84,6 +93,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   18: detail(
     "PID combines present error, accumulated past error, and the rate of error change; tuning must start with correct sign, units, sampling, and bounded output.",
     "With Kp=2, Ki=0, Kd=0.5, e=3, e_prev=2, and Δt=0.1 s, u=2·3+0+0.5(3-2)/0.1=11 before clamping; this directly uses the week’s formula, but one arithmetic step does not prove stable tuning.",
+    "A discrete PID step is $$u=K_p e+K_i\\sum e\\,\\Delta t+K_d\\frac{e-e_{\\text{prev}}}{\\Delta t}$$ Here, $$u=2(3)+0+0.5\\frac{3-2}{0.1}=11$$ before output clamping.",
     "Simulated temperature controller",
     "A slow virtual heater makes P, I, and D effects visible without risking a real actuator.",
     "In a simulation, begin with P only, plot target, measurement, error, and command, then change one gain at a time.",
@@ -93,6 +103,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   19: detail(
     "Sampling rate, delay, and sensor noise change what a feedback controller sees; a mathematically correct controller can become noisy or unstable when timing is wrong.",
     "At f=20 Hz, Δt=1/f=0.05 s; a noise jump of only 0.02 error units creates derivative estimate 0.02/0.05=0.4 units/s, and a 100 ms delay spans two samples—the week’s PID derivative uses Δt, but its equation alone is not a stability proof.",
+    "The sampling period is $$\\Delta t=\\frac{1}{f}=\\frac{1}{20}=0.05\\ \\mathrm{s}.$$ A noise jump of $0.02$ error units produces the derivative estimate $$\\frac{\\Delta e}{\\Delta t}=\\frac{0.02}{0.05}=0.4\\ \\mathrm{units/s}.$$",
     "Delayed shower correction",
     "Turning a shower tap again before delayed water arrives causes overcorrection, like control latency.",
     "Use a spreadsheet or simulation to delay measurements by 0, 1, then 2 samples and compare the same P-controller response.",
@@ -102,6 +113,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   20: detail(
     "Saturation clamps commands to safe achievable limits; anti-windup prevents the integral state from growing while the actuator cannot deliver the requested command.",
     "If PID requests u=11 but the safe range is [-5,5], u_safe=clamp(11)=5; with e=3 and Δt=0.1, blindly adding eΔt adds 0.3 to the integral despite saturation—the week’s PID formula needs explicit clamping and an anti-windup rule.",
+    "Clamp the requested command to the actuator range: $$u_{\\text{safe}}=\\operatorname{clamp}(11,-5,5)=5.$$ Without anti-windup, this saturated step still adds $$\\Delta I=e\\,\\Delta t=3(0.1)=0.3$$ to the integral state.",
     "Elevator button held down",
     "Continuing to demand more after an actuator reaches its limit resembles storing useless integral error.",
     "In simulation only, clamp a controller output and compare recovery with integral accumulation enabled versus paused during saturation.",
@@ -111,6 +123,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   21: detail(
     "A controller report must connect fixed test conditions to plots and metrics such as rise time, overshoot, settling time, steady-state error, saturation, and repeatability.",
     "For a 10-unit target and 12-unit peak, overshoot=(12-10)/10×100%=20%; if error remains within ±0.2 after 3.4 s, settling time is 3.4 s—the week’s PID formula explains each command, but trial metrics judge the full response.",
+    "Percent overshoot is $$M_p=\\frac{y_{\\text{peak}}-y_{\\text{target}}}{y_{\\text{target}}}\\times100\\%=\\frac{12-10}{10}\\times100\\%=20\\%.$$ If the response remains inside the declared $\\pm0.2$ band after $3.4\\ \\mathrm{s}$, then $t_s=3.4\\ \\mathrm{s}$.",
     "Plot before judging",
     "Two controllers can reach the same target while one oscillates, saturates, or settles much more slowly.",
     "Run a fixed simulated step input three times, plot target/measurement/command, and calculate peak overshoot plus settling time.",
@@ -120,6 +133,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   22: detail(
     "RAII binds resource acquisition and release to object lifetime; ownership says who destroys an object, references express non-ownership, and smart-pointer choice must match that lifetime.",
     "A simple lifetime check is resources leaked=acquired-released: one opened handle minus one destructor close equals 0; the week’s B≥r·t formula can size a queue owned by the object, but it cannot prove correct ownership or cleanup.",
+    "For the one-handle example, the leak count is $$N_{\\text{leaked}}=N_{\\text{acquired}}-N_{\\text{released}}=1-1=0.$$ This arithmetic is evidence for that test path, while RAII defines which lifetime performs the release.",
     "Scoped file handle",
     "A file wrapper that closes on leaving scope behaves predictably on normal return and exceptions.",
     "Write a tiny C++ scope that owns a temporary file handle, exit through two code paths, and verify one close per open without touching hardware.",
@@ -129,6 +143,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   23: detail(
     "Small value types carry data, units, and invariants; interfaces expose only required behavior; dependency boundaries keep hardware, policy, and tests replaceable.",
     "A typed Rate{100 Hz} and Duration{0.20 s} give B≥r·t=20 samples, while accidentally treating 200 ms as 200 s would give 20,000; the week’s queue formula exposes the unit error, but interface design prevents such invalid values from crossing boundaries.",
+    "With compatible units, queue capacity is $$B\\ge r t=(100\\ \\mathrm{s^{-1}})(0.20\\ \\mathrm{s})=20\\ \\mathrm{samples}.$$ Because $200\\ \\mathrm{ms}=0.20\\ \\mathrm{s}$, treating it as $200\\ \\mathrm{s}$ creates the incorrect result $B=20{,}000$.",
     "Typed measuring cups",
     "A clearly labelled cup prevents millilitres from being mistaken for litres, like a unit-aware value type.",
     "Define separate C++ structs for Hertz and Seconds, compute capacity through one interface, and show that raw interchangeable doubles are no longer accepted.",
@@ -138,6 +153,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   24: detail(
     "Modern CMake should describe target-level dependencies, usage requirements, and reproducible build inputs rather than rely on global include paths or machine state.",
     "For dependency graph app→controller→sensor, three targets and two directed edges form an acyclic build order; a test configuration of r=50/s and t=0.1 s expects B≥5 in every clean build—the week’s formula supplies one invariant, not reproducibility by itself.",
+    "The test invariant is $$B\\ge r t=(50\\ \\mathrm{s^{-1}})(0.1\\ \\mathrm{s})=5\\ \\mathrm{items}.$$ The build graph has $3$ targets and $2$ directed dependency edges; it must remain acyclic.",
     "Recipe with named ingredients",
     "A target declares exactly which libraries and headers it needs, like a recipe naming ingredients instead of using an unknown shared cupboard.",
     "Create library targets sensor and controller plus one executable, build from two clean directories, and run the same capacity test.",
@@ -147,6 +163,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   25: detail(
     "Concurrent robot processes need bounded queues, explicit timing, cooperative cancellation, and a defined overload policy so shutdown and latency remain predictable.",
     "At input rate r=100 messages/s and tolerated stall t=0.20 s, B≥r·t=20 messages; if cancellation must finish within 50 ms, measure stop-request-to-join time≤0.05 s—the week’s formula sizes backlog but does not guarantee thread safety or prompt cancellation.",
+    "Size the queue for the tolerated stall: $$B\\ge r t=(100\\ \\mathrm{messages/s})(0.20\\ \\mathrm{s})=20\\ \\mathrm{messages}.$$ The separate cancellation requirement is $$t_{\\text{join}}-t_{\\text{stop request}}\\le0.05\\ \\mathrm{s}.$$",
     "Checkout line with closing time",
     "A bounded checkout line needs a rule for overflow and a way to stop accepting work before the worker closes.",
     "Implement a 20-item in-memory queue, inject 21 items in a test, and verify the documented drop/block policy plus bounded cancellation.",
@@ -156,6 +173,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   26: detail(
     "Binary protocols require fixed field meaning, byte order, size validation, and bounded buffers before parsing untrusted or corrupted input.",
     "At 100 messages/s, 0.20 s stall, and 32 bytes/message, item capacity is B≥100·0.20=20 and byte storage is 20·32=640 bytes; the week’s formula sizes items, while serialization rules separately define those 32 bytes and reject shorter or oversized frames.",
+    "First size the item queue, then convert it to bytes: $$B\\ge(100\\ \\mathrm{messages/s})(0.20\\ \\mathrm{s})=20\\ \\mathrm{messages},\\qquad S=20(32\\ \\mathrm{bytes})=640\\ \\mathrm{bytes}.$$",
     "Sealed parcel labels",
     "A binary message resembles a parcel whose fixed label says version, length, and contents before it is opened.",
     "Encode a small version/length/value message, flip its declared length, and verify the decoder rejects it before reading beyond the buffer.",
@@ -165,6 +183,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   27: detail(
     "Unit tests check behavior, sanitizers expose memory and concurrency defects, profiling measures bottlenecks, and failure injection proves error paths before deployment.",
     "With B=20 from r=100/s and t=0.20 s, injecting the 21st queued message is a precise boundary test; require observed overflows=1 and sanitizer findings=0—the week’s formula supplies the boundary oracle, not proof against every bug.",
+    "The queue boundary is $$B=r t=(100\\ \\mathrm{s^{-1}})(0.20\\ \\mathrm{s})=20.$$ Injecting message $B+1=21$ should produce the declared overflow result, with test targets $$N_{\\text{overflow}}=1,\\qquad N_{\\text{sanitizer findings}}=0.$$",
     "Break the spare copy",
     "Failure injection deliberately damages a test input, not a live robot, so the recovery path becomes normal verified behavior.",
     "Run the pipeline with a corrupted packet and a full queue under sanitizers; record expected error, actual error, and shutdown time.",
@@ -174,6 +193,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   28: detail(
     "Shipping the control-pipeline repository means another person can build, test, replay, overload, cancel, and understand it from committed instructions and evidence.",
     "If measured r=80/s and worst accepted stall t=0.25 s, document B≥80·0.25=20 items and demonstrate 20 accepted versus the defined result at 21; the week’s formula is one release invariant, while reproducible build, logs, tests, and replay prove the wider system.",
+    "Document the release invariant with its measured inputs: $$B\\ge r t=(80\\ \\mathrm{s^{-1}})(0.25\\ \\mathrm{s})=20\\ \\mathrm{items}.$$ The acceptance check compares behavior at $B=20$ with the documented overload behavior at $B+1=21$.",
     "Fresh-clone rehearsal",
     "A project is not shipped until it works outside the author’s already-configured directory.",
     "Use a clean temporary checkout, follow only the README, run tests and one deterministic replay, then record any missing step and fix the documentation.",
@@ -183,6 +203,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   29: detail(
     "A ROS 2 workspace contains packages; packages provide executables and interfaces; running nodes and their typed connections form the live ROS graph.",
     "A 20 Hz telemetry timer has T=1/f=1/20=0.05 s; in a graph with telemetry→watchdog and command→actuator there are four named nodes and two topic edges—the week’s rate formula checks cadence, while graph inspection checks which processes and connections actually exist.",
+    "A $20\\ \\mathrm{Hz}$ timer has period $$T=\\frac{1}{f}=\\frac{1}{20}=0.05\\ \\mathrm{s}=50\\ \\mathrm{ms}.$$ The example ROS graph contains $4$ nodes and $2$ directed topic edges; cadence and topology are separate checks.",
     "Paper ROS graph",
     "Nodes are workers and topic arrows are named one-way data routes, not direct function calls.",
     "Draw three node boxes and their topics, then run equivalent harmless string/number nodes and compare the live graph with the drawing.",
@@ -192,6 +213,7 @@ export const topicDetails1d: Record<number, TopicDetail> = {
   30: detail(
     "A topic streams typed messages from publishers to subscribers; good message design names meaning, units, frame, timestamp, and validity rather than exposing internal objects.",
     "At f=20 Hz, T=1/f=50 ms; a 64-byte message produces 64·20=1,280 bytes/s before middleware overhead—the week’s formula checks publish cadence, while schema semantics and QoS determine whether subscribers can use the data correctly.",
+    "For $f=20\\ \\mathrm{Hz}$, $$T=\\frac{1}{f}=0.05\\ \\mathrm{s}=50\\ \\mathrm{ms}.$$ A $64$-byte payload at that rate produces $$R=64\\times20=1{,}280\\ \\mathrm{bytes/s}$$ before middleware overhead.",
     "Digital radio channel",
     "A publisher broadcasts a named message stream and multiple subscribers can listen without sending a reply.",
     "Publish a timestamped simulated temperature value, subscribe from two nodes, and verify approximately 50 ms spacing plus declared °C units.",

@@ -3,6 +3,7 @@ import type { TopicDetail } from "./topic-detail-types";
 function detail(
   core: string,
   mathConnection: string,
+  mathMarkdown: string,
   title: string,
   explanation: string,
   tryIt: string,
@@ -12,6 +13,7 @@ function detail(
   return {
     core,
     mathConnection,
+    mathMarkdown,
     example: { title, explanation, tryIt },
     quiz: { question, answer },
   };
@@ -21,6 +23,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   1: detail(
     "A vector records direction and size, a dot product measures alignment, and a norm measures length; every component and result needs a physical unit.",
     "For v=(3,4) m, ||v||=√(3²+4²)=5 m; for a=(1,0) and b=(0,2), a·b=0, so they are perpendicular—the week’s norm formula measures size, while the dot product answers a different question.",
+    "For $\\mathbf v=(3,4)\\,\\mathrm{m}$, its length is $$\\lVert\\mathbf v\\rVert=\\sqrt{3^2+4^2}=5\\,\\mathrm{m}.$$ For $\\mathbf a=(1,0)$ and $\\mathbf b=(0,2)$, $\\mathbf a\\cdot\\mathbf b=0$, so the nonzero vectors are perpendicular. The norm measures size; the dot product measures alignment.",
     "Tape-measure vector",
     "A 3 m east and 4 m north displacement is one arrow from start to finish, not 7 m of straight-line displacement.",
     "On graph paper, draw the two legs and the direct arrow; calculate 5 m, then check it with a ruler scale.",
@@ -30,6 +33,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   2: detail(
     "A matrix becomes useful in robotics when it acts on a vector to rotate, scale, reflect, or otherwise transform it; its row and column meaning must be explicit.",
     "The 90° rotation R=[[0,-1],[1,0]] gives R(2,0)=(0,2); both vectors have ||v||=2, so the week’s norm formula checks that this pure rotation preserved length, but norm alone cannot prove the direction is correct.",
+    "A $90^\\circ$ counterclockwise rotation is $$R=\\begin{bmatrix}0&-1\\\\1&0\\end{bmatrix},\\qquad R\\begin{bmatrix}2\\\\0\\end{bmatrix}=\\begin{bmatrix}0\\\\2\\end{bmatrix}.$$ Both vectors have norm $2$, so length is preserved. Equal norms alone do not prove that the direction is correct.",
     "Rotate an arrow",
     "Turning a phone a quarter-turn changes where its screen-right arrow points in the room, just as a rotation matrix changes vector components.",
     "Draw (2,0), multiply it by R on paper, then rotate the paper 90° and compare the predicted arrow.",
@@ -39,6 +43,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   3: detail(
     "Coordinates describe a vector in a named basis; changing basis changes the numbers without changing the physical arrow.",
     "If frame B is rotated 90° counterclockwise from A, the basis matrix R_AB=[[0,-1],[1,0]] converts (1,0)_B to R_AB(1,0)=(0,1)_A; both have norm 1, so the week’s norm formula checks physical length while the basis multiplication performs the conversion.",
+    "If frame $B$ is rotated $90^\\circ$ counterclockwise from frame $A$, then $$R_{AB}=\\begin{bmatrix}0&-1\\\\1&0\\end{bmatrix},\\qquad {}^{A}\\mathbf v=R_{AB}\\,{}^{B}\\mathbf v=R_{AB}\\begin{bmatrix}1\\\\0\\end{bmatrix}=\\begin{bmatrix}0\\\\1\\end{bmatrix}.$$ Both coordinate vectors have norm $1$; the matrix changes the basis description, not the physical arrow.",
     "Two rotated maps",
     "Two people can describe the same hallway direction with different coordinate pairs when their maps face different ways.",
     "Rotate one sheet 90°, draw its +x arrow, and express that same physical arrow in the unrotated sheet’s axes.",
@@ -48,6 +53,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   4: detail(
     "A 2D homogeneous transform combines rotation and translation in one 3×3 matrix so a point can be moved between poses with one multiplication.",
     "With R=90°, translation t=(2,1), T=[[0,-1,2],[1,0,1],[0,0,1]] maps homogeneous point (1,0,1) to (2,2,1); the week’s norm formula confirms the rotated local offset still has length 1, but the final point’s distance from the origin also includes translation.",
+    "With a $90^\\circ$ rotation and translation $\\mathbf t=(2,1)$, $$T=\\begin{bmatrix}0&-1&2\\\\1&0&1\\\\0&0&1\\end{bmatrix},\\qquad T\\begin{bmatrix}1\\\\0\\\\1\\end{bmatrix}=\\begin{bmatrix}2\\\\2\\\\1\\end{bmatrix}.$$ Rotation preserves the local offset’s length of $1$; translation also changes the point’s final distance from the origin.",
     "Book on a tray",
     "Rotating a tray and then carrying it changes a book’s room position through both orientation and translation.",
     "Mark a point 1 cm along the tray’s x-axis, rotate the tray 90°, shift its origin 2 cm right and 1 cm up, and verify the point lands at (2,2).",
@@ -57,6 +63,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   5: detail(
     "A frame tree relates distant frames by composing every parent-to-child transform along one ordered path; reversing or reordering that path changes the answer.",
     "For aligned frames, T_map_base=translate(2.0 m) and T_base_camera=translate(0.3 m) compose to T_map_camera=translate(2.3 m); ||(2.3,0)||=2.3 m checks the final displacement, but the week’s norm formula cannot detect a wrong transform order when lengths happen to match.",
+    "For aligned frames, $$T_{\\mathrm{map,base}}=\\operatorname{Trans}_x(2.0\\,\\mathrm{m}),\\quad T_{\\mathrm{base,camera}}=\\operatorname{Trans}_x(0.3\\,\\mathrm{m}),$$ so $$T_{\\mathrm{map,camera}}=T_{\\mathrm{map,base}}T_{\\mathrm{base,camera}}=\\operatorname{Trans}_x(2.3\\,\\mathrm{m}).$$ The displacement norm is $2.3\\,\\mathrm{m}$, but a matching norm does not prove transform order is correct.",
     "Camera on a toy car",
     "The camera position in the room equals the room-to-car transform followed by the car-to-camera mounting transform.",
     "Place a toy car 20 cm from a wall and a paper camera 3 cm ahead of its centre; predict and measure the camera’s 23 cm position.",
@@ -66,6 +73,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   6: detail(
     "Right- and left-handed frames differ in axis orientation; a silent reflection can make rotations, cross products, and pose estimates point the wrong way.",
     "In a right-handed frame x×y=+z; flipping y gives x×(-y)=-z, even though ||y||=||-y||=1, so the week’s norm formula cannot expose handedness and an orientation rule such as the cross product or det(R)=+1 is required.",
+    "In a right-handed frame, $$\\mathbf x\\times\\mathbf y=+\\mathbf z.$$ Flipping the $y$-axis gives $\\mathbf x\\times(-\\mathbf y)=-\\mathbf z$, even though $\\lVert\\mathbf y\\rVert=\\lVert-\\mathbf y\\rVert=1$. Norms cannot reveal handedness; a proper rotation also requires $\\det(R)=+1$.",
     "Right-hand paper axes",
     "Paper x and y arrows determine whether the z direction points out of or into the page.",
     "Draw x right and y up, use the right-hand rule for z, then flip y and observe that z reverses while all axis lengths stay unchanged.",
@@ -75,6 +83,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   7: detail(
     "A frame visualizer is credible only when it predicts known poses, labels every frame and unit, and deliberately demonstrates at least one wrong assumption.",
     "If the predicted point is (3.00,4.00) m and the rendered point is (3.03,4.04) m, the error norm is √(0.03²+0.04²)=0.05 m; this uses the week’s norm formula as an acceptance metric, while separate tests must still verify frame names, handedness, and transform order.",
+    "For predicted point $\\mathbf p=(3.00,4.00)\\,\\mathrm{m}$ and rendered point $\\hat{\\mathbf p}=(3.03,4.04)\\,\\mathrm{m}$, $$\\lVert\\hat{\\mathbf p}-\\mathbf p\\rVert=\\sqrt{(0.03)^2+(0.04)^2}=0.05\\,\\mathrm{m}.$$ This is a positional acceptance metric; separate checks must still verify frame names, handedness, and transform order.",
     "Planted-frame test",
     "A visualizer should make a swapped parent-child transform visibly fail instead of merely drawing a plausible arrow.",
     "Save one correct scene, reverse one transform, and capture the changed pose plus the 5 cm-or-larger error you predicted.",
@@ -84,6 +93,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   8: detail(
     "SO(3) is the set of proper 3D rotation matrices: they preserve lengths and angles, satisfy RᵀR=I, and have determinant +1.",
     "Rz(90°) maps (1,0,0) to (0,1,0), and RᵀR=I with det(R)=1; the week’s two-link formula also uses sin and cos to orient links, but it computes one arm position rather than defining every valid SO(3) orientation.",
+    "A $90^\\circ$ rotation about $z$ satisfies $$R_z(90^\\circ)\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix}=\\begin{bmatrix}0\\\\1\\\\0\\end{bmatrix},\\qquad R^{\\mathsf T}R=I,\\qquad \\det(R)=1.$$ The two-link sine-and-cosine formula computes one arm position; these conditions define a proper $\\mathrm{SO}(3)$ rotation.",
     "Rotate a cardboard triad",
     "A rigid set of three perpendicular arrows turns together without changing arrow lengths or the angles between them.",
     "Make x, y, z arrows from cardboard, rotate the triad 90° about z, and record where each original basis arrow lands.",
@@ -93,6 +103,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   9: detail(
     "Euler angles are intuitive but can become singular; a unit quaternion represents the same 3D orientation without that coordinate singularity, although it must stay normalized.",
     "A 90° rotation about y has quaternion q=(cos45°,0,sin45°,0)≈(0.707,0,0.707,0) with ||q||=1; Euler pitch at 90° loses one independent axis, while the week’s two-link sin/cos formula uses planar joint angles and does not solve 3D orientation singularities.",
+    "A $90^\\circ$ rotation about $y$ can be written as $$q=(\\cos45^\\circ,0,\\sin45^\\circ,0)\\approx(0.707,0,0.707,0),\\qquad \\lVert q\\rVert=1.$$ Euler pitch at $90^\\circ$ loses one independent coordinate axis; a planar two-link sine-and-cosine formula does not resolve that 3D orientation singularity.",
     "Phone orientation coordinates",
     "Near a straight-up phone pose, different yaw/roll descriptions can become hard to distinguish even though the phone still has a valid orientation.",
     "Use a phone orientation viewer in a stationary position near 90° pitch; observe coordinate changes without commanding any robot motion.",
@@ -102,6 +113,7 @@ export const topicDetails1: Record<number, TopicDetail> = {
   10: detail(
     "SE(3) represents a rigid 3D pose with a proper 3×3 rotation and a 3D translation inside one 4×4 homogeneous transform.",
     "With identity rotation and t=(1,2,3) m, T maps point (0.5,0,0,1) to (1.5,2,3,1); the week’s two-link formula is a planar special case for tip position, while SE(3) also carries full 3D orientation and translation.",
+    "With identity rotation and translation $\\mathbf t=(1,2,3)\\,\\mathrm{m}$, $$T=\\begin{bmatrix}I&\\mathbf t\\\\\\mathbf 0^{\\mathsf T}&1\\end{bmatrix},\\qquad T\\begin{bmatrix}0.5\\\\0\\\\0\\\\1\\end{bmatrix}=\\begin{bmatrix}1.5\\\\2\\\\3\\\\1\\end{bmatrix}.$$ A planar two-link formula gives tip position only; an $\\mathrm{SE}(3)$ transform carries full 3D orientation and translation.",
     "Camera moved on a box",
     "A camera rigidly attached to a box changes both location and viewing direction when the box is moved and turned.",
     "Represent a 1 m translation with identity rotation, transform three paper points, then verify their pairwise distances stay unchanged.",

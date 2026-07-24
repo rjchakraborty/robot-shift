@@ -3,6 +3,7 @@ import type { TopicDetail } from "./topic-detail-types";
 function detail(
   core: string,
   mathConnection: string,
+  mathMarkdown: string,
   exampleTitle: string,
   explanation: string,
   tryIt: string,
@@ -12,6 +13,7 @@ function detail(
   return {
     core,
     mathConnection,
+    mathMarkdown,
     example: { title: exampleTitle, explanation, tryIt },
     quiz: { question, answer },
   };
@@ -21,6 +23,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   31: detail(
     "A service is a short request-response operation; an action owns a long-running goal with feedback, result, timeout, and cancellation. Cancellation is a protocol whose completion must be observed, not a button click.",
     "Cancellation latency is t_stopped−t_cancel: 1.28−1.20=0.08 s; at a 20 Hz feedback rate the week’s T=1/f=0.05 s, so an 80 ms stop spans about 1.6 feedback periods without guaranteeing safety.",
+    "Cancellation latency is $$t_{\\mathrm{stopped}}-t_{\\mathrm{cancel}}=1.28-1.20=0.08\\,\\mathrm{s}=80\\,\\mathrm{ms}.$$ At $f=20\\,\\mathrm{Hz}$, the feedback period is $T=1/f=0.05\\,\\mathrm{s}=50\\,\\mathrm{ms}$, so stopping takes about $80/50=1.6$ feedback periods. That timing measurement alone does not guarantee safety.",
     "Paper delivery action",
     "A card moves through accepted, running, cancel-requested, canceled, or succeeded states, while a status lookup is one short service.",
     "Walk a card through normal completion and mid-run cancellation; require an observed terminal state before reuse.",
@@ -30,6 +33,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   32: detail(
     "Parameters configure node behavior, launch files assemble processes and namespaces, and configuration files make an environment reproducible. Types, units, valid ranges, ownership, and precedence must be explicit.",
     "Override rule is effective=CLI??launch??file??default; for rates default 10, file 15, launch 20 Hz, effective f=20 Hz and T=1/f=50 ms. The period checks timing, not configuration correctness.",
+    "With precedence $\\mathrm{CLI}>\\mathrm{launch}>\\mathrm{file}>\\mathrm{default}$, the first defined value becomes effective. For default $10\\,\\mathrm{Hz}$, file $15\\,\\mathrm{Hz}$, and launch $20\\,\\mathrm{Hz}$, $$f_{\\mathrm{effective}}=20\\,\\mathrm{Hz},\\qquad T=\\frac{1}{f}=0.05\\,\\mathrm{s}=50\\,\\mathrm{ms}.$$ The period checks timing, not whether the configuration is semantically correct.",
     "Layered setting cards",
     "Four cards represent default, file, launch, and command-line values for one harmless update rate.",
     "Resolve three parameter stacks, then reject one value with the wrong type or an out-of-range rate.",
@@ -39,6 +43,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   33: detail(
     "QoS controls delivery behavior: reliability handles loss, durability controls late-join history, history/depth bound queues, and deadline states the expected arrival interval. Publishers and subscribers need compatible policies.",
     "At f=10 Hz, expected T=1/f=100 ms; an observed 150 ms gap misses a 120 ms deadline. Delivery rate=received/sent=96/100=96%, but that number alone does not choose reliable versus best-effort.",
+    "At $f=10\\,\\mathrm{Hz}$, $$T=\\frac{1}{f}=0.1\\,\\mathrm{s}=100\\,\\mathrm{ms}.$$ An observed $150\\,\\mathrm{ms}$ gap misses a $120\\,\\mathrm{ms}$ deadline. The delivery rate is $96/100=96\\%$, but delivery rate alone does not decide between reliable and best-effort QoS.",
     "Postcards and live radio",
     "A durable notice board serves late readers, while a live radio stream favors current data over replaying every old message.",
     "Assign QoS to a camera stream, emergency state, and static map, then explain every tradeoff without running hardware.",
@@ -48,6 +53,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   34: detail(
     "The ROS 2 CLI, structured logs, and rqt expose the live graph, interfaces, rates, timestamps, parameters, and errors. Inspect evidence before changing node code.",
     "Observed frequency is f=count/duration: 40 messages/2 s=20 Hz, so T=1/f=50 ms; this exact introspection check reveals rate trouble but not the cause.",
+    "Observed frequency is $$f=\\frac{\\text{message count}}{\\text{duration}}=\\frac{40}{2\\,\\mathrm{s}}=20\\,\\mathrm{Hz},$$ so $T=1/f=0.05\\,\\mathrm{s}=50\\,\\mathrm{ms}$. This introspection reveals a rate mismatch, not its underlying cause.",
     "Graph detective sheet",
     "A printed node-topic graph contains one missing connection and one wrong rate for a reviewer to find.",
     "Use a local or simulated ROS graph to list nodes, inspect one interface, measure rate, and correlate one log timestamp.",
@@ -57,6 +63,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   35: detail(
     "A multi-node watchdog receives heartbeats, tracks each component’s freshness, reports degradation, and commands only a predefined safe state through a trusted path when a timeout expires.",
     "Heartbeat age=now−last: 0.35−0.20=0.15 s; with f=10 Hz, T=100 ms, so a 120 ms timeout is exceeded. T sizes expectations, but timeout behavior still needs explicit state logic.",
+    "Heartbeat age is $$t_{\\mathrm{now}}-t_{\\mathrm{last}}=0.35-0.20=0.15\\,\\mathrm{s}=150\\,\\mathrm{ms}.$$ At $f=10\\,\\mathrm{Hz}$, $T=100\\,\\mathrm{ms}$; therefore a $120\\,\\mathrm{ms}$ timeout has been exceeded. The period sizes expectations, while explicit state logic defines the response.",
     "Three-node heartbeat board",
     "Telemetry, command, and watchdog cards exchange timestamp tokens until one sender stops and the watchdog marks it stale.",
     "Simulate normal, delayed, and missing heartbeats on paper or in ROS 2 simulation and verify bounded recovery.",
@@ -66,6 +73,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   36: detail(
     "URDF links are rigid bodies and joints define their allowed relationships. Visual geometry is for display, collision geometry for contact checks, and inertial mass and tensor for physics; they must not be confused.",
     "For aligned link offsets x_AC=x_AB+x_BC=1.2+0.3=1.5 m; total mass is 1.0+0.5=1.5 kg. Transform addition checks placement, not whether inertia or collision geometry is realistic.",
+    "For aligned link offsets, $$x_{AC}=x_{AB}+x_{BC}=1.2+0.3=1.5\\,\\mathrm{m}.$$ Total mass is $1.0+0.5=1.5\\,\\mathrm{kg}$. Offset addition checks placement; it does not validate inertia or collision geometry.",
     "Cardboard two-link arm",
     "Two rulers joined by a paper fastener represent links and a revolute joint, with separate outline cards for visual and collision shapes.",
     "Label parent, child, axis, limits, mass, and three geometry roles on the unpowered model.",
@@ -75,6 +83,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   37: detail(
     "Xacro turns repeated robot-description patterns into parameterized macros. Useful parameters expose real variations while generated URDF remains deterministic, reviewable, and uniquely named.",
     "Macro expansion can set tool pose x=base_offset+tool_length=1.2+0.3=1.5 m, the week’s aligned transform rule; instantiating two arms should create 2×3=6 uniquely named links, not duplicate IDs.",
+    "A macro can set $$x_{\\mathrm{tool}}=x_{\\mathrm{base\\ offset}}+l_{\\mathrm{tool}}=1.2+0.3=1.5\\,\\mathrm{m}.$$ If each arm contains $3$ links, two instances must create $2\\times3=6$ uniquely named links rather than duplicate identifiers.",
     "Reusable paper limb",
     "One template card with length and prefix fields produces left and right limb descriptions without copying the structure.",
     "Instantiate the template twice with different prefixes and lengths, then inspect the expanded names and offsets.",
@@ -84,6 +93,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   38: detail(
     "Static transforms describe fixed frame relationships; dynamic transforms change over time and carry timestamps. tf2 composes the unique tree path and can also invert it.",
     "For aligned frames x_AC=x_AB+x_BC=2.0+0.4=2.4 m; the reverse is x_CA=−2.4 m. This simple translation check does not replace full rotation-aware transform multiplication.",
+    "For aligned frames, $$x_{AC}=x_{AB}+x_{BC}=2.0+0.4=2.4\\,\\mathrm{m},\\qquad x_{CA}=-2.4\\,\\mathrm{m}.$$ This one-dimensional translation check does not replace full rotation-aware transform multiplication.",
     "Stacked frame rulers",
     "Map, base, and camera rulers show two fixed offsets while a rotating paper arm represents a dynamic edge.",
     "Compose and reverse three paper transforms, then identify which publisher owns each edge.",
@@ -93,6 +103,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   39: detail(
     "A transform lookup asks for a frame relationship at a specific time. It fails when frames are disconnected, data is too old or future-dated, publishers lag, clocks disagree, or the buffer lacks that interval.",
     "Time error is Δt=t_sensor−t_latest_tf: 10.15−10.00=0.15 s, exceeding a 0.10 s tolerance; even though x_AC=2.0+0.4=2.4 m spatially, that pose is not valid for the requested moment.",
+    "The time mismatch is $$\\Delta t=t_{\\mathrm{sensor}}-t_{\\mathrm{latest\\ tf}}=10.15-10.00=0.15\\,\\mathrm{s},$$ which exceeds the $0.10\\,\\mathrm{s}$ tolerance. Although $x_{AC}=2.0+0.4=2.4\\,\\mathrm{m}$ spatially, that transform is not valid at the requested time.",
     "Two-timeline cards",
     "Sensor and transform events on separate paper timelines reveal why frames can exist yet no time-valid path exists.",
     "Test past, current, and future lookup times in a simulation or draw them against a fixed buffer window.",
@@ -102,6 +113,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   40: detail(
     "RViz displays and markers make frame, sensor, path, collision, and state assumptions visible. Debug overlays should show expected versus observed data with frame and timestamp, not merely attractive graphics.",
     "Overlay error can be e=x_observed−x_expected=2.30−2.40=−0.10 m; expected x came from x_AC=2.0+0.4=2.4 m. The difference localizes a symptom but not its cause.",
+    "The overlay error is $$e=x_{\\mathrm{observed}}-x_{\\mathrm{expected}}=2.30-2.40=-0.10\\,\\mathrm{m},$$ where $x_{\\mathrm{expected}}=x_{AB}+x_{BC}=2.0+0.4=2.4\\,\\mathrm{m}$. This difference localizes a symptom, not its cause.",
     "Expected-versus-observed arrows",
     "Two colored paper arrows from the same origin make a 10 cm disagreement visible along with their frame labels.",
     "Add predicted and measured markers to a simulated scene, then deliberately swap a frame and describe the visual clue.",
@@ -111,6 +123,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   41: detail(
     "Joint-state messages provide named joint positions, velocities, efforts, and time. robot_state_publisher combines them with URDF geometry to publish the corresponding moving frame tree.",
     "For aligned links, a simple pose check is x_tool=1.0+0.5=1.5 m; freshness is age=now−stamp=0.08 s. The weekly transform sum is only a sanity check—rotating joints require full kinematics.",
+    "For aligned links, a simple pose check is $$x_{\\mathrm{tool}}=1.0+0.5=1.5\\,\\mathrm{m}.$$ Message freshness is $t_{\\mathrm{now}}-t_{\\mathrm{stamp}}=0.08\\,\\mathrm{s}$. The sum is only a sanity check; rotating joints require full kinematics.",
     "Joint-name matching",
     "Paper joint values must attach to the matching URDF names before downstream link poses can be drawn.",
     "Shuffle three joint-name/value cards, match them to a model, and reject a missing or duplicated name.",
@@ -120,6 +133,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   42: detail(
     "A transform audit checks topology, ownership, parent-child direction, units, axes, timestamps, and known-pose residuals. Repair one planted fault at a time and rerun the same assertions.",
     "Closure residual for inverse aligned transforms is r=x_AB+x_BA; 2.0+(−1.8)=0.2 m instead of 0. The week’s x_AC=x_AB+x_BC then helps trace which edge corrupts a known pose.",
+    "For inverse aligned transforms, the closure residual is $$r=x_{AB}+x_{BA}=2.0+(-1.8)=0.2\\,\\mathrm{m},$$ but a correct inverse pair should give $r=0$. The relation $x_{AC}=x_{AB}+x_{BC}$ then helps trace which edge corrupts a known pose.",
     "Three planted frame faults",
     "A paper tree contains one reversed edge, one centimetre/metre error, and one stale timestamp.",
     "Find each using topology, numeric, and time checks before revealing the answer key.",
@@ -129,6 +143,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   43: detail(
     "A simulator advances physics in timesteps; smaller steps can improve numerical behavior at greater compute cost. Real-time factor compares simulated elapsed time with wall time and must be logged.",
     "Steps per simulated second=1/Δt: Δt=0.002 s gives 500 steps; RTF=sim_time/wall_time=10/20=0.5. The week’s drive equations predict ideal motion but cannot correct unstable integration.",
+    "With simulation step $\\Delta t=0.002\\,\\mathrm{s}$, $$\\frac{1}{\\Delta t}=500\\ \\text{steps per simulated second}.$$ The real-time factor is $\\mathrm{RTF}=t_{\\mathrm{sim}}/t_{\\mathrm{wall}}=10/20=0.5$. Ideal drive equations cannot correct unstable numerical integration.",
     "Flip-book simulation",
     "A bouncing ball drawn with large versus small time increments shows how coarse updates can skip contact.",
     "Compare two safe simulated runs with fixed seed and different timesteps; record RTF and trajectory difference.",
@@ -138,6 +153,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   44: detail(
     "Differential drive uses the sum of wheel speeds for forward motion and their difference for turning. Wheel odometry integrates that motion, accumulating slip and calibration error over time.",
     "With r=0.1 m, L=0.5 m, ωR=6 and ωL=4 rad/s, v=0.5 m/s and Ω=0.4 rad/s; over Δt=2 s, ideal heading change ΩΔt=0.8 rad.",
+    "For wheel radius $r=0.1\\,\\mathrm{m}$, track width $L=0.5\\,\\mathrm{m}$, and wheel rates $\\omega_R=6$ and $\\omega_L=4\\,\\mathrm{rad/s}$, $$v=\\frac{r(\\omega_R+\\omega_L)}{2}=0.5\\,\\mathrm{m/s},\\qquad \\Omega=\\frac{r(\\omega_R-\\omega_L)}{L}=0.4\\,\\mathrm{rad/s}.$$ Over $\\Delta t=2\\,\\mathrm{s}$, the ideal heading change is $\\Omega\\Delta t=0.8\\,\\mathrm{rad}$.",
     "Two bottle-cap wheels",
     "Rolling both caps equally moves a cardboard base straight; moving one faster turns it.",
     "Mark wheel rotations on an unpowered cardboard base and predict straight, spin, and curved cases.",
@@ -147,6 +163,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   45: detail(
     "Lidar measures ranges by angle, cameras measure images, IMUs measure acceleration and angular rate, and encoders measure joint or wheel motion. Each stream has frame, rate, field of view, noise, and failure modes.",
     "At v=0.5 m/s from the drive formula, a 10 Hz camera period moves the robot v/f=0.05 m between frames; a 20 Hz encoder stream moves 0.025 m. These are sampling checks, not sensor-accuracy claims.",
+    "At $v=0.5\\,\\mathrm{m/s}$, distance traveled between samples is $d=v/f$. Thus $$d_{10\\,\\mathrm{Hz}}=\\frac{0.5}{10}=0.05\\,\\mathrm{m},\\qquad d_{20\\,\\mathrm{Hz}}=\\frac{0.5}{20}=0.025\\,\\mathrm{m}.$$ These are sampling-distance checks, not claims about sensor accuracy.",
     "Sensor-view cards",
     "A ruler fan, photo rectangle, tilt arrow, and wheel ticks show what each sensor can and cannot observe.",
     "Match four physical events to the sensors that can measure them and label frame, unit, and rate.",
@@ -156,6 +173,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   46: detail(
     "Sensor noise varies measurements, update rate limits temporal detail, and timestamp alignment determines whether different readings describe the same state. Filtering cannot repair unknown time offsets.",
     "For samples [1.00,1.02,0.98] m, mean=1.00 m and max deviation=0.02 m; at v=0.5 m/s, a 100 ms alignment error means 0.05 m motion. The drive formula supplies that motion estimate, not a noise model.",
+    "For samples $[1.00,1.02,0.98]\\,\\mathrm{m}$, $$\\bar x=\\frac{1.00+1.02+0.98}{3}=1.00\\,\\mathrm{m},\\qquad \\max|x_i-\\bar x|=0.02\\,\\mathrm{m}.$$ At $v=0.5\\,\\mathrm{m/s}$, a $100\\,\\mathrm{ms}=0.1\\,\\mathrm{s}$ alignment error corresponds to $v\\Delta t=0.05\\,\\mathrm{m}$ of motion. That motion estimate is not a noise model.",
     "Repeated ruler readings",
     "Several measurements of one fixed book show spread, while delayed labels show timing error.",
     "Measure one safe distance ten times, calculate mean and spread, then shift one timestamp by 100 ms on paper.",
@@ -165,6 +183,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   47: detail(
     "rosbag2 records timestamped topics and metadata for playback. Deterministic replay also freezes code, parameters, clock behavior, scenario, ordering assumptions, and randomness.",
     "Replay completeness=recorded required messages/expected: 980/1,000=98%; for wheel speeds 6 and 4 rad/s the drive model predicts v=0.5 m/s, giving a numeric trace assertion during replay.",
+    "Replay completeness is $$\\frac{N_{\\mathrm{recorded\\ required}}}{N_{\\mathrm{expected}}}=\\frac{980}{1000}=98\\%.$$ For wheel rates $6$ and $4\\,\\mathrm{rad/s}$ with the stated drive model, $v=0.5\\,\\mathrm{m/s}$ provides a separate numeric assertion during replay.",
     "Recorded event tape",
     "Numbered paper events replay in the same order while one missing event demonstrates why metadata matters.",
     "Record a short simulated bag, replay twice with fixed settings, and compare message counts and one derived motion value.",
@@ -174,6 +193,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   48: detail(
     "Health checks classify sensors as healthy, stale, degraded, or failed using freshness, plausibility, diagnostics, and cross-checks. Degraded behavior must be defined before failure.",
     "Freshness age=now−stamp: 0.25 s exceeds a 0.20 s limit; at v=0.5 m/s that stale interval represents 0.125 m travel. The drive equation quantifies exposure but does not choose the fallback.",
+    "A message age of $0.25\\,\\mathrm{s}$ exceeds the $0.20\\,\\mathrm{s}$ freshness limit. At $v=0.5\\,\\mathrm{m/s}$, the possible travel during that stale interval is $$d=v\\Delta t=0.5\\times0.25=0.125\\,\\mathrm{m}.$$ This quantifies exposure; it does not choose the safe fallback.",
     "Covered-sensor drill",
     "A paper cover over one mock sensor changes its health card while a safe state machine selects slow, stop, or alternate sensing.",
     "Inject stale, frozen, and impossible values in simulation and verify distinct logged responses.",
@@ -183,6 +203,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   49: detail(
     "A reproducible scenario fixes world, robot state, parameters, seed, commands, and acceptance criteria. Fault injection introduces one timed, named failure so detection and recovery are measurable.",
     "With r=0.1,L=0.5,ωR=ωL=4, expected v=0.4 m/s and Ω=0; injecting right-wheel zero gives v=0.2 m/s, Ω=−0.8 rad/s. Numeric expectations make the fixed fault auditable.",
+    "With $r=0.1\\,\\mathrm{m}$, $L=0.5\\,\\mathrm{m}$, and $\\omega_R=\\omega_L=4\\,\\mathrm{rad/s}$, the expected motion is $v=0.4\\,\\mathrm{m/s}$ and $\\Omega=0$. Setting only $\\omega_R=0$ gives $$v=\\frac{0.1(0+4)}{2}=0.2\\,\\mathrm{m/s},\\qquad \\Omega=\\frac{0.1(0-4)}{0.5}=-0.8\\,\\mathrm{rad/s}.$$ Fixed numeric expectations make the injected fault auditable.",
     "Frozen route with one fault",
     "A simulated robot follows the same route until a scheduled sensor freeze or wheel fault occurs.",
     "Run the same safe simulation twice with one fixed seed and confirm event time, detection latency, and outcome match.",
@@ -192,6 +213,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   50: detail(
     "Choose mobile navigation or arm manipulation from the job target, available simulator or hardware, safety, support, and whether one track can reach a complete measurable project; depth beats two unfinished stacks.",
     "Weighted score=Σw_i s_i: support 0.4×5 + job fit 0.4×4 + safety 0.2×5 =4.6/5. The week’s t=d/v then checks feasibility—for 6 m at 0.5 m/s, ideal time is 12 s.",
+    "The weighted score is $$\\sum_i w_i s_i=0.4(5)+0.4(4)+0.2(5)=4.6\\ \\text{out of }5.$$ Feasibility also uses $t=d/v$: for $d=6\\,\\mathrm{m}$ at $v=0.5\\,\\mathrm{m/s}$, $t=12\\,\\mathrm{s}$. Neither number proves that the capstone works.",
     "Track decision matrix",
     "Two columns compare one mobile and one arm project against frozen criteria rather than excitement.",
     "Score both tracks with documented evidence, then write the condition that would reverse the decision.",
@@ -201,6 +223,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   51: detail(
     "A map or costmap represents traversable and occupied space for a mobile base; a planning scene and collision objects represent geometry for an arm. Inflation or padding protects the robot body and uncertainty.",
     "Clearance c=distance−padding: 0.40−0.15=0.25 m usable; a 6 m detour at 0.5 m/s has t=d/v=12 s. Travel-time math compares plans but cannot validate collision geometry.",
+    "Usable clearance is $$c=d_{\\mathrm{obstacle}}-p=0.40-0.15=0.25\\,\\mathrm{m},$$ where $p$ is padding. A $6\\,\\mathrm{m}$ detour at $0.5\\,\\mathrm{m/s}$ takes $t=d/v=12\\,\\mathrm{s}$. Travel time compares plans; it does not validate collision geometry.",
     "Paper obstacle field",
     "A coin-sized robot footprint plus a drawn safety ring reveals paths a point robot would incorrectly accept.",
     "Inflate paper obstacles or pad a mock arm object, then compare the free path before and after.",
@@ -210,6 +233,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   52: detail(
     "The execution pipeline accepts a goal, builds or updates a world model, plans a route or motion, controls execution from live state, verifies progress, and returns a structured outcome.",
     "Pipeline latency=Σt_i: perception 0.2 s + planning 0.5 s + dispatch 0.1 s=0.8 s; path travel t=d/v=6/0.5=12 s, so ideal completion is at least 12.8 s before recovery margin.",
+    "Pipeline latency is $$\\sum_i t_i=0.2+0.5+0.1=0.8\\,\\mathrm{s}.$$ Path travel takes $t=d/v=6/0.5=12\\,\\mathrm{s}$, so ideal completion is at least $12.8\\,\\mathrm{s}$ before adding recovery margin.",
     "Goal-to-result cards",
     "Cards pass through planner, controller, monitor, and result stages, with one rejection path.",
     "Trace one simulated goal end to end and attach input, output, owner, timeout, and failure at each boundary.",
@@ -219,6 +243,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   53: detail(
     "A behavior tree coordinates navigation conditions, actions, and fallback branches; a manipulation pipeline sequences perception, grasp generation, collision-aware motion planning, execution, and verification.",
     "Stage success estimate for 0.9,0.8,0.95 is 0.9×0.8×0.95=68.4%; the weekly t=d/v separately estimates motion time, e.g. 2 m/0.5=4 s. Neither formula creates correct stages.",
+    "Using the stated stage-success estimate, $$0.9\\times0.8\\times0.95=0.684=68.4\\%.$$ Motion time is a separate quantity: for $d=2\\,\\mathrm{m}$ and $v=0.5\\,\\mathrm{m/s}$, $t=d/v=4\\,\\mathrm{s}$. Neither calculation creates correct stages.",
     "Branching task cards",
     "A blocked-path card triggers replan in a tree, while a bad-grasp card returns manipulation to grasp generation.",
     "Build one paper pipeline with a failure at each stage and verify no branch bypasses validation.",
@@ -228,6 +253,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   54: detail(
     "Timeout and cancellation bound execution; obstruction detection identifies lost progress; replanning uses fresh state and a retry budget rather than repeating the same invalid plan.",
     "Ideal time t=d/v=6/0.5=12 s, so a 5 s timeout is impossible; with a 1.5 margin, choose at least 18 s, then measure cancel latency separately.",
+    "Ideal travel time is $$t=\\frac{d}{v}=\\frac{6\\,\\mathrm{m}}{0.5\\,\\mathrm{m/s}}=12\\,\\mathrm{s}.$$ A $5\\,\\mathrm{s}$ timeout is therefore impossible. Applying the stated factor $1.5$ gives $1.5\\times12=18\\,\\mathrm{s}$; cancellation latency must still be measured separately.",
     "Blocked paper route",
     "A book placed on a drawn path forces a planner card to stop, update the map, and choose a new route or abort.",
     "Run nominal, blocked, timeout, and cancel cases in simulation with a maximum replan count.",
@@ -237,6 +263,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   55: detail(
     "Evaluation reports frozen trial success, path length, elapsed time, recovery count, interventions, and failure categories. Shortest is not best if it is unsafe or unreliable.",
     "Path efficiency=d_shortest/d_actual: 6/7.5=80%; ideal t=d/v=7.5/0.5=15 s, while observed 21 s exposes 6 s of planning, turning, or recovery overhead.",
+    "Path efficiency is $$\\frac{d_{\\mathrm{shortest}}}{d_{\\mathrm{actual}}}=\\frac{6}{7.5}=0.8=80\\%.$$ Ideal travel time is $7.5/0.5=15\\,\\mathrm{s}$; an observed $21\\,\\mathrm{s}$ run contains $6\\,\\mathrm{s}$ of planning, turning, or recovery overhead.",
     "Two route scorecards",
     "One route is shorter but fails near an obstacle; another is longer and consistently succeeds.",
     "Score ten saved simulated trials without removing failures, and report medians plus worst cases.",
@@ -246,6 +273,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   56: detail(
     "A resilient phase demo performs one complete simulated task, exposes state, handles obstruction and cancellation, recovers within a budget, and produces an uncut trace tied to fixed acceptance criteria.",
     "For a 6 m route at 0.5 m/s, t=d/v=12 s ideal; observed 16 s with one 3 s recovery leaves 1 s other overhead. The breakdown makes the demo measurable without claiming time alone proves resilience.",
+    "For $d=6\\,\\mathrm{m}$ at $v=0.5\\,\\mathrm{m/s}$, ideal travel time is $t=d/v=12\\,\\mathrm{s}$. An observed $16\\,\\mathrm{s}$ run with $3\\,\\mathrm{s}$ of recovery leaves $$16-12-3=1\\,\\mathrm{s}$$ of other overhead. Timing alone does not prove resilience.",
     "Uncut simulated mission",
     "A mobile robot or arm simulator runs nominal, obstruction, and cancel variants under the same visible state machine.",
     "Record one uncut run and link goal, plan, state changes, recovery, final verification, and exact remaining failure.",
@@ -255,6 +283,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   57: detail(
     "An image samples light into pixels; color spaces encode those samples for different tasks, and sensor, lighting, compression, and quantization add noise. Pixel values are measurements, not object truth.",
     "Simple grayscale Y≈0.299R+0.587G+0.114B: RGB(100,150,200) gives about 141; downstream detection with TP=8,FP=2,FN=4 has 80% precision and 66.7% recall, which do not measure image fidelity.",
+    "Using the stated grayscale approximation, $$Y\\approx0.299R+0.587G+0.114B,$$ so $\\mathrm{RGB}(100,150,200)$ gives $Y\\approx141$. For $TP=8$, $FP=2$, and $FN=4$, precision is $8/(8+2)=80\\%$ and recall is $8/(8+4)\\approx66.7\\%$. Those detection metrics do not measure image fidelity.",
     "Phone color patches",
     "The same colored paper looks numerically different under daylight, warm indoor light, and shadow.",
     "Photograph one safe color patch under three lights, inspect pixel values, and avoid using personal images.",
@@ -264,6 +293,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   58: detail(
     "Filtering suppresses or emphasizes image structure, edges mark rapid intensity change, contours connect boundaries, and morphology removes or fills small regions. Kernel choices encode assumptions and can erase real objects.",
     "A 3×3 filter uses 9 neighboring pixels; after processing, TP=18,FP=3,FN=2 gives precision=18/21≈85.7% and recall=18/20=90%. Metrics compare pipelines but do not choose the kernel.",
+    "A $3\\times3$ filter uses $9$ neighboring pixels. With $TP=18$, $FP=3$, and $FN=2$, $$\\mathrm{precision}=\\frac{18}{18+3}\\approx85.7\\%,\\qquad \\mathrm{recall}=\\frac{18}{18+2}=90\\%.$$ These metrics compare pipelines; they do not choose the filter kernel.",
     "Paper-shape vision",
     "A phone image of circles and rectangles with salt-like paper dots makes cleanup and contour failure visible.",
     "Run an OpenCV script on a non-sensitive tabletop image and compare raw, filtered, edge, and morphology outputs.",
@@ -273,6 +303,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   59: detail(
     "Camera intrinsics map 3D camera-frame rays to pixels; distortion bends that ideal mapping. Calibration estimates focal lengths, principal point, and distortion from varied known target poses.",
     "Pinhole u=f_xX/Z+c_x: with f_x=500 px,X=0.1 m,Z=1 m,c_x=320, u=370 px. Precision/recall can score target detection, but cannot measure calibration; use reprojection error, e.g. 0.6 px.",
+    "The pinhole projection is $$u=f_x\\frac{X}{Z}+c_x=500\\,\\mathrm{px}\\frac{0.1\\,\\mathrm{m}}{1\\,\\mathrm{m}}+320\\,\\mathrm{px}=370\\,\\mathrm{px}.$$ Precision and recall can score target detection, but calibration needs a quantity such as the stated $0.6\\,\\mathrm{px}$ reprojection error.",
     "Printed calibration target",
     "A flat checkerboard photographed at varied angles and positions provides known corner geometry without moving machinery.",
     "Calibrate from your own printed target, reserve images for validation, and inspect reprojection residuals across the frame.",
@@ -282,6 +313,7 @@ export const topicDetails1b: Record<number, TopicDetail> = {
   60: detail(
     "Fiducial markers provide distinctive IDs and known geometry for reliable detection and camera-relative pose, making them a strong engineering baseline before learned perception.",
     "Pose translation error can be |z_est−z_true|=|0.98−1.00|=0.02 m; with TP=19,FP=1,FN=1, precision=recall=95%. Detection metrics and pose error answer different questions.",
+    "Translation error along $z$ is $$|z_{\\mathrm{est}}-z_{\\mathrm{true}}|=|0.98-1.00|=0.02\\,\\mathrm{m}.$$ With $TP=19$, $FP=1$, and $FN=1$, precision and recall are both $19/20=95\\%$. Detection metrics and pose error answer different questions.",
     "Marker and ruler baseline",
     "A printed marker beside a ruler lets a phone-camera pipeline compare detected ID and estimated distance with a safe physical reference.",
     "Test several distances and tilts, log misses and pose error, and keep all work on a stationary tabletop.",

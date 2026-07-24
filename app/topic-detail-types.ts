@@ -1,6 +1,7 @@
 export type TopicDetail = {
   core: string;
   mathConnection: string;
+  mathMarkdown: string;
   example: {
     title: string;
     explanation: string;

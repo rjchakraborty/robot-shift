@@ -45,6 +45,7 @@ test("all 14 visual families and all 180 days have validated interactive math", 
     assert.equal(new Set(model.controls.map((item) => item.id)).size, model.controls.length);
     assert.equal(model.evaluation.steps.length, 3);
     assert.ok(model.evaluation.formula);
+    assert.ok(model.evaluation.formulaLatex);
     assert.ok(model.evaluation.substitution);
     assert.ok(model.evaluation.result);
     assert.ok(model.evaluation.metrics.length > 0);
