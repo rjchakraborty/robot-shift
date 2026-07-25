@@ -93,7 +93,8 @@
     "providers": {
       "emailPassword": true,
       "googleSignIn": {
-        "oAuthBrandDisplayName": "RobotShift"
+        "oAuthBrandDisplayName": "RobotShift",
+        "supportEmail": "rjchakraborty21@gmail.com"
       }
     }
   },

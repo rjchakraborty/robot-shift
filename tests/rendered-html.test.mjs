@@ -275,6 +275,16 @@ test("protects account-action codes and requires Firestore consent for performan
     /robotshift-tutor-gemini@robotshift\.iam\.gserviceaccount\.com/,
     "the release preflight must require the dedicated Gemini authorization identity",
   );
+  assert.equal(
+    config.auth.providers.googleSignIn.oAuthBrandDisplayName,
+    "RobotShift",
+    "the deployable Google OAuth brand must use the public RobotShift name",
+  );
+  assert.equal(
+    config.auth.providers.googleSignIn.supportEmail,
+    "rjchakraborty21@gmail.com",
+    "the deployable Google OAuth brand must include the approved support email",
+  );
   assert.match(
     preflightSource,
     /grep -F "\$gemini_service_account".*\n\s+\| grep -Fq "generativelanguage\.googleapis\.com"/,

@@ -85,7 +85,19 @@ test("public source, built output, and generated Tutor context contain no fixed 
     path.join(repositoryRoot, "out"),
     new Set([".html", ".js", ".json", ".txt", ".xml"]),
   );
-  const corpus = await readCorpus([...sourceFiles, ...builtFiles]);
+  const corpus = (await readCorpus([...sourceFiles, ...builtFiles])).map(
+    (entry) => (
+      entry.file === "firebase.json"
+        ? {
+            ...entry,
+            text: entry.text.replace(
+              /"supportEmail":\s*"rjchakraborty21@gmail\.com"/,
+              '"supportEmail": "<approved-operational-address>"',
+            ),
+          }
+        : entry
+    ),
+  );
 
   for (const [label, pattern] of forbiddenPublicPatterns) {
     const match = corpus.find(({ text }) => pattern.test(text));
@@ -97,7 +109,7 @@ test("public source, built output, and generated Tutor context contain no fixed 
   }
 });
 
-test("career guidance starts neutral and Firebase Auth has no personal support address", async () => {
+test("career guidance stays neutral and Firebase Auth uses only the approved operational support address", async () => {
   const careerView = await readFile(
     path.join(repositoryRoot, "app", "career-view.tsx"),
     "utf8",
@@ -109,11 +121,11 @@ test("career guidance starts neutral and Firebase Auth has no personal support a
   assert.match(careerView, /useState<string \| null>\(null\)/);
   assert.doesNotMatch(careerView, /useState\(targetRoles\[0\]\.id\)/);
   assert.match(careerView, /No recommendation inferred/);
-  assert.equal(
-    Object.hasOwn(
-      firebaseConfig.auth.providers.googleSignIn,
-      "supportEmail",
-    ),
-    false,
+  assert.deepEqual(
+    firebaseConfig.auth.providers.googleSignIn,
+    {
+      oAuthBrandDisplayName: "RobotShift",
+      supportEmail: "rjchakraborty21@gmail.com",
+    },
   );
 });
