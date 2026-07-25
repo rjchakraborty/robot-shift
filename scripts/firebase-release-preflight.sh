@@ -7,6 +7,8 @@ cd "$robot_shift_root"
 firebase_project="robotshift"
 firebase_cli_version="15.24.0"
 firebase_account="${FIREBASE_RELEASE_ACCOUNT:-}"
+gcloud_configuration="${FIREBASE_GCLOUD_CONFIGURATION:-robotshift-release}"
+gemini_service_account="robotshift-tutor-gemini@robotshift.iam.gserviceaccount.com"
 
 fail() {
   printf 'Firebase release preflight failed: %s\n' "$1" >&2
@@ -52,31 +54,90 @@ firebase_projects="$(
 grep -Eq "(^|[^[:alnum:]-])${firebase_project}([^[:alnum:]-]|$)" <<<"$firebase_projects" \
   || fail "the approved Firebase account cannot access project ${firebase_project}."
 
-active_gcloud_account="$(
-  gcloud auth list --filter=status:ACTIVE --format='value(account)'
-)"
-[[ "$active_gcloud_account" == "$firebase_account" ]] \
-  || fail "the active gcloud account does not match FIREBASE_RELEASE_ACCOUNT."
+env -u CLOUDSDK_CORE_PROJECT gcloud config configurations describe \
+  "$gcloud_configuration" >/dev/null 2>&1 \
+  || fail "gcloud configuration ${gcloud_configuration} does not exist."
 
-active_gcloud_project="$(gcloud config get-value project 2>/dev/null)"
+configured_gcloud_account="$(
+  env -u CLOUDSDK_CORE_PROJECT gcloud \
+    --configuration="$gcloud_configuration" \
+    config get-value account 2>/dev/null
+)"
+[[ "$configured_gcloud_account" == "$firebase_account" ]] \
+  || fail "the release gcloud account does not match FIREBASE_RELEASE_ACCOUNT."
+
+active_gcloud_project="$(
+  env -u CLOUDSDK_CORE_PROJECT gcloud \
+    --configuration="$gcloud_configuration" \
+    config get-value project 2>/dev/null
+)"
 [[ "$active_gcloud_project" == "$firebase_project" ]] \
-  || fail "the active gcloud project is '${active_gcloud_project:-unset}', not ${firebase_project}."
+  || fail "the release gcloud project is '${active_gcloud_project:-unset}', not ${firebase_project}."
 
 billing_enabled="$(
-  CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud beta billing projects describe \
+  env -u CLOUDSDK_CORE_PROJECT CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud \
+    --configuration="$gcloud_configuration" \
+    beta billing projects describe \
     "$firebase_project" \
     --format='value(billingEnabled)' 2>/dev/null
 )" || fail "billing state could not be read for ${firebase_project}."
-[[ "$billing_enabled" == "True" ]] \
+[[ "$billing_enabled" == "True" || "$billing_enabled" == "true" ]] \
   || fail "Blaze billing is not enabled for ${firebase_project}; Functions cannot deploy."
 
+enabled_services="$(
+  env -u CLOUDSDK_CORE_PROJECT CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud \
+    --configuration="$gcloud_configuration" \
+    services list \
+    --enabled \
+    --project="$firebase_project" \
+    --format='value(config.name)' 2>/dev/null
+)" || fail "enabled Google Cloud services could not be read."
+for required_service in \
+  artifactregistry.googleapis.com \
+  cloudbuild.googleapis.com \
+  cloudfunctions.googleapis.com \
+  eventarc.googleapis.com \
+  generativelanguage.googleapis.com \
+  pubsub.googleapis.com \
+  run.googleapis.com \
+  secretmanager.googleapis.com
+do
+  grep -Fxq "$required_service" <<<"$enabled_services" \
+    || fail "required API ${required_service} is not enabled."
+done
+
 secret_name="$(
-  CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud secrets describe GEMINI_API_KEY \
+  env -u CLOUDSDK_CORE_PROJECT CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud \
+    --configuration="$gcloud_configuration" \
+    secrets describe GEMINI_API_KEY \
     --project="$firebase_project" \
     --format='value(name)' 2>/dev/null
 )" || fail "Secret Manager does not contain GEMINI_API_KEY or access is denied."
 [[ "$secret_name" == *"/secrets/GEMINI_API_KEY" ]] \
   || fail "GEMINI_API_KEY metadata did not resolve to the expected secret."
+
+latest_secret_state="$(
+  env -u CLOUDSDK_CORE_PROJECT CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud \
+    --configuration="$gcloud_configuration" \
+    secrets versions list GEMINI_API_KEY \
+    --project="$firebase_project" \
+    --sort-by='~createTime' \
+    --limit=1 \
+    --format='value(state)' 2>/dev/null
+)" || fail "GEMINI_API_KEY version state could not be read."
+[[ "$latest_secret_state" == "enabled" ]] \
+  || fail "the newest GEMINI_API_KEY version is not enabled."
+
+gemini_key_metadata="$(
+  env -u CLOUDSDK_CORE_PROJECT CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud \
+    --configuration="$gcloud_configuration" \
+    services api-keys list \
+    --project="$firebase_project" \
+    --format='value(serviceAccountEmail,restrictions.apiTargets[].service)' 2>/dev/null
+)" || fail "Gemini API key metadata could not be read."
+grep -F "$gemini_service_account" <<<"$gemini_key_metadata" \
+  | grep -Fq "generativelanguage.googleapis.com" \
+  || fail "no Tutor service-account key is restricted to the Gemini API."
 
 printf 'Firebase release preflight passed for %s at commit %s.\n' \
   "$firebase_project" "$(git rev-parse --short=12 HEAD)"

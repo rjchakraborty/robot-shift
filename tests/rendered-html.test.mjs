@@ -262,13 +262,23 @@ test("protects account-action codes and requires Firestore consent for performan
   );
   assert.match(
     preflightSource,
-    /gcloud beta billing projects describe/,
+    /gcloud\s+\\\n\s+--configuration=.*\s+\\\n\s+beta billing projects describe/,
     "the release preflight must verify Functions billing before deployment",
   );
   assert.match(
     preflightSource,
-    /gcloud secrets describe GEMINI_API_KEY/,
+    /secrets describe GEMINI_API_KEY/,
     "the release preflight must verify the server-side Gemini secret metadata",
+  );
+  assert.match(
+    preflightSource,
+    /robotshift-tutor-gemini@robotshift\.iam\.gserviceaccount\.com/,
+    "the release preflight must require the dedicated Gemini authorization identity",
+  );
+  assert.match(
+    preflightSource,
+    /grep -F "\$gemini_service_account".*\n\s+\| grep -Fq "generativelanguage\.googleapis\.com"/,
+    "the release preflight must verify the Tutor identity and API restriction on the same key",
   );
   const headers = config.hosting.headers;
   const actionHeaderIndexes = headers
