@@ -26,7 +26,10 @@ import {
   buildTutorPrompt,
   contextForDay,
 } from "../lib/tutor-context.js";
-import { GeminiTutorProvider } from "../lib/tutor-provider.js";
+import {
+  GeminiTutorProvider,
+  safeProviderErrorMetadata,
+} from "../lib/tutor-provider.js";
 import {
   parseLegacyMigrationPayload,
   parseTracker,
@@ -195,6 +198,36 @@ test("Gemini token counting sends the complete Developer API prompt", async () =
       },
     },
   });
+});
+
+test("Tutor provider diagnostics exclude messages and arbitrary values", () => {
+  const secret = "AIza-secret-value";
+  assert.deepEqual(
+    safeProviderErrorMetadata({
+      name: "ApiError",
+      status: "403",
+      code: "PERMISSION_DENIED",
+      message: `provider rejected ${secret}`,
+      response: { key: secret },
+    }),
+    {
+      name: "ApiError",
+      status: 403,
+      code: "PERMISSION_DENIED",
+    },
+  );
+  assert.deepEqual(
+    safeProviderErrorMetadata({
+      name: "<script>",
+      status: 999,
+      code: "contains spaces",
+    }),
+    {
+      name: "UnknownError",
+      status: null,
+      code: null,
+    },
+  );
 });
 
 function expectInvalid(operation, messagePattern) {

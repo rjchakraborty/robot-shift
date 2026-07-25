@@ -21,6 +21,12 @@ export type TutorProviderResult = {
   totalTokens: number | undefined;
 };
 
+export type SafeProviderErrorMetadata = {
+  name: string;
+  status: number | null;
+  code: string | null;
+};
+
 export interface TutorProvider {
   countTokens(input: TutorGenerationInput): Promise<number>;
   generate(input: TutorGenerationInput): Promise<TutorProviderResult>;
@@ -121,4 +127,32 @@ export function providerResponseIsUsable(
     result.finishReason === undefined
     || result.finishReason === FinishReason.STOP
   );
+}
+
+export function safeProviderErrorMetadata(
+  error: unknown,
+): SafeProviderErrorMetadata {
+  if (typeof error !== "object" || error === null) {
+    return { name: "UnknownError", status: null, code: null };
+  }
+  const value = error as Record<string, unknown>;
+  const name = typeof value.name === "string"
+    && /^[A-Za-z][A-Za-z0-9_.-]{0,79}$/.test(value.name)
+    ? value.name
+    : "UnknownError";
+  const rawStatus = typeof value.status === "number"
+    ? value.status
+    : typeof value.status === "string"
+      ? Number(value.status)
+      : NaN;
+  const status = Number.isInteger(rawStatus)
+    && rawStatus >= 100
+    && rawStatus <= 599
+    ? rawStatus
+    : null;
+  const code = typeof value.code === "string"
+    && /^[A-Za-z0-9_.-]{1,80}$/.test(value.code)
+    ? value.code
+    : null;
+  return { name, status, code };
 }

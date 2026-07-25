@@ -4,6 +4,7 @@ import {
   HttpsError,
   type CallableRequest,
 } from "firebase-functions/v2/https";
+import { error as logError } from "firebase-functions/logger";
 
 import { TUTOR_MODEL_POLICY } from "./config.js";
 import { canonicalJson, sha256Hex } from "./crypto.js";
@@ -21,6 +22,7 @@ import {
 } from "./tutor-quota.js";
 import {
   providerResponseIsUsable,
+  safeProviderErrorMetadata,
   type TutorProvider,
 } from "./tutor-provider.js";
 import {
@@ -130,7 +132,11 @@ export async function handleAskTutor(
   let promptTokens: number;
   try {
     promptTokens = await dependencies.provider.countTokens(prompt);
-  } catch {
+  } catch (error) {
+    logError(
+      "Tutor provider token counting failed.",
+      safeProviderErrorMetadata(error),
+    );
     await bestEffortMarkUnknown(
       dependencies.database,
       reservation.request,
@@ -162,7 +168,11 @@ export async function handleAskTutor(
   let generated;
   try {
     generated = await dependencies.provider.generate(prompt);
-  } catch {
+  } catch (error) {
+    logError(
+      "Tutor provider generation failed.",
+      safeProviderErrorMetadata(error),
+    );
     await bestEffortMarkUnknown(
       dependencies.database,
       reservation.request,
