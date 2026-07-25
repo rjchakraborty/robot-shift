@@ -214,6 +214,36 @@ test("Tutor provider diagnostics exclude messages and arbitrary values", () => {
       name: "ApiError",
       status: 403,
       code: "PERMISSION_DENIED",
+      providerReason: null,
+      quotaMetric: null,
+      quotaId: null,
+    },
+  );
+  assert.deepEqual(
+    safeProviderErrorMetadata({
+      name: "ApiError",
+      status: 429,
+      message: JSON.stringify({
+        error: {
+          status: "RESOURCE_EXHAUSTED",
+          message: `quota rejected ${secret}`,
+          details: [{
+            quotaMetric:
+              "generativelanguage.googleapis.com/generate_content_requests",
+            quotaId: "GenerateRequestsPerDayPerProjectPerModel",
+            arbitrary: secret,
+          }],
+        },
+      }),
+    }),
+    {
+      name: "ApiError",
+      status: 429,
+      code: null,
+      providerReason: "RESOURCE_EXHAUSTED",
+      quotaMetric:
+        "generativelanguage.googleapis.com/generate_content_requests",
+      quotaId: "GenerateRequestsPerDayPerProjectPerModel",
     },
   );
   assert.deepEqual(
@@ -226,6 +256,9 @@ test("Tutor provider diagnostics exclude messages and arbitrary values", () => {
       name: "UnknownError",
       status: null,
       code: null,
+      providerReason: null,
+      quotaMetric: null,
+      quotaId: null,
     },
   );
 });

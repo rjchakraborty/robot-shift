@@ -25,6 +25,9 @@ export type SafeProviderErrorMetadata = {
   name: string;
   status: number | null;
   code: string | null;
+  providerReason: string | null;
+  quotaMetric: string | null;
+  quotaId: string | null;
 };
 
 export interface TutorProvider {
@@ -133,7 +136,14 @@ export function safeProviderErrorMetadata(
   error: unknown,
 ): SafeProviderErrorMetadata {
   if (typeof error !== "object" || error === null) {
-    return { name: "UnknownError", status: null, code: null };
+    return {
+      name: "UnknownError",
+      status: null,
+      code: null,
+      providerReason: null,
+      quotaMetric: null,
+      quotaId: null,
+    };
   }
   const value = error as Record<string, unknown>;
   const name = typeof value.name === "string"
@@ -154,5 +164,43 @@ export function safeProviderErrorMetadata(
     && /^[A-Za-z0-9_.-]{1,80}$/.test(value.code)
     ? value.code
     : null;
-  return { name, status, code };
+  const message = typeof value.message === "string"
+    ? value.message.slice(0, 20_000)
+    : "";
+  const providerReason = safeMessageField(
+    message,
+    /"status"\s*:\s*"([A-Z][A-Z0-9_]{0,79})"/,
+    /^[A-Z][A-Z0-9_]{0,79}$/,
+  );
+  const quotaMetric = safeMessageField(
+    message,
+    /"quotaMetric"\s*:\s*"([A-Za-z0-9._/-]{1,160})"/,
+    /^[A-Za-z0-9._/-]{1,160}$/,
+  ) ?? safeMessageField(
+    message,
+    /Quota exceeded for metric:\s*([A-Za-z0-9._/-]{1,160})/,
+    /^[A-Za-z0-9._/-]{1,160}$/,
+  );
+  const quotaId = safeMessageField(
+    message,
+    /"quotaId"\s*:\s*"([A-Za-z0-9._/-]{1,160})"/,
+    /^[A-Za-z0-9._/-]{1,160}$/,
+  );
+  return {
+    name,
+    status,
+    code,
+    providerReason,
+    quotaMetric,
+    quotaId,
+  };
+}
+
+function safeMessageField(
+  message: string,
+  pattern: RegExp,
+  allowlist: RegExp,
+): string | null {
+  const value = message.match(pattern)?.[1];
+  return value !== undefined && allowlist.test(value) ? value : null;
 }
