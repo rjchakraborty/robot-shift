@@ -207,6 +207,7 @@ test("protects account-action codes and requires Firestore consent for performan
     configSource,
     observabilitySource,
     packageSource,
+    preflightSource,
     privacyHtml,
     telemetrySource,
   ] = await Promise.all([
@@ -223,6 +224,10 @@ test("protects account-action codes and requires Firestore consent for performan
       "utf8",
     ),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(
+      new URL("../scripts/firebase-release-preflight.sh", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../out/privacy/index.html", import.meta.url), "utf8"),
     readFile(new URL("../app/telemetry-control.tsx", import.meta.url), "utf8"),
   ]);
@@ -247,8 +252,23 @@ test("protects account-action codes and requires Firestore consent for performan
   );
   assert.equal(
     packageConfig.scripts["release:firebase"],
-    "npx --yes firebase-tools@15.24.0 deploy --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift",
+    'npm run release:preflight && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account "$FIREBASE_RELEASE_ACCOUNT"',
     "the release command must use the validated CLI and deploy all coupled surfaces",
+  );
+  assert.match(
+    preflightSource,
+    /git rev-list --left-right --count/,
+    "the release preflight must require the exact commit to be pushed",
+  );
+  assert.match(
+    preflightSource,
+    /gcloud beta billing projects describe/,
+    "the release preflight must verify Functions billing before deployment",
+  );
+  assert.match(
+    preflightSource,
+    /gcloud secrets describe GEMINI_API_KEY/,
+    "the release preflight must verify the server-side Gemini secret metadata",
   );
   const headers = config.hosting.headers;
   const actionHeaderIndexes = headers

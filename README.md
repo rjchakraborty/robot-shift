@@ -132,6 +132,7 @@ replay records are written only by callable Functions through the Admin SDK.
 
 ```bash
 npm run verify
+export FIREBASE_RELEASE_ACCOUNT="<approved-project-member>"
 npm run release:firebase
 ```
 
@@ -139,6 +140,13 @@ The release script pins Firebase CLI `15.24.0`, targets only `robotshift`, and
 deploys Auth, Firestore Rules/indexes, Functions, and Hosting together. Hosting's
 predeploy gate reruns `npm run verify`, rebuilding `out/` before upload rather
 than trusting an older ignored export.
+
+The preflight fails before deployment unless the worktree is clean, the current
+commit is synchronized with its upstream branch, Firebase CLI and gcloud use the
+same explicitly approved project member, gcloud targets exactly `robotshift`,
+Blaze billing is enabled, and Secret Manager contains `GEMINI_API_KEY`. The
+account is supplied through the shell and is never stored in repository
+configuration.
 
 The Firebase production target is
 [https://robotshift.web.app](https://robotshift.web.app). A successful HTTP

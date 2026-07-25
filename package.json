@@ -21,7 +21,8 @@
     "test:firebase-emulators": "npm run test:auth-emulator && npm run test:firestore-rules && npm run test:functions-emulator",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "verify": "bash scripts/verify-project.sh",
-    "release:firebase": "npx --yes firebase-tools@15.24.0 deploy --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift"
+    "release:preflight": "bash scripts/firebase-release-preflight.sh",
+    "release:firebase": "npm run release:preflight && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account \"$FIREBASE_RELEASE_ACCOUNT\""
   },
   "dependencies": {
     "firebase": "12.16.0",
