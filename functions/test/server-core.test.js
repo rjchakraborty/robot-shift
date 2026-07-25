@@ -26,6 +26,7 @@ import {
   buildTutorPrompt,
   contextForDay,
 } from "../lib/tutor-context.js";
+import { GeminiTutorProvider } from "../lib/tutor-provider.js";
 import {
   parseLegacyMigrationPayload,
   parseTracker,
@@ -152,6 +153,48 @@ test("Tutor enforces the Week 8 boundary and opens estimator theory in Week 11",
   });
   assert.match(revisitPrompt.systemInstruction, /theory-and-diagnosis pass/i);
   assert.match(revisitPrompt.systemInstruction, /Week 8 artifact identities/i);
+});
+
+test("Gemini token counting sends the complete Developer API prompt", async () => {
+  let request;
+  const provider = new GeminiTutorProvider(
+    "test-key",
+    async (url, init) => {
+      request = {
+        url: String(url),
+        headers: init?.headers,
+        body: JSON.parse(String(init?.body)),
+      };
+      return new Response(JSON.stringify({ totalTokens: 321 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+  );
+  const input = {
+    systemInstruction: "Trusted RobotShift instruction",
+    contents: [{
+      role: "user",
+      parts: [{ text: "Lesson-grounded question" }],
+    }],
+  };
+
+  assert.equal(await provider.countTokens(input), 321);
+  assert.equal(
+    request.url,
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:countTokens",
+  );
+  assert.equal(request.headers["x-goog-api-key"], "test-key");
+  assert.deepEqual(request.body, {
+    generateContentRequest: {
+      model: "models/gemini-2.5-flash-lite",
+      contents: input.contents,
+      systemInstruction: {
+        role: "user",
+        parts: [{ text: input.systemInstruction }],
+      },
+    },
+  });
 });
 
 function expectInvalid(operation, messagePattern) {

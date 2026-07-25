@@ -28,28 +28,62 @@ export interface TutorProvider {
 
 export class GeminiTutorProvider implements TutorProvider {
   private readonly client: GoogleGenAI;
+  private readonly apiKey: string;
+  private readonly fetchImpl: typeof fetch;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, fetchImpl: typeof fetch = fetch) {
     if (!apiKey.trim()) throw new Error("Gemini API key is missing.");
+    this.apiKey = apiKey;
+    this.fetchImpl = fetchImpl;
     this.client = new GoogleGenAI({ apiKey });
   }
 
   async countTokens(input: TutorGenerationInput): Promise<number> {
-    const response = await this.client.models.countTokens({
-      model: TUTOR_MODEL_POLICY.model,
-      contents: input.contents,
-      config: {
-        systemInstruction: input.systemInstruction,
+    const model = TUTOR_MODEL_POLICY.model.replace(/^models\//, "");
+    const response = await this.fetchImpl(
+      `https://generativelanguage.googleapis.com/v1beta/models/${
+        encodeURIComponent(model)
+      }:countTokens`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": this.apiKey,
+        },
+        body: JSON.stringify({
+          generateContentRequest: {
+            model: `models/${model}`,
+            contents: input.contents,
+            systemInstruction: {
+              role: "user",
+              parts: [{ text: input.systemInstruction }],
+            },
+          },
+        }),
+        signal: AbortSignal.timeout(15_000),
       },
-    });
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Gemini countTokens failed with HTTP ${response.status}.`,
+      );
+    }
+    const payload: unknown = await response.json();
+    const totalTokens = (
+      typeof payload === "object"
+      && payload !== null
+      && "totalTokens" in payload
+    )
+      ? payload.totalTokens
+      : undefined;
     if (
-      typeof response.totalTokens !== "number"
-      || !Number.isSafeInteger(response.totalTokens)
-      || response.totalTokens < 0
+      typeof totalTokens !== "number"
+      || !Number.isSafeInteger(totalTokens)
+      || totalTokens < 0
     ) {
       throw new Error("Gemini did not return a valid prompt token count.");
     }
-    return response.totalTokens;
+    return totalTokens;
   }
 
   async generate(input: TutorGenerationInput): Promise<TutorProviderResult> {

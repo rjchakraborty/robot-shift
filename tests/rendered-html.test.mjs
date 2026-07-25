@@ -346,6 +346,16 @@ test("protects account-action codes and requires Firestore consent for performan
   );
   assert.match(
     preflightSource,
+    /firebaseappcheck\.googleapis\.com/,
+    "the release preflight must require the Firebase App Check API",
+  );
+  assert.match(
+    preflightSource,
+    /roles\/firebaseappcheck\.tokenVerifier/,
+    "the release preflight must verify the Functions App Check token role",
+  );
+  assert.match(
+    preflightSource,
     /robotshift-tutor-gemini@robotshift\.iam\.gserviceaccount\.com/,
     "the release preflight must require the dedicated Gemini authorization identity",
   );

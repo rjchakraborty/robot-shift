@@ -426,7 +426,12 @@ test("the live tutor uses the verified, quota-guarded callable boundary", async 
   assert.match(tutorContextSource, /KaTeX-compatible/);
 
   assert.match(tutorProviderSource, /new GoogleGenAI\(\{ apiKey \}\)/);
-  assert.match(tutorProviderSource, /this\.client\.models\.countTokens\(\{/);
+  assert.match(
+    tutorProviderSource,
+    /generativelanguage\.googleapis\.com\/v1beta\/models/,
+  );
+  assert.match(tutorProviderSource, /generateContentRequest:\s*\{/);
+  assert.match(tutorProviderSource, /systemInstruction:\s*\{/);
   assert.match(tutorProviderSource, /this\.client\.models\.generateContent\(\{/);
   assert.match(securitySource, /if \(!request\.auth\)/);
   assert.match(securitySource, /request\.auth\.token\.email_verified !== true/);

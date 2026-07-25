@@ -11,6 +11,7 @@ release_mode="${FIREBASE_RELEASE_MODE:-local}"
 release_service_account="${FIREBASE_RELEASE_SERVICE_ACCOUNT:-}"
 gcloud_configuration="${FIREBASE_GCLOUD_CONFIGURATION:-robotshift-release}"
 gemini_service_account="robotshift-tutor-gemini@robotshift.iam.gserviceaccount.com"
+functions_runtime_service_account="847716289197-compute@developer.gserviceaccount.com"
 firebase_web_app_id="1:847716289197:web:ff9452513c9eb2e0a35424"
 firebase_args=(--project "$firebase_project")
 gcloud_args=(--project="$firebase_project")
@@ -137,6 +138,7 @@ for required_service in \
   cloudbuild.googleapis.com \
   cloudfunctions.googleapis.com \
   eventarc.googleapis.com \
+  firebaseappcheck.googleapis.com \
   firebaseextensions.googleapis.com \
   generativelanguage.googleapis.com \
   pubsub.googleapis.com \
@@ -147,6 +149,18 @@ do
   grep -Fxq "$required_service" <<<"$enabled_services" \
     || fail "required API ${required_service} is not enabled."
 done
+
+app_check_verifier_roles="$(
+  env -u CLOUDSDK_CORE_PROJECT CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud \
+    "${gcloud_args[@]}" \
+    projects get-iam-policy "$firebase_project" \
+    --flatten='bindings[].members' \
+    --filter="bindings.members:serviceAccount:${functions_runtime_service_account}" \
+    --format='value(bindings.role)' 2>/dev/null
+)" || fail "Functions runtime IAM bindings could not be read."
+grep -Fxq "roles/firebaseappcheck.tokenVerifier" \
+  <<<"$app_check_verifier_roles" \
+  || fail "the Functions runtime service account cannot verify App Check tokens."
 
 secret_name="$(
   env -u CLOUDSDK_CORE_PROJECT CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud \
