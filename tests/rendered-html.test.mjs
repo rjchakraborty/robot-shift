@@ -208,6 +208,7 @@ test("protects account-action codes and requires Firestore consent for performan
     observabilitySource,
     packageSource,
     preflightSource,
+    postflightSource,
     privacyHtml,
     telemetrySource,
   ] = await Promise.all([
@@ -226,6 +227,10 @@ test("protects account-action codes and requires Firestore consent for performan
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(
       new URL("../scripts/firebase-release-preflight.sh", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../scripts/firebase-release-postflight.sh", import.meta.url),
       "utf8",
     ),
     readFile(new URL("../out/privacy/index.html", import.meta.url), "utf8"),
@@ -252,9 +257,29 @@ test("protects account-action codes and requires Firestore consent for performan
   );
   assert.equal(
     packageConfig.scripts["release:firebase"],
-    'npm run release:preflight && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account "$FIREBASE_RELEASE_ACCOUNT"',
+    'npm run release:preflight && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account "$FIREBASE_RELEASE_ACCOUNT" && npm run release:postflight',
     "the release command must use the validated CLI and deploy all coupled surfaces",
   );
+  assert.equal(
+    packageConfig.scripts["release:postflight"],
+    "bash scripts/firebase-release-postflight.sh",
+    "the release command must reject partial cloud rollouts after Firebase CLI exits",
+  );
+  for (const callableName of [
+    "askTutor",
+    "bootstrapUserData",
+    "clearTutorThread",
+    "migrateLegacyData",
+    "resetUserData",
+  ]) {
+    assert.match(
+      postflightSource,
+      new RegExp(`\\b${callableName}\\b`),
+      `the postflight must require ${callableName}`,
+    );
+  }
+  assert.match(postflightSource, /content-security-policy-report-only/);
+  assert.match(postflightSource, /referrer-policy/);
   assert.match(
     preflightSource,
     /git rev-list --left-right --count/,

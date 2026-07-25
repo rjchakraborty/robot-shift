@@ -97,10 +97,12 @@ for required_service in \
   cloudbuild.googleapis.com \
   cloudfunctions.googleapis.com \
   eventarc.googleapis.com \
+  firebaseextensions.googleapis.com \
   generativelanguage.googleapis.com \
   pubsub.googleapis.com \
   run.googleapis.com \
-  secretmanager.googleapis.com
+  secretmanager.googleapis.com \
+  storage.googleapis.com
 do
   grep -Fxq "$required_service" <<<"$enabled_services" \
     || fail "required API ${required_service} is not enabled."

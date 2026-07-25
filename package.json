@@ -22,7 +22,8 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "verify": "bash scripts/verify-project.sh",
     "release:preflight": "bash scripts/firebase-release-preflight.sh",
-    "release:firebase": "npm run release:preflight && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account \"$FIREBASE_RELEASE_ACCOUNT\""
+    "release:postflight": "bash scripts/firebase-release-postflight.sh",
+    "release:firebase": "npm run release:preflight && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account \"$FIREBASE_RELEASE_ACCOUNT\" && npm run release:postflight"
   },
   "dependencies": {
     "firebase": "12.16.0",
