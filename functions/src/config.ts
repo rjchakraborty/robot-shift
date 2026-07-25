@@ -13,12 +13,12 @@ export const DATA_RETENTION_POLICY = Object.freeze({
 });
 
 export const TUTOR_MODEL_POLICY = Object.freeze({
-  model: "gemini-2.5-flash-lite",
-  pricingVersion: "gemini-2.5-flash-lite-standard-2026-07-24",
-  lifecycleShutdownAt: "2026-10-16T00:00:00.000Z",
-  migrationDeadline: "2026-09-30",
-  inputNanoUsdPerToken: 100,
-  outputNanoUsdPerToken: 400,
+  model: "gemini-3.1-flash-lite",
+  pricingVersion: "gemini-3.1-flash-lite-standard-2026-07-25",
+  lifecycleShutdownAt: "2027-07-25T00:00:00.000Z",
+  migrationDeadline: "2027-06-30",
+  inputNanoUsdPerToken: 250,
+  outputNanoUsdPerToken: 1_500,
   maxInputTokens: 12_000,
   maxOutputTokens: 1_200,
   thinkingBudget: 0,

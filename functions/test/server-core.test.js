@@ -185,12 +185,12 @@ test("Gemini token counting sends the complete Developer API prompt", async () =
   assert.equal(await provider.countTokens(input), 321);
   assert.equal(
     request.url,
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:countTokens",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:countTokens",
   );
   assert.equal(request.headers["x-goog-api-key"], "test-key");
   assert.deepEqual(request.body, {
     generateContentRequest: {
-      model: "models/gemini-2.5-flash-lite",
+      model: "models/gemini-3.1-flash-lite",
       contents: input.contents,
       systemInstruction: {
         role: "user",
@@ -301,14 +301,14 @@ test("legacy source digest is canonical, fixed, and sensitive to archived data",
 test("cost reservation uses the prompt count plus the full output allowance", () => {
   assert.equal(
     calculateReservationNanoUsd(2_000, TUTOR_MODEL_POLICY),
-    680_000,
+    2_300_000,
   );
   assert.equal(
     calculateReservationNanoUsd(
       TUTOR_MODEL_POLICY.maxInputTokens,
       TUTOR_MODEL_POLICY,
     ),
-    1_680_000,
+    4_800_000,
   );
 
   expectInvalid(
@@ -330,7 +330,7 @@ test("cost reservation uses the prompt count plus the full output allowance", ()
 });
 
 test("actual cost trusts internally consistent metadata and otherwise keeps the reservation", () => {
-  const reservationNanoUsd = 680_000;
+  const reservationNanoUsd = 2_300_000;
   assert.deepEqual(
     calculateActualNanoUsd({
       promptTokens: 1_000,
@@ -341,7 +341,7 @@ test("actual cost trusts internally consistent metadata and otherwise keeps the 
       policy: TUTOR_MODEL_POLICY,
     }),
     {
-      nanoUsd: 200_000,
+      nanoUsd: 625_000,
       source: "provider_metadata",
     },
   );
@@ -584,28 +584,28 @@ test("model, region, and lifecycle constants stay fail-closed", () => {
     "1:847716289197:web:ff9452513c9eb2e0a35424",
   );
   assert.ok(Object.isFrozen(TUTOR_MODEL_POLICY));
-  assert.equal(TUTOR_MODEL_POLICY.model, "gemini-2.5-flash-lite");
+  assert.equal(TUTOR_MODEL_POLICY.model, "gemini-3.1-flash-lite");
   assert.equal(TUTOR_MODEL_POLICY.thinkingBudget, 0);
-  assert.equal(TUTOR_MODEL_POLICY.inputNanoUsdPerToken, 100);
-  assert.equal(TUTOR_MODEL_POLICY.outputNanoUsdPerToken, 400);
+  assert.equal(TUTOR_MODEL_POLICY.inputNanoUsdPerToken, 250);
+  assert.equal(TUTOR_MODEL_POLICY.outputNanoUsdPerToken, 1_500);
   assert.equal(TUTOR_MODEL_POLICY.maxInputTokens, 12_000);
   assert.equal(TUTOR_MODEL_POLICY.maxOutputTokens, 1_200);
-  assert.equal(TUTOR_MODEL_POLICY.lifecycleShutdownAt, "2026-10-16T00:00:00.000Z");
-  assert.equal(TUTOR_MODEL_POLICY.migrationDeadline, "2026-09-30");
+  assert.equal(TUTOR_MODEL_POLICY.lifecycleShutdownAt, "2027-07-25T00:00:00.000Z");
+  assert.equal(TUTOR_MODEL_POLICY.migrationDeadline, "2027-06-30");
   assert.ok(
     Date.parse(`${TUTOR_MODEL_POLICY.migrationDeadline}T23:59:59.999Z`)
       < Date.parse(TUTOR_MODEL_POLICY.lifecycleShutdownAt),
   );
 
   assert.doesNotThrow(() =>
-    assertModelLifecycle(new Date("2026-10-15T23:59:59.999Z"))
+    assertModelLifecycle(new Date("2027-07-24T23:59:59.999Z"))
   );
   assert.throws(
     () => assertModelLifecycle(new Date(TUTOR_MODEL_POLICY.lifecycleShutdownAt)),
     /lifecycle deadline/i,
   );
   assert.throws(
-    () => assertModelLifecycle(new Date("2026-10-17T00:00:00.000Z")),
+    () => assertModelLifecycle(new Date("2027-07-26T00:00:00.000Z")),
     /lifecycle deadline/i,
   );
 });

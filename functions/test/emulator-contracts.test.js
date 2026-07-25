@@ -239,7 +239,7 @@ test("successful replay is provider-idempotent and payload substitution is rejec
   assert.equal(usage?.successes, 1);
   assert.equal(usage?.inFlight, 0);
   assert.equal(usage?.reservedNanoUsd, 0);
-  assert.equal(usage?.actualNanoUsd, 90_000);
+  assert.equal(usage?.actualNanoUsd, 250_000);
   const requestSnapshot = await database
     .doc(`users/${identity.uid}/tutorRequests/${requestId}`)
     .get();
