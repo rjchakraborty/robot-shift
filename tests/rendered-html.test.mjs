@@ -309,6 +309,11 @@ test("protects account-action codes and requires Firestore consent for performan
   );
   assert.match(preflightSource, /GOOGLE_APPLICATION_CREDENTIALS/);
   assert.match(preflightSource, /FIREBASE_RELEASE_SERVICE_ACCOUNT/);
+  assert.match(preflightSource, /apps:list WEB/);
+  assert.match(
+    preflightSource,
+    /1:847716289197:web:ff9452513c9eb2e0a35424/,
+  );
   assert.match(workflowSource, /pull_request:/);
   assert.match(workflowSource, /branches:\s*\n\s*- main/);
   assert.match(workflowSource, /needs: verify/);

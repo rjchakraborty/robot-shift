@@ -11,6 +11,7 @@ release_mode="${FIREBASE_RELEASE_MODE:-local}"
 release_service_account="${FIREBASE_RELEASE_SERVICE_ACCOUNT:-}"
 gcloud_configuration="${FIREBASE_GCLOUD_CONFIGURATION:-robotshift-release}"
 gemini_service_account="robotshift-tutor-gemini@robotshift.iam.gserviceaccount.com"
+firebase_web_app_id="1:847716289197:web:ff9452513c9eb2e0a35424"
 firebase_args=(--project "$firebase_project")
 gcloud_args=(--project="$firebase_project")
 
@@ -94,12 +95,22 @@ else
     || fail "the release gcloud project is '${active_gcloud_project:-unset}', not ${firebase_project}."
 fi
 
-firebase_projects="$(
-  npx --yes "firebase-tools@${firebase_cli_version}" projects:list \
-    "${firebase_args[@]}" 2>&1
-)" || fail "the approved release identity cannot list Firebase projects."
-grep -Eq "(^|[^[:alnum:]-])${firebase_project}([^[:alnum:]-]|$)" <<<"$firebase_projects" \
-  || fail "the approved release identity cannot access project ${firebase_project}."
+if [[ "$release_mode" == "ci" ]]; then
+  firebase_apps="$(
+    npx --yes "firebase-tools@${firebase_cli_version}" apps:list WEB \
+      --json \
+      "${firebase_args[@]}" 2>&1
+  )" || fail "the approved release identity cannot read the Firebase web app."
+  grep -Fq "$firebase_web_app_id" <<<"$firebase_apps" \
+    || fail "the approved release identity cannot access the RobotShift web app."
+else
+  firebase_projects="$(
+    npx --yes "firebase-tools@${firebase_cli_version}" projects:list \
+      "${firebase_args[@]}" 2>&1
+  )" || fail "the approved release identity cannot list Firebase projects."
+  grep -Eq "(^|[^[:alnum:]-])${firebase_project}([^[:alnum:]-]|$)" <<<"$firebase_projects" \
+    || fail "the approved release identity cannot access project ${firebase_project}."
+fi
 
 if [[ "$release_mode" != "ci" ]]; then
   billing_enabled="$(
