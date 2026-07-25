@@ -57,7 +57,7 @@ for attempt in {1..12}; do
   )" || production_headers=""
 
   if grep -Eqi '^content-security-policy-report-only:' <<<"$production_headers" \
-    && grep -Eqi '^referrer-policy:[[:space:]]*no-referrer\r?$' <<<"$production_headers"; then
+    && grep -Eqi '^referrer-policy:[[:space:]]*no-referrer[[:space:]]*$' <<<"$production_headers"; then
     break
   fi
 
@@ -68,7 +68,7 @@ done
 
 grep -Eqi '^content-security-policy-report-only:' <<<"$production_headers" \
   || fail "production Hosting is not serving the verified security headers after 60 seconds."
-grep -Eqi '^referrer-policy:[[:space:]]*no-referrer\r?$' <<<"$production_headers" \
+grep -Eqi '^referrer-policy:[[:space:]]*no-referrer[[:space:]]*$' <<<"$production_headers" \
   || fail "production Hosting is not serving the verified referrer policy after 60 seconds."
 
 printf 'Firebase release postflight passed for %s at commit %s.\n' \
