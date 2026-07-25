@@ -692,9 +692,9 @@ export const weekLessonPacks: readonly WeekPack[] = [
     sources: [openVla, lerobot],
   },
   {
-    bigIdea: "Your ten software years become robotics credibility when projects show real interfaces, measurements, failures, recovery, and clear ownership.",
-    pareto: ["Target robotics software, platform, autonomy-integration, simulation, or ML-infrastructure roles first.", "Lead with transferable systems evidence.", "Three deep case studies beat ten toy demos.", "Applications need role-specific proof and interview practice."],
-    simpleExplanation: ["Choose roles where your software depth already matters.", "Map each job requirement to one inspected project artifact.", "Practise explaining decisions, incidents, metrics, and the next limitation."],
+    bigIdea: "Prior experience becomes relevant robotics credibility only when truthful transfer claims are paired with direct, inspectable robotics evidence.",
+    pareto: ["Compare robotics role families against your actual evidence.", "Label transferable and direct robotics evidence separately.", "Three deep case studies beat ten toy demos.", "Applications need role-specific proof and interview practice."],
+    simpleExplanation: ["Inventory what you can already prove without assuming a particular background.", "Map each job requirement to one inspected project artifact.", "Practise explaining decisions, incidents, metrics, and the next limitation."],
     math: {
       title: "Application funnel",
       meaning: "A is targeted applications; I is interviews; conversion measures whether positioning creates conversations.",
@@ -704,14 +704,14 @@ export const weekLessonPacks: readonly WeekPack[] = [
       check: "3 interviews from 20 targeted applications is 15%; compare batches, not one application.",
     },
     examples: [
-      { title: "Bridge portfolio", explanation: "A ROS/C++ reliability story connects web systems experience to robots.", tryIt: "Write old skill→robot proof pairs." },
+      { title: "Bridge portfolio", explanation: "A ROS 2 reliability story can connect verified experience from another domain to a robot-system requirement.", tryIt: "Write prior skill → robot proof pairs, then label any missing context." },
       { title: "Incident story", explanation: "Debugging a timing failure demonstrates engineering judgment.", tryIt: "Use context, evidence, fix, verification, lesson." },
       { title: "Product demo", explanation: "An uncut trial table is stronger than visual polish.", tryIt: "Link code, architecture, metrics, video, and failure note." },
     ],
-    story: { title: "The experienced climber", body: "You are not starting at the mountain base; you are learning new terrain while carrying ten years of tools.", memoryHook: "New domain, proven engineering." },
+    story: { title: "The evidence bridge", body: "One side holds what you can already prove; the other holds the robotics role. Every plank is a direct artifact, not an assumed résumé advantage.", memoryHook: "Prior proof, new context, honest bridge." },
     mistakes: ["Apologizing for no robotics degree before showing evidence.", "Claiming research expertise from tutorials.", "Sending one generic résumé to every robotics role."],
     quiz: [
-      { question: "Which initial role best fits a senior software engineer?", answer: "Often robotics software/platform, ROS 2 integration, simulation, autonomy infrastructure, or ML deployment—chosen from actual job requirements." },
+      { question: "Which robotics role should a learner target first?", answer: "The role whose core requirements best match verified transfer evidence and direct robotics artifacts, after checking current postings in the learner's chosen market." },
       { question: "What replaces a robotics degree signal?", answer: "Inspectable projects, strong fundamentals, measured trials, failure analysis, and credible systems explanations." },
     ],
     sources: [

@@ -48,6 +48,7 @@ for (const day of curriculumDays) {
     workedExample: deepDive.workedExample,
     handsOn: deepDive.handsOn,
     commonMistakes: deepDive.commonMistakes,
+    teachingBoundary: chapter.teachingBoundary,
     sources: chapter.sources,
   });
 }

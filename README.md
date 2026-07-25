@@ -1,13 +1,13 @@
 # Robot/Shift
 
-Robot/Shift is a practical 180-day robotics curriculum for a senior software engineer moving into robotics, ROS 2 integration, deployment, validation, and embodied AI.
+Robot/Shift is a practical 180-day robotics curriculum for programmers, developers, and technical learners moving into robotics, ROS 2 integration, deployment, validation, and embodied AI. It does not assume a particular résumé, employer, degree, technology stack, or experience duration.
 
 The course is designed as a single reader-first learning system:
 
 - zero-prerequisite mathematics with checked equations;
 - deterministic SVG explanations and interactive maths;
 - daily practical work and six portfolio projects;
-- India-focused role and job-description guidance;
+- evidence-led role guidance, a local job-description matcher, and a clearly dated India market example;
 - an optional Gemini tutor grounded in the displayed lesson;
 - Firebase email/password and Google account access for the tutor;
 - Cloud Firestore notes, evidence, bookmarks, preferences, and tutor history;
@@ -132,8 +132,13 @@ replay records are written only by callable Functions through the Admin SDK.
 
 ```bash
 npm run verify
-firebase deploy --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift
+npm run release:firebase
 ```
+
+The release script pins Firebase CLI `15.24.0`, targets only `robotshift`, and
+deploys Auth, Firestore Rules/indexes, Functions, and Hosting together. Hosting's
+predeploy gate reruns `npm run verify`, rebuilding `out/` before upload rather
+than trusting an older ignored export.
 
 The Firebase production target is
 [https://robotshift.web.app](https://robotshift.web.app). A successful HTTP

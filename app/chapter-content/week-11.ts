@@ -10,7 +10,9 @@ export const week11Content = {
   week: 11,
   title: "Estimate robot state, localize honestly, and measure uncertainty",
   purpose:
-    "Turn noisy motion and sensor data into an inspectable belief about robot pose. This chapter builds the ideas in order—state and observations, probability and covariance, recursive Bayes filtering, practical EKF fusion, scan matching and mapping, pose-graph and particle localization, then a dropout-tested report—so every estimate carries a frame, timestamp, uncertainty claim, and measured limitation.",
+    "Reopen the exact map, configuration, MCAP recording, transform snapshot, scenarios, and raw results preserved in Week 8, then explain what the first-flight black boxes were doing. Build the ideas in order—state and observations, probability and covariance, recursive Bayes filtering, practical EKF fusion, scan matching, pose graphs, and particle localization—before rerunning the frozen scenarios. The revised report must connect every frame, timestamp, uncertainty claim, parameter change, and measured improvement back to the unchanged Week 8 evidence.",
+  teachingBoundary:
+    "Week 11 is the theory-and-diagnosis pass for the bounded Week 8 navigation preview. Teach estimator internals and tuning only against the frozen Week 8 artifact identities and scenarios; compare before and after metrics without replacing inconvenient trials or silently changing the world, seed, sensors, or ground-truth method.",
   prerequisites: [
     "Run the Week 7 simulated differential-drive robot with wheel odometry and an IMU, and replay a short rosbag2 recording without connecting powered hardware.",
     "Recognize the Week 8 `map→odom→base_link→sensor` frame chain, an occupancy grid, SLAM Toolbox mapping mode, AMCL localization mode, and simulation ground truth.",
@@ -1051,14 +1053,14 @@ export const week11Content = {
       },
       handsOn: {
         setup:
-          "Use one frozen Gazebo route, a fixed set of seeds, wheel/IMU/lidar bags, the approved map, estimator configuration, AMCL or SLAM mode, and separate truth.",
+          "Reopen the exact Week 8 source/container identity, Gazebo world and seed, MCAP bag, map image/YAML, serialized pose graph, launch/config/BT files, TF snapshot, scenario manifest, and raw results. Verify their recorded hashes before using separate simulation truth.",
         steps: [
           "Write acceptance criteria and hard gates for frame and transform ownership, nominal position and heading error, covariance coverage, dropout detection, allowed prediction-only behavior, recovery time, jump size, and terminal state.",
           "Run the nominal seed set and save aligned estimate, covariance, truth, innovations or residuals, transform age, update latency, map or particle evidence, and complete denominators.",
           "Replay the same set with a fixed lidar dropout plus one bounded outlier or timestamp fault, retaining runs that fail initialization or never recover.",
           "Calculate per-run and scenario-level RMSE, mean absolute and maximum error, heading error, time outside tolerance, coverage, loss count, detection time, recovery time, and operator or stop events.",
           "Inspect the worst run and one overconfident run against raw messages, transforms, diagnostics, map, and configuration; assign an actionable cause rather than an outcome-only label.",
-          "Package commands, versions, configs, map provenance, seed manifest, raw CSV, plots, bags, calculations, failures, limitations, and a PASS, NEEDS REVISION, or BLOCKED verdict tied to the frozen criteria.",
+          "Package commands, versions, unchanged Week 8 artifact hashes, configs, map provenance, seed manifest, raw CSV, plots, bags, calculations, failures, limitations, and a PASS, NEEDS REVISION, or BLOCKED verdict tied to the frozen criteria.",
         ],
         observe:
           "Prediction-only intervals widen uncertainty and accumulate error; observation return may correct pose, oscillate, jump, or fail, and aggregate averages can hide those distinct outcomes.",

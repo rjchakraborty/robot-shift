@@ -15,46 +15,52 @@ export type CareerViewProps = {
   onOpenDay?: (dayId: number) => void;
 };
 
-const tierOrder: readonly RoleTier[] = ["apply-first", "primary", "next", "stretch"];
+const tierOrder: readonly RoleTier[] = [
+  "software-bridge",
+  "integration",
+  "robotics-core",
+  "advanced-applied",
+];
 
 const tierCopy: Record<RoleTier, { label: string; note: string }> = {
-  "apply-first": {
-    label: "Apply first",
-    note: "Bridge roles that reuse your strongest production skills after one robotics-facing proof.",
+  "software-bridge": {
+    label: "Software-to-robotics bridges",
+    note: "Consider these when your verified interface or platform evidence is stronger than your direct robotics evidence.",
   },
-  primary: {
-    label: "Primary target",
-    note: "Best specialization once ROS 2 core and the production fleet/validation gate are complete.",
+  integration: {
+    label: "Integration and validation",
+    note: "Consider these when your strongest proof connects subsystems, diagnoses failures, or validates releases.",
   },
-  next: {
-    label: "Next target",
-    note: "Pursue after two credible ROS 2 builds and repeatable real-robot or HIL evidence.",
+  "robotics-core": {
+    label: "Robotics-core specialization",
+    note: "Requires direct ROS 2, C++, mathematics, and repeated robot or HIL evidence.",
   },
-  stretch: {
-    label: "Stretch target",
-    note: "Build toward this at the integration/evaluation layer—not as a research-scientist claim.",
+  "advanced-applied": {
+    label: "Advanced applied specialization",
+    note: "Requires direct dataset, evaluation, safety, and rollout evidence beyond general AI familiarity.",
   },
 };
 
-const portfolioStrengths = [
-  "10+ years shipping production software end to end",
-  "React, Next.js, Flutter, Android, UX, APIs, and QA",
-  "Python/Node services, REST, background jobs, and event workflows",
-  "PostgreSQL, Redis, Kafka, Firebase, CI/CD, and cloud concepts",
-  "LLM, RAG, agent/tool workflows, and vector search",
-  "Hands-on wiring, soldering, components, motors, and servos",
+const transferEvidenceExamples = [
+  "Interfaces: accessible web, desktop, mobile, embedded, or operator workflows",
+  "Platforms: APIs, data consistency, messaging, background work, and observability",
+  "Delivery: testing, CI/CD, release, rollback, incident response, or field support",
+  "Systems: concurrency, networking, performance, reliability, and security",
+  "Intelligence: data pipelines, ML evaluation, agents, retrieval, or multimodal systems",
+  "Physical work: electronics, controls, fabrication, repair, commissioning, or lab practice",
 ] as const;
 
-const proofGaps = [
-  "Production C++ and Linux evidence",
-  "ROS 2, tf2, URDF, ros2_control, Nav2/SLAM",
-  "Robot deployment, SIL/HIL, fault injection, and commissioning",
-  "Safety boundaries, e-stop/STO awareness, and risk-linked tests",
-  "Repeated hardware or HIL trials with logs and failure analysis",
+const directRoboticsEvidence = [
+  "ROS 2 graphs, tf2, URDF, ros2_control, navigation, or manipulation",
+  "Bounded C++ and Linux robot-runtime diagnosis",
+  "Simulation, SIL/HIL, hardware integration, and commissioning",
+  "Command limits, e-stop/STO awareness, and risk-linked tests",
+  "Repeated trials with complete logs, denominators, failures, and limitations",
 ] as const;
 
-function roleById(id: string): TargetRole {
-  return targetRoles.find((role) => role.id === id) ?? targetRoles[0];
+function roleById(id: string | null): TargetRole | null {
+  if (!id) return null;
+  return targetRoles.find((role) => role.id === id) ?? null;
 }
 
 function formatCapturedDate(value: string) {
@@ -68,7 +74,7 @@ function formatCapturedDate(value: string) {
 }
 
 export function CareerView({ onOpenDay }: CareerViewProps) {
-  const [selectedRoleId, setSelectedRoleId] = useState(targetRoles[0].id);
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [jobDescription, setJobDescription] = useState("");
   const selectedRole = roleById(selectedRoleId);
   const skillSignals = useMemo(() => countMarketSkills(), []);
@@ -85,21 +91,21 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
           <div>
             <h1 id="career-title">Target roles</h1>
             <p className="career-hero-lede">
-              Primary specialization: Production Robotics Integration &amp; Fleet Systems.
+              Explore role families, then choose from your own verified evidence.
             </p>
           </div>
           <dl className="career-verdict-stats" aria-label="Career strategy summary">
             <div>
-              <dt>Evidence</dt>
-              <dd>{jobEvidence.length} current postings</dd>
+              <dt>Regional sample</dt>
+              <dd>{jobEvidence.length} dated postings</dd>
             </div>
             <div>
-              <dt>Primary gate</dt>
-              <dd>Days 84–119</dd>
+              <dt>Role families</dt>
+              <dd>{targetRoles.length} evidence paths</dd>
             </div>
             <div>
-              <dt>Research degree</dt>
-              <dd>Not the plan</dd>
+              <dt>Decision rule</dt>
+              <dd>Proof before title</dd>
             </div>
           </dl>
         </div>
@@ -107,35 +113,36 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
           Honest boundary: no course can cover every company-specific interview
           question or guarantee a job. This path covers recurring requirements in
           the postings captured on {capturedLabel}; re-check each live posting and
-          paste its description into the matcher before applying.
+          paste its description into the matcher before applying. No role is
+          preselected for you.
         </p>
       </section>
 
       <section className="career-fit" aria-labelledby="career-fit-title">
         <div className="career-section-heading">
-          <h2 id="career-fit-title">Current strengths and missing proof</h2>
+          <h2 id="career-fit-title">Build your own evidence inventory</h2>
         </div>
         <div className="career-fit-grid">
           <article className="career-fit-card career-fit-card-strong">
-            <p className="career-card-label">Already credible from your portfolio</p>
+            <p className="career-card-label">Prior evidence that may transfer</p>
             <ul>
-              {portfolioStrengths.map((strength) => <li key={strength}>{strength}</li>)}
+              {transferEvidenceExamples.map((strength) => <li key={strength}>{strength}</li>)}
             </ul>
           </article>
           <article className="career-fit-card career-fit-card-gap">
-            <p className="career-card-label">Prove before putting on the resume</p>
+            <p className="career-card-label">Direct robotics evidence to build</p>
             <ul>
-              {proofGaps.map((gap) => <li key={gap}>{gap}</li>)}
+              {directRoboticsEvidence.map((gap) => <li key={gap}>{gap}</li>)}
             </ul>
           </article>
         </div>
         <details className="career-positioning">
-          <summary>Degree-question answer</summary>
+          <summary>Evidence-first transition answer template</summary>
           <p>
-            “I am a senior production software engineer moving into robotics
-            integration. I bring ten years of shipping and operating complete
-            systems, and I can demonstrate ROS 2, fleet, deployment, validation,
-            and hardware-in-the-loop work through these projects and test reports.”
+            “My previous work in [truthful domain] demonstrates [verified transferable
+            capabilities]. For robotics, I built [specific system] and tested
+            [failure or safety boundary] under [simulation, HIL, or hardware
+            conditions]. These artifacts show [measured result] and [remaining limit].”
           </p>
           <footer>
             Use this only after the linked evidence exists. Some employers still
@@ -161,7 +168,7 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
                 </div>
                 <div className="career-role-buttons">
                   {roles.map((role) => {
-                    const selected = role.id === selectedRole.id;
+                    const selected = role.id === selectedRole?.id;
                     return (
                       <button
                         className="career-role-button"
@@ -182,70 +189,89 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
           })}
         </div>
 
-        <article
-          className="career-role-detail"
-          id="career-role-detail"
-          aria-live="polite"
-          aria-labelledby="career-selected-title"
-        >
-          <header>
-            <p className="career-card-label">{tierCopy[selectedRole.tier].label}</p>
-            <h3 id="career-selected-title">{selectedRole.title}</h3>
-            <p>{selectedRole.fit}</p>
-            <strong>{selectedRole.timing}</strong>
-          </header>
-          <div className="career-role-detail-grid">
-            <div>
-              <h4>Reuse now</h4>
-              <ul>
-                {selectedRole.portfolioLeverage.map((item) => <li key={item}>{item}</li>)}
-              </ul>
+        {selectedRole ? (
+          <article
+            className="career-role-detail"
+            id="career-role-detail"
+            aria-live="polite"
+            aria-labelledby="career-selected-title"
+          >
+            <header>
+              <p className="career-card-label">{tierCopy[selectedRole.tier].label}</p>
+              <h3 id="career-selected-title">{selectedRole.title}</h3>
+              <p>{selectedRole.fit}</p>
+              <strong>{selectedRole.timing}</strong>
+            </header>
+            <div className="career-role-detail-grid">
+              <div>
+                <h4>Prior evidence that can transfer</h4>
+                <ul>
+                  {selectedRole.portfolioLeverage.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div>
+                <h4>Close the gaps</h4>
+                <ul>
+                  {selectedRole.gaps.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div>
+                <h4>Portfolio proof</h4>
+                <ul>
+                  {selectedRole.proof.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+              <div>
+                <h4>Interview domains</h4>
+                <ul>
+                  {selectedRole.interviewDomains.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
             </div>
-            <div>
-              <h4>Close the gaps</h4>
-              <ul>
-                {selectedRole.gaps.map((item) => <li key={item}>{item}</li>)}
-              </ul>
+            <div className="career-role-keywords" aria-label="Resume keywords after proof">
+              <strong>Keywords to earn:</strong>
+              {selectedRole.keywords.map((keyword) => <span key={keyword}>{keyword}</span>)}
             </div>
-            <div>
-              <h4>Portfolio proof</h4>
-              <ul>
-                {selectedRole.proof.map((item) => <li key={item}>{item}</li>)}
-              </ul>
+            <div className="career-day-links" aria-label="Relevant curriculum days">
+              <strong>Course checkpoints</strong>
+              {selectedRole.courseDays.map((dayId) => (
+                onOpenDay ? (
+                  <button type="button" onClick={() => onOpenDay(dayId)} key={dayId}>
+                    Day {dayId}
+                  </button>
+                ) : (
+                  <span key={dayId}>Day {dayId}</span>
+                )
+              ))}
             </div>
-            <div>
-              <h4>Interview domains</h4>
-              <ul>
-                {selectedRole.interviewDomains.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            </div>
+          </article>
+        ) : (
+          <div
+            className="career-role-detail"
+            id="career-role-detail"
+            aria-live="polite"
+            aria-labelledby="career-selected-title"
+          >
+            <header>
+              <p className="career-card-label">No recommendation inferred</p>
+              <h3 id="career-selected-title">Choose a role to inspect its evidence gate</h3>
+              <p>
+                Start with your verified work and course artifacts. The order above
+                is a role-family map, not a ranking of what you should become.
+              </p>
+            </header>
           </div>
-          <div className="career-role-keywords" aria-label="Resume keywords after proof">
-            <strong>Keywords to earn:</strong>
-            {selectedRole.keywords.map((keyword) => <span key={keyword}>{keyword}</span>)}
-          </div>
-          <div className="career-day-links" aria-label="Relevant curriculum days">
-            <strong>Course checkpoints</strong>
-            {selectedRole.courseDays.map((dayId) => (
-              onOpenDay ? (
-                <button type="button" onClick={() => onOpenDay(dayId)} key={dayId}>
-                  Day {dayId}
-                </button>
-              ) : (
-                <span key={dayId}>Day {dayId}</span>
-              )
-            ))}
-          </div>
-        </article>
+        )}
       </section>
 
       <section className="career-signals" aria-labelledby="career-signals-title">
         <div className="career-section-heading">
-          <h2 id="career-signals-title">Skills in the India job sample</h2>
+          <h2 id="career-signals-title">Regional example: a dated India job sample</h2>
           <p>
             Counts below come only from explicit tags on the {jobEvidence.length}
             reviewed postings. They are a directional sample, not a complete census
-            of India’s robotics market.
+            of India’s robotics market or a substitute for current evidence in
+            another location.
           </p>
         </div>
         <div className="career-signal-list">
@@ -397,9 +423,9 @@ export function CareerView({ onOpenDay }: CareerViewProps) {
           <span>Artifact link</span>
         </div>
         <p>
-          Do not write “10 years robotics.” Write “10 years production software”
-          and then show the exact ROS 2, fleet, validation, or physical-AI artifacts
-          you built during this transition.
+          Never convert time in another domain into years of robotics experience.
+          Name the prior work truthfully, then link the exact ROS 2, fleet,
+          validation, hardware, or physical-AI artifacts that support each new claim.
         </p>
       </section>
     </div>

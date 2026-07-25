@@ -76,7 +76,7 @@ export const week14Content = {
       explanation: [
         "A policy is a rule that chooses an action from available observations and possibly recent history. An observation is information exposed to that rule, such as camera pixels, joint positions, gripper state, or a task instruction. An action is the command contract produced for execution. Keep commanded action separate from measured robot state because limits, latency, contact, disconnection, or an operator intervention can make the physical response differ.",
         "An episode represents one bounded attempt, not an arbitrary slice from a continuous log. Its reset specification states the starting object arrangement, robot mode, task text, sensor readiness, and anything randomized. Its terminal specification distinguishes success, timeout, task failure, operator abort, safety stop, and recording fault. The trajectory is the time-ordered sequence inside those boundaries, including observations, issued actions, measured state, and relevant event labels.",
-        "Sampling rate describes intended cadence, while timestamps describe when individual records claim to occur. Six hundred samples at 20 Hz cover 30 seconds of nominal sample intervals, although the timestamp from the first sample to the last is normally 29.95 seconds when neither endpoint is duplicated. That arithmetic detects some gaps and boundary errors; it cannot establish that the images, states, actions, or outcome labels are semantically correct.",
+        "Sampling rate describes intended cadence, while timestamps describe when individual records claim to occur. A stream configured to collect 20 samples each second can produce 600 samples in a nominal 30-second acquisition window, although 600 instantaneous samples contain 599 between-sample intervals and therefore normally span 29.95 seconds from the first timestamp to the last. That arithmetic detects some gaps and boundary errors; it cannot establish that the images, states, actions, or outcome labels are semantically correct.",
         "Episodes are the natural unit for comparison and splitting because nearby frames share the same reset, operator behavior, scene, and outcome. Preserve aborted or malformed attempts in a raw ledger with explicit dispositions rather than silently renumbering good attempts. A training view may exclude a bad episode, but the exclusion rule, original identity, reviewer, and reason remain part of dataset lineage.",
       ],
       keyTerms: [
@@ -198,7 +198,7 @@ export const week14Content = {
         {
           question: "Why can `600 / 20 = 30 s` coexist with a 29.95 s first-to-last timestamp span?",
           answer:
-            "Six hundred samples at 20 Hz represent 600 sample intervals of nominal coverage, while only 599 intervals lie between the first and last sample timestamps.",
+            "The quotient describes a nominal 30-second acquisition window at 20 samples per second, while 600 instantaneous samples contain only 599 intervals between their first and last timestamps.",
         },
         {
           question: "Should a safe abort disappear from the raw dataset?",

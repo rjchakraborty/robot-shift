@@ -2321,6 +2321,153 @@ textarea::placeholder {
   line-height: 1.55;
 }
 
+.chapter-mission {
+  padding-top: 48px;
+}
+
+.chapter-learning-contract,
+.day-learning-contract,
+.chapter-environment dl,
+.chapter-starter__contract {
+  margin: 30px 0 0;
+}
+
+.chapter-learning-contract > div,
+.day-learning-contract > div,
+.chapter-environment dl > div,
+.chapter-starter__contract > div {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.3fr) minmax(0, 1fr);
+  gap: 26px;
+  padding: 16px 0;
+  border-top: 1px solid var(--muted-line);
+}
+
+.chapter-learning-contract dt,
+.day-learning-contract dt,
+.chapter-environment dt,
+.chapter-starter__contract dt {
+  color: var(--steel);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.chapter-learning-contract dd,
+.day-learning-contract dd,
+.chapter-environment dd,
+.chapter-starter__contract dd,
+.chapter-learning-contract dd p,
+.day-learning-contract dd p,
+.chapter-environment dd p,
+.chapter-starter__contract dd p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.chapter-environment {
+  margin-top: 34px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-tint-soft);
+}
+
+.chapter-environment > summary {
+  min-height: 62px;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: minmax(150px, 0.34fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.chapter-environment > summary span {
+  color: var(--cyan);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chapter-environment dl {
+  margin: 0;
+  padding: 8px 18px 18px;
+  border-top: 1px solid var(--border-strong);
+}
+
+.lesson-article__thread-copy > p {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.16rem;
+  line-height: 1.72;
+}
+
+.chapter-starter__finish {
+  color: var(--steel);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.08rem;
+}
+
+.chapter-starter__code {
+  margin-top: 28px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-subtle);
+}
+
+.chapter-starter__code > div {
+  min-height: 44px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--steel);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.7rem;
+}
+
+.chapter-starter__code > div > :nth-child(2) {
+  margin-left: auto;
+}
+
+.chapter-starter__download {
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.chapter-starter__download:focus-visible {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+.chapter-starter__code pre {
+  overflow-x: auto;
+  margin: 0;
+  padding: 20px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  tab-size: 2;
+}
+
+.chapter-starter__save {
+  margin: 12px 0 0;
+  color: var(--steel);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.lesson-article .math-rescue {
+  width: 100%;
+  margin: 24px 0 30px;
+}
+
 .lesson-article__chapter-line {
   margin: 0 0 8px;
   color: var(--steel);
@@ -2616,6 +2763,15 @@ textarea::placeholder {
   .chapter-opening__columns {
     grid-template-columns: 1fr;
     gap: 24px;
+  }
+
+  .chapter-learning-contract > div,
+  .day-learning-contract > div,
+  .chapter-environment dl > div,
+  .chapter-starter__contract > div,
+  .chapter-environment > summary {
+    grid-template-columns: 1fr;
+    gap: 7px;
   }
 
   .lesson-article__section {
@@ -3054,7 +3210,7 @@ textarea::placeholder {
   border: 1px solid var(--line);
 }
 
-.math-symbols article {
+.math-symbols > div {
   min-height: 116px;
   padding: 15px;
   display: flex;
@@ -3063,23 +3219,32 @@ textarea::placeholder {
   border-right: 1px solid var(--line);
 }
 
-.math-symbols article:last-child {
+.math-symbols > div:last-child {
   border-right: 0;
 }
 
-.math-symbols strong {
+.math-symbols dt {
   color: var(--cyan);
   font-family: var(--font-geist-mono), monospace;
   font-size: 1rem;
+  font-weight: 800;
 }
 
-.math-symbols span {
+.math-symbols dd {
+  margin: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.math-symbols dd span {
   color: var(--steel);
   font-size: 0.78rem;
   line-height: 1.4;
 }
 
-.math-symbols small {
+.math-symbols dd small {
   margin-top: auto;
   color: var(--ink);
   font-family: var(--font-geist-mono), monospace;
@@ -3161,6 +3326,10 @@ textarea::placeholder {
   color: #98e4dc;
   font-family: var(--font-geist-mono), monospace;
   font-size: 1.05rem;
+}
+
+.lesson-visual__figure.formula-card figcaption strong {
+  color: var(--ink);
 }
 
 .formula-typeset {
@@ -3956,13 +4125,13 @@ textarea::placeholder {
     grid-template-columns: 1fr;
   }
 
-  .math-symbols article {
+  .math-symbols > div {
     min-height: 0;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
 
-  .math-symbols article:last-child {
+  .math-symbols > div:last-child {
     border-bottom: 0;
   }
 
@@ -5522,19 +5691,19 @@ textarea::placeholder {
   line-height: 1.45;
 }
 
-.career-tier-apply-first {
+.career-tier-software-bridge {
   border-top: 6px solid var(--green);
 }
 
-.career-tier-primary {
+.career-tier-integration {
   border-top: 6px solid var(--cyan);
 }
 
-.career-tier-next {
+.career-tier-robotics-core {
   border-top: 6px solid #9b4dca;
 }
 
-.career-tier-stretch {
+.career-tier-advanced-applied {
   border-top: 6px solid var(--signal);
 }
 

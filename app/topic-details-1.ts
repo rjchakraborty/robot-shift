@@ -42,13 +42,13 @@ export const topicDetails1: Record<number, TopicDetail> = {
   ),
   3: detail(
     "A configuration is one complete description of a robot’s joint positions. Configuration space, or C-space, contains every allowed configuration; workspace contains places the robot’s tool can reach.",
-    "For a two-hinge arm, q is a simple ordered list: first shoulder angle, then elbow angle. We write it as q=(θ₁,θ₂). The hand’s (x,y) point is only one workspace result. Joint limits remove forbidden q values.",
-    "Write the configuration as $$q=(\\theta_1,\\theta_2).$$ Here $q$ means the full robot shape and each $\\theta$ (theta) is a joint angle in degrees or radians. Two angles mean a two-dimensional C-space.",
+    "For a two-hinge arm, begin with an ordered two-slot record: shoulder reading first, elbow reading second. Roboticists abbreviate that record as q=(θ₁,θ₂), but q and theta are labels today, not assumed algebra. The hand point is only one workspace result, and joint limits remove forbidden records.",
+    "Write the shape label as $$q=(\\theta_1,\\theta_2).$$ Here $q$ means the complete robot shape and each $\\theta$ (theta) names one joint reading. Count two independent slots, but defer signed coordinates and units to Day 4 and degree/radian calculation to Day 8.",
     "Map robot shapes, not only hand points",
     "Two different elbow shapes can put a hand on the same dot. They share a workspace point but occupy different C-space points.",
     "Move a two-link cardboard arm into six shapes. Record both angles and trace the tip. Find two configurations with nearly the same tip, then mark any joint-limit boundary.",
     "What does topology add beyond drawing C-space as a flat sheet?",
-    "It describes how configurations connect. A continuously rotating angle wraps around like a clock, so its ends join instead of forming two separate boundaries.",
+    "It describes which shapes connect without crossing a blocked boundary. A freely rotating joint wraps like a clock, so its apparent paper endpoints join; formal topology comes later.",
   ),
   4: detail(
     "A scalar is one number. A variable is a named box for a number. Coordinates locate a point from an origin, and units tell what the number measures.",

@@ -17,6 +17,37 @@ type RichTextProps = {
   allowedLinks?: readonly string[];
 };
 
+type HastNode = {
+  type?: string;
+  properties?: Record<string, unknown>;
+  children?: HastNode[];
+};
+
+function rehypeFocusableDisplayMath() {
+  return (tree: HastNode) => {
+    const pending = [tree];
+    while (pending.length > 0) {
+      const node = pending.pop();
+      if (!node) continue;
+      pending.push(...(node.children ?? []));
+
+      const className = node.properties?.className;
+      const classes = Array.isArray(className) ? className : [className];
+      if (
+        node.type === "element" &&
+        classes.some((value) => value === "katex-display")
+      ) {
+        node.properties = {
+          ...node.properties,
+          tabIndex: 0,
+          role: "region",
+          ariaLabel: "Scrollable equation",
+        };
+      }
+    }
+  };
+}
+
 function safeUrlTransform(url: string, allowedLinks?: ReadonlySet<string>): string {
   if (url.startsWith("#")) return url;
 
@@ -72,12 +103,15 @@ export const RichText = memo(function RichText({
         skipHtml
         disallowedElements={["img"]}
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[[rehypeKatex, {
-          strict: "warn",
-          throwOnError: false,
-          trust: false,
-          output: "htmlAndMathml",
-        }]]}
+        rehypePlugins={[
+          [rehypeKatex, {
+            strict: "warn",
+            throwOnError: false,
+            trust: false,
+            output: "htmlAndMathml",
+          }],
+          rehypeFocusableDisplayMath,
+        ]}
         urlTransform={(url) => safeUrlTransform(url, approved)}
         components={{
           a: ({ href, children, ...props }) => {

@@ -541,9 +541,9 @@ export const topicDetailOverrides: Record<number, TopicDetail> = {
     "No. LoRA can still overfit biased data, forget behaviors through its applied update, or target the wrong layers; held-out rollouts are required.",
   ),
   131: detail(
-    "Observation and action normalization place features on consistent numeric scales, but statistics must come from the intended training split and match each field. Safe action decoding restores units, checks finite values, clips against physical and rate limits, validates frame and timestamp, and routes through a monitored controller.",
-    "If joint action normalization is a=(q−μ)/σ with μ=0.4 rad and σ=0.2 rad, predicted a=1.5 decodes to q=0.7 rad. A previous command of 0.5 rad with a 0.1 rad/step limit must be bounded to 0.6 rad.",
-    "Normalization and decoding are $$a=\\frac{q-\\mu}{\\sigma},\\qquad q=a\\sigma+\\mu.$$ With $a=1.5$, $\\sigma=0.2\\ \\mathrm{rad}$, and $\\mu=0.4\\ \\mathrm{rad}$, $q=0.7\\ \\mathrm{rad}$; the step limit instead bounds the next command to $0.5+0.1=0.6\\ \\mathrm{rad}$.",
+    "Observation and action normalization place features on consistent numeric scales, but statistics must come from the intended training split and match each field. Safe action decoding restores units, checks finite values, rejects undeclared physical or rate-limit violations, validates frame and timestamp, and routes only eligible commands through a monitored controller. Clipping is allowed only when a separately validated controller contract names the tolerance and response.",
+    "If joint action normalization is a=(q−μ)/σ with μ=0.4 rad and σ=0.2 rad, predicted a=1.5 decodes to q=0.7 rad. From a previous command of 0.5 rad, the 0.2 rad jump exceeds the declared 0.1 rad/step limit, so the default result is rejection. An explicitly authorized bounded-response contract would identify 0.6 rad as its cap, not silently execute it.",
+    "Normalization and decoding are $$a=\\frac{q-\\mu}{\\sigma},\\qquad q=a\\sigma+\\mu.$$ With $a=1.5$, $\\sigma=0.2\\ \\mathrm{rad}$, and $\\mu=0.4\\ \\mathrm{rad}$, $q=0.7\\ \\mathrm{rad}$. The change is $$\\Delta q=0.7-0.5=0.2\\ \\mathrm{rad}>0.1\\ \\mathrm{rad},$$ so the default guard rejects it; $0.6\\ \\mathrm{rad}$ is only the maximum under a separately declared clipping contract.",
     "Wrong-statistics action jump",
     "A decoder accidentally uses gripper statistics for an elbow joint, producing a finite but unsafe value. Per-field schema IDs and delta limits reject it before execution.",
     "Create a five-field synthetic observation/action example, normalize and denormalize it by hand, inject NaN, wrong field order, and oversized delta, then verify the decoder rejects each case in offline tests.",
@@ -748,7 +748,7 @@ export const topicDetailOverrides: Record<number, TopicDetail> = {
     "Instead of “learned ROS 2,” a bullet states the system built, failure injected, metric achieved, artifacts published, and personal engineering contribution without inventing production use.",
     "Collect ten realistic target postings, normalize recurring requirements into a matrix, attach one honest artifact to each covered skill, rewrite three résumé bullets with measured outcomes, and label every remaining gap.",
     "What should you say about lacking a robotics degree?",
-    "State the transition directly, emphasize ten years of transferable engineering, and point to reproducible robotics projects and measured system evidence rather than apologizing or implying credentials you do not have.",
+    "State your actual education and transition directly, name only the transferable capabilities you can prove, and point to reproducible robotics projects and measured system evidence rather than apologizing or implying credentials you do not have.",
   ),
   179: detail(
     "Interview preparation should combine explain-back fundamentals, live debugging, system design, safety reasoning, and concise project stories. Warm outreach is specific and respectful, while an open-source contribution should solve a real scoped issue with tests, documentation, and maintainable review—not exist only for résumé decoration.",

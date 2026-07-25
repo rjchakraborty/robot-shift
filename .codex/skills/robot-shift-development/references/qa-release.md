@@ -1,4 +1,4 @@
-# QA and private release
+# QA and public release
 
 ## Local verification
 
@@ -44,10 +44,10 @@ Do not claim provider end-to-end success when only the configuration error path 
 1. Confirm `git status` and preserve unrelated work.
 2. Run `npm run verify`.
 3. Run browser QA against the exact source state.
-4. Confirm Firebase CLI identity is `rjchakraborty21@gmail.com` and the selected project is exactly `robotshift`.
+4. Confirm the active Firebase CLI identity is an approved project member and the selected project is exactly `robotshift`; do not record a personal account address in repository configuration or documentation.
 5. Confirm Blaze is explicitly approved, the Functions region is `asia-south1`, and the Firestore database/region are correct.
 6. Revoke any previously exposed Gemini credential and configure a dedicated rotated `GEMINI_API_KEY` through Secret Manager without printing it.
-7. Confirm Email/Password and Google providers, password policy, email-enumeration protection, authorized domains, action URL, App Check enforcement, API-key restrictions, quota, and budget controls.
+7. Confirm Email/Password and Google providers, a verified public product support mailbox for the OAuth brand, password policy, email-enumeration protection, authorized domains, action URL, App Check enforcement, API-key restrictions, quota, and budget controls.
 8. Commit and push that exact state when requested.
 
 ## Firebase release
@@ -55,8 +55,12 @@ Do not claim provider end-to-end success when only the configuration error path 
 Deploy all interdependent security surfaces from the same verified source state:
 
 ```bash
-firebase deploy --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift
+npm run release:firebase
 ```
+
+This command uses the repository-pinned Firebase CLI version. Hosting's
+predeploy gate reruns the complete verification suite and rebuilds `out/`
+before Firebase uploads it.
 
 Do not deploy Hosting alone: the shipped client depends on matching Auth policy,
 Firestore Rules, indexes, callable Functions, App Check registration, and

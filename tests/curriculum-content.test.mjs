@@ -14,6 +14,7 @@ import {
   weekLessonPacks,
 } from "../app/lessons.ts";
 import { mathRescueByWeek, validateMathRescues } from "../app/math-rescue.ts";
+import { lessonPath } from "../app/seo.ts";
 import { topicDetailOverrides } from "../app/topic-detail-overrides.ts";
 
 test("every curriculum day has complete topic-specific teaching content", () => {
@@ -168,6 +169,33 @@ test("the opening foundation assumes no maths and introduces concepts in depende
     articleSource.indexOf("Build the physical picture first")
       < articleSource.indexOf("Work through today’s relationship"),
     "the physical explanation must appear before the mathematics",
+  );
+});
+
+test("the Week 8 and Week 11 spiral keeps every persisted lesson identity", () => {
+  const expected = [
+    [50, "map→odom→base frames, occupancy grids, SLAM, and AMCL", "/lessons/050-map-odom-base-frames-occupancy-grids-slam-and-amcl/"],
+    [51, "Layered costmaps, robot footprint, inflation, and keepout zones", "/lessons/051-layered-costmaps-robot-footprint-inflation-and-keepout-zones/"],
+    [52, "Nav2 planners, controllers, smoothers, and goal execution", "/lessons/052-nav2-planners-controllers-smoothers-and-goal-execution/"],
+    [53, "Nav2 behavior trees, recovery, and lifecycle management", "/lessons/053-nav2-behavior-trees-recovery-and-lifecycle-management/"],
+    [54, "Cancellation, obstruction, collision monitoring, and replanning", "/lessons/054-cancellation-obstruction-collision-monitoring-and-replanning/"],
+    [55, "Navigation metrics: success, path, time, localization error, and recovery", "/lessons/055-navigation-metrics-success-path-time-localization-error-and-recovery/"],
+    [56, "Mandatory resilient Nav2/SLAM phase demo", "/lessons/056-mandatory-resilient-nav2-slam-phase-demo/"],
+    [71, "State, observation, process model, and uncertainty", "/lessons/071-state-observation-process-model-and-uncertainty/"],
+    [72, "Probability distributions and covariance intuition", "/lessons/072-probability-distributions-and-covariance-intuition/"],
+    [73, "Bayes filters and the predict/update cycle", "/lessons/073-bayes-filters-and-the-predict-update-cycle/"],
+    [74, "Kalman/EKF intuition and odometry-IMU fusion", "/lessons/074-kalman-ekf-intuition-and-odometry-imu-fusion/"],
+    [75, "Scan matching, occupancy mapping, and localization drift", "/lessons/075-scan-matching-occupancy-mapping-and-localization-drift/"],
+    [76, "Pose graphs, loop closure, AMCL, and map→odom correction", "/lessons/076-pose-graphs-loop-closure-amcl-and-map-odom-correction/"],
+    [77, "SLAM/localization report with uncertainty and dropout recovery", "/lessons/077-slam-localization-report-with-uncertainty-and-dropout-recovery/"],
+  ];
+
+  assert.deepEqual(
+    expected.map(([dayId]) => {
+      const day = curriculumDays[Number(dayId) - 1];
+      return [day.id, day.title, lessonPath(day)];
+    }),
+    expected,
   );
 });
 

@@ -11,6 +11,8 @@ import {
 } from "react";
 import { loadChapterContent } from "./chapter-content";
 import type { ChapterContent } from "./chapter-content-types";
+import type { ChapterLearningGuide } from "./chapter-guide-types";
+import { loadChapterLearningGuide } from "./chapter-guides";
 import { type CurriculumDay } from "./curriculum";
 import {
   initializeFirebaseObservability,
@@ -149,6 +151,7 @@ export function LearningStudio({ day }: LearningStudioProps) {
   } = useAuth();
   const lesson = useMemo(() => lessonForDay(day), [day]);
   const [chapter, setChapter] = useState<ChapterContent | null>(null);
+  const [guide, setGuide] = useState<ChapterLearningGuide | null>(null);
   const [chapterError, setChapterError] = useState<string | null>(null);
   const [threads, setThreads] = useState<Record<string, TutorThread>>({});
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -186,17 +189,22 @@ export function LearningStudio({ day }: LearningStudioProps) {
   useEffect(() => {
     let active = true;
 
-    void loadChapterContent(day.week)
-      .then((content) => {
+    void Promise.all([
+      loadChapterContent(day.week),
+      loadChapterLearningGuide(day.week),
+    ])
+      .then(([content, learningGuide]) => {
         if (active) {
           setChapter(content);
+          setGuide(learningGuide);
           setChapterError(null);
         }
       })
       .catch(() => {
         if (active) {
           setChapter(null);
-          setChapterError("This chapter could not be loaded. Refresh the page and try again.");
+          setGuide(null);
+          setChapterError("This chapter and its learning guide could not be loaded. Refresh the page and try again.");
         }
       });
 
@@ -475,9 +483,10 @@ export function LearningStudio({ day }: LearningStudioProps) {
       className="learning-studio"
       aria-label={`Learning content for Day ${day.id}`}
     >
-      {chapter && deepDive ? (
+      {chapter && guide && deepDive ? (
         <LessonArticle
           chapter={chapter}
+          guide={guide}
           day={day}
           deepDive={deepDive}
           lesson={lesson}

@@ -123,6 +123,37 @@ test("Tutor prompt refuses unrelated or general-purpose requests", () => {
   );
 });
 
+test("Tutor enforces the Week 8 boundary and opens estimator theory in Week 11", () => {
+  const firstFlight = contextForDay(50);
+  const estimatorRevisit = contextForDay(71);
+  assert.ok(firstFlight);
+  assert.ok(estimatorRevisit);
+  assert.match(firstFlight.teachingBoundary ?? "", /defer.*Week 11/i);
+  assert.match(estimatorRevisit.teachingBoundary ?? "", /theory-and-diagnosis pass/i);
+
+  const firstFlightPrompt = buildTutorPrompt({
+    context: firstFlight,
+    mode: "ask",
+    history: [],
+    question: "How should I tune particle resampling today?",
+  });
+  assert.match(firstFlightPrompt.systemInstruction, /Teaching boundary:/);
+  assert.match(firstFlightPrompt.systemInstruction, /Defer particle weighting and resampling/i);
+  assert.match(
+    firstFlightPrompt.systemInstruction,
+    /Respect the teaching boundary.*defer explicitly named internals or tuning/s,
+  );
+
+  const revisitPrompt = buildTutorPrompt({
+    context: estimatorRevisit,
+    mode: "math",
+    history: [],
+    question: "Explain covariance using the frozen Week 8 run.",
+  });
+  assert.match(revisitPrompt.systemInstruction, /theory-and-diagnosis pass/i);
+  assert.match(revisitPrompt.systemInstruction, /Week 8 artifact identities/i);
+});
+
 function expectInvalid(operation, messagePattern) {
   assert.throws(operation, (error) => {
     assert.equal(error?.code, "invalid-argument");

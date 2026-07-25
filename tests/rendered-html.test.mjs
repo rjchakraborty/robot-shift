@@ -43,7 +43,7 @@ test("statically renders the complete Robot/Shift release shell", async () => {
   );
   assert.match(
     html,
-    /<meta name="description" content="A practical 180-day robotics course and AI tutor for a software engineer moving into embodied AI\."\/>/i,
+    /<meta name="description" content="A practical 180-day robotics course and AI tutor for programmers and technical learners moving into embodied AI\."\/>/i,
   );
   assert.match(
     html,
@@ -102,6 +102,9 @@ test("ships the complete Robot/Shift curriculum manager", async () => {
     ["course data import", "Import backup"],
     ["guarded Firestore reset", "Reset saved Firestore data?"],
     ["content-first lesson", "Build the physical picture first"],
+    ["continuing chapter narrative", "Today in the field story"],
+    ["visible prerequisite rescue", "Prerequisite rescue · optional"],
+    ["runnable chapter starter", "Chapter starter artifact"],
     ["beginner vocabulary", "Words you need"],
     ["typeset exact-topic mathematics", "Math, one line at a time"],
     ["real-world application examples", "Physical examples"],
@@ -203,6 +206,7 @@ test("protects account-action codes and requires Firestore consent for performan
     actionSource,
     configSource,
     observabilitySource,
+    packageSource,
     privacyHtml,
     telemetrySource,
   ] = await Promise.all([
@@ -218,6 +222,7 @@ test("protects account-action codes and requires Firestore consent for performan
       new URL("../app/firebase-observability.ts", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../out/privacy/index.html", import.meta.url), "utf8"),
     readFile(new URL("../app/telemetry-control.tsx", import.meta.url), "utf8"),
   ]);
@@ -234,6 +239,17 @@ test("protects account-action codes and requires Firestore consent for performan
   assert.ok(providerIndex > scrubIndex);
 
   const config = JSON.parse(configSource);
+  const packageConfig = JSON.parse(packageSource);
+  assert.deepEqual(
+    config.hosting.predeploy,
+    ["npm run verify"],
+    "Firebase Hosting deploys must rebuild and verify the exact static export",
+  );
+  assert.equal(
+    packageConfig.scripts["release:firebase"],
+    "npx --yes firebase-tools@15.24.0 deploy --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift",
+    "the release command must use the validated CLI and deploy all coupled surfaces",
+  );
   const headers = config.hosting.headers;
   const actionHeaderIndexes = headers
     .map((entry, index) => (
@@ -309,34 +325,100 @@ test("publishes crawlable metadata and all 180 lesson pages", async () => {
     new URL("../out/lessons/", import.meta.url),
     { withFileTypes: true },
   );
-  const lessonDirectories = lessonEntries.filter((entry) => entry.isDirectory());
+  const lessonDirectories = lessonEntries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
   assert.equal(lessonDirectories.length, 180);
 
-  const [robots, sitemap, firstLesson] = await Promise.all([
+  const [robots, sitemap, lessonPages] = await Promise.all([
     readFile(new URL("../out/robots.txt", import.meta.url), "utf8"),
     readFile(new URL("../out/sitemap.xml", import.meta.url), "utf8"),
-    readFile(
-      new URL(
-        "../out/lessons/001-robot-anatomy-sense-think-act-links-and-actuators/index.html",
-        import.meta.url,
+    Promise.all(
+      lessonDirectories.map((directory) =>
+        readFile(
+          new URL(`../out/lessons/${directory}/index.html`, import.meta.url),
+          "utf8",
+        )
       ),
-      "utf8",
     ),
   ]);
 
   assert.match(robots, /Sitemap: https:\/\/robotshift\.web\.app\/sitemap\.xml/);
-  assert.equal(
-    (sitemap.match(/<loc>/g) ?? []).length,
-    181,
-    "the sitemap should include home plus every lesson",
+  const lessonUrls = lessonDirectories.map(
+    (directory) => `https://robotshift.web.app/lessons/${directory}/`,
   );
-  assert.match(firstLesson, /<title>Day 1: Robot anatomy[^<]*\| Robot\/Shift<\/title>/i);
-  assert.match(
-    firstLesson,
-    /<link rel="canonical" href="https:\/\/robotshift\.web\.app\/lessons\/001-robot-anatomy-sense-think-act-links-and-actuators\/"\/>/i,
+  const sitemapUrls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+    ([, url]) => url,
   );
-  assert.match(firstLesson, /"@type":"LearningResource"/);
-  assert.match(firstLesson, /rel="next"/);
+  assert.deepEqual(
+    sitemapUrls,
+    ["https://robotshift.web.app/", ...lessonUrls],
+    "the sitemap must contain the exact canonical home and lesson URL set",
+  );
+
+  for (const [index, directory] of lessonDirectories.entries()) {
+    const day = index + 1;
+    const paddedDay = String(day).padStart(3, "0");
+    const html = lessonPages[index];
+    const canonical = lessonUrls[index];
+
+    assert.match(
+      directory,
+      new RegExp(`^${paddedDay}-[a-z0-9]+(?:-[a-z0-9]+)*$`),
+      `Day ${day} must keep its stable padded canonical slug`,
+    );
+    assert.match(
+      html,
+      new RegExp(`<title>Day ${day}: [^<]+ \\| Robot\\/Shift<\\/title>`, "i"),
+      `Day ${day} must publish a unique lesson title`,
+    );
+    assert.ok(
+      html.includes(`<link rel="canonical" href="${canonical}"/>`),
+      `Day ${day} must publish its exact canonical URL`,
+    );
+
+    const structuredScripts = [
+      ...html.matchAll(
+        /<script type="application\/ld\+json">([^<]+)<\/script>/g,
+      ),
+    ].map(([, json]) => JSON.parse(json));
+    const lessonGraph = structuredScripts
+      .flatMap((entry) => entry["@graph"] ?? [])
+      .find((entry) => entry["@type"] === "LearningResource");
+    assert.ok(lessonGraph, `Day ${day} must publish LearningResource JSON-LD`);
+    assert.equal(lessonGraph.url, canonical);
+    assert.equal(lessonGraph.position, day);
+    assert.equal(lessonGraph.learningResourceType, "Lesson");
+    assert.match(lessonGraph.name, new RegExp(`^Day ${day}: `));
+    assert.match(lessonGraph.description, new RegExp(`Complete Day ${day} `));
+    assert.match(lessonGraph.timeRequired, /^PT\d+M$/);
+    assert.equal(
+      lessonGraph.isPartOf?.["@id"],
+      "https://robotshift.web.app/#course",
+    );
+
+    const previousDirectory = lessonDirectories[index - 1];
+    const nextDirectory = lessonDirectories[index + 1];
+    if (previousDirectory) {
+      assert.ok(
+        html.includes(
+          `rel="prev" href="/lessons/${previousDirectory}/"`,
+        ),
+        `Day ${day} must link to Day ${day - 1}`,
+      );
+    } else {
+      assert.doesNotMatch(html, /rel="prev"/);
+    }
+    if (nextDirectory) {
+      assert.ok(
+        html.includes(`rel="next" href="/lessons/${nextDirectory}/"`),
+        `Day ${day} must link to Day ${day + 1}`,
+      );
+    } else {
+      assert.doesNotMatch(html, /rel="next"/);
+    }
+  }
 });
 
 test("keeps tutor Markdown in one readable document flow", async () => {

@@ -17,7 +17,7 @@ import {
 test("normalizes bounded account identity fields", () => {
   assert.equal(normalizeEmail("  Reader@Example.COM "), "reader@example.com");
   assert.equal(validateEmail("Reader@example.com"), "reader@example.com");
-  assert.equal(validateDisplayName("  Raja   Chakraborty  "), "Raja Chakraborty");
+  assert.equal(validateDisplayName("  Ada   Lovelace  "), "Ada Lovelace");
   assert.throws(() => validateEmail("reader@example"), AuthValidationError);
   assert.throws(() => validateDisplayName("x"), AuthValidationError);
   assert.throws(

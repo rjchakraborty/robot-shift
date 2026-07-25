@@ -101,6 +101,7 @@ export type TutorContext = {
     mistake: string;
     correction: string;
   }>;
+  teachingBoundary?: string;
   sources: Array<{
     label: string;
     url: string;

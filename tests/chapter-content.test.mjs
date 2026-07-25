@@ -72,6 +72,39 @@ test("all 26 chapters cover the exact 180-day curriculum", () => {
   }
 });
 
+test("Week 8 previews navigation interfaces and Week 11 owns estimator theory", () => {
+  const week8 = chapters[7];
+  const week11 = chapters[10];
+  const day56 = week8.days.find((day) => day.dayId === 56);
+  const day77 = week11.days.find((day) => day.dayId === 77);
+
+  assert.match(week8.purpose, /first bounded navigation flight|first flight/i);
+  assert.match(week8.teachingBoundary ?? "", /defer.*week 11/i);
+  assert.match(week8.teachingBoundary ?? "", /particle weighting.*covariance.*Bayes|particle weighting.*process and measurement models/i);
+  assert.match(week11.purpose, /reopen the exact.*Week 8/i);
+  assert.match(week11.teachingBoundary ?? "", /theory-and-diagnosis pass/i);
+
+  assert.ok(day56, "Day 56 must remain in Week 8");
+  assert.ok(day77, "Day 77 must remain in Week 11");
+  const handoff = JSON.stringify(day56?.handsOn);
+  for (const signal of [
+    /source commit or container identity/i,
+    /Gazebo world and random seed/i,
+    /MCAP bag/i,
+    /map image\/YAML and serialized pose graph/i,
+    /TF snapshot/i,
+    /scenario manifest/i,
+    /raw result rows/i,
+  ]) {
+    assert.match(handoff, signal);
+  }
+
+  const revisit = JSON.stringify(day77?.handsOn);
+  assert.match(revisit, /exact Week 8 source\/container identity/i);
+  assert.match(revisit, /verify their recorded hashes/i);
+  assert.match(revisit, /unchanged Week 8 artifact hashes/i);
+});
+
 test("every daily lesson meets the deep-teaching contract", () => {
   for (const chapter of chapters) {
     assert.ok(chapter.title.trim().length >= 10, `Week ${chapter.week} title`);

@@ -10,7 +10,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "serve out",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs && node --import tsx --test tests/chapter-content.test.mjs tests/curriculum-content.test.mjs tests/career-market.test.mjs tests/visual-content.test.mjs tests/mission-progress.test.mjs tests/interactive-math.test.mjs tests/theme.test.mjs tests/rich-text.test.tsx tests/lesson-media.test.ts tests/storage-migrations.test.ts tests/firebase-auth.test.ts tests/cloud-persistence.test.ts",
+    "audit:curriculum-sources": "node --import tsx scripts/audit-curriculum-sources.mts",
+    "test": "npm run build && npm --prefix functions run generate:context && node --test tests/rendered-html.test.mjs && node --import tsx --test tests/public-content.test.mjs tests/chapter-content.test.mjs tests/chapter-learning-guides.test.mjs tests/curriculum-content.test.mjs tests/career-market.test.mjs tests/visual-content.test.mjs tests/mission-progress.test.mjs tests/interactive-math.test.mjs tests/theme.test.mjs tests/rich-text.test.tsx tests/lesson-media.test.ts tests/storage-migrations.test.ts tests/firebase-auth.test.ts tests/cloud-persistence.test.ts",
     "test:auth-emulator:inside": "node --import tsx --test --test-concurrency=1 tests/firebase/auth.emulator.test.ts",
     "test:auth-emulator": "env -i PATH=\"$PATH\" TMPDIR=\"${TMPDIR:-/tmp}\" LANG=\"${LANG:-C.UTF-8}\" npm_config_cache=\"${npm_config_cache:-$HOME/.npm}\" GOOGLE_APPLICATION_CREDENTIALS=/nonexistent/robotshift-emulator-no-credentials.json NO_COLOR=1 CI=1 npx --yes firebase-tools@15.24.0 emulators:exec --project demo-robotshift --only auth \"npm run test:auth-emulator:inside\"",
     "test:firestore-rules:inside": "node --import tsx --test --test-concurrency=1 tests/firebase/firestore.rules.test.ts",
@@ -19,7 +20,8 @@
     "test:functions-emulator": "npm --prefix functions run build && if [ -x /opt/homebrew/opt/openjdk@21/bin/java ]; then export JAVA_HOME=/opt/homebrew/opt/openjdk@21; fi; env -i PATH=\"$PATH\" TMPDIR=\"${TMPDIR:-/tmp}\" LANG=\"${LANG:-C.UTF-8}\" JAVA_HOME=\"$JAVA_HOME\" npm_config_cache=\"${npm_config_cache:-$HOME/.npm}\" FIREBASE_EMULATORS_PATH=\"${FIREBASE_EMULATORS_PATH:-$HOME/.cache/firebase/emulators}\" GOOGLE_APPLICATION_CREDENTIALS=/nonexistent/robotshift-emulator-no-credentials.json NO_COLOR=1 CI=1 FIREBASE_DEBUG_MODE=true FIREBASE_DEBUG_FEATURES='{\"skipTokenVerification\":true}' FUNCTIONS_EMULATOR_HOST=127.0.0.1:5001 npx --yes firebase-tools@15.24.0 emulators:exec --project demo-robotshift --only auth,firestore,functions \"npm run test:functions-emulator:inside\"",
     "test:firebase-emulators": "npm run test:auth-emulator && npm run test:firestore-rules && npm run test:functions-emulator",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "verify": "bash scripts/verify-project.sh"
+    "verify": "bash scripts/verify-project.sh",
+    "release:firebase": "npx --yes firebase-tools@15.24.0 deploy --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift"
   },
   "dependencies": {
     "firebase": "12.16.0",

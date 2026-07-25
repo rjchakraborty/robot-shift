@@ -2,7 +2,7 @@
 
 ## Product
 
-Robot/Shift is RJ's private, reader-first 180-day robotics curriculum. It teaches a senior software engineer practical robotics, ROS 2 integration, validation, deployment, and embodied-AI foundations without assuming prior mathematics or a robotics degree.
+Robot/Shift is a public, reader-first 180-day robotics curriculum. It teaches programmers, developers, and technical learners practical robotics, ROS 2 integration, validation, deployment, and embodied-AI foundations without assuming a particular résumé, employer, degree, technology stack, experience duration, or mathematics background.
 
 ## Source of truth
 
@@ -16,7 +16,7 @@ Robot/Shift is RJ's private, reader-first 180-day robotics curriculum. It teache
 - `app/auth/`: Firebase Authentication, email actions, profile management, and tutor access state.
 - `app/firebase-observability.ts`: bounded Analytics and Performance Monitoring.
 - `app/storage-migrations.ts`: legacy browser schema parsing and one-time Firestore migration compatibility.
-- `app/career-market.ts` and `app/career-view.tsx`: India job evidence and role guidance.
+- `app/career-market.ts` and `app/career-view.tsx`: neutral role guidance plus a clearly dated regional India job-evidence example.
 - `tests/`: executable curriculum, visual, storage, tutor, theme, and rendering contracts.
 
 Read `.codex/skills/robot-shift-development/SKILL.md` for any curriculum, tutor, visual, storage, UI, QA, or release task.
@@ -51,4 +51,4 @@ For rendered changes, also test the exact flow at `http://localhost:3000/`, insp
 
 - Do not commit `node_modules/`, `dist/`, `.next/`, `.vinext/`, `.wrangler/`, `outputs/`, `work/`, local environment files, or browser test artifacts.
 - Keep commits narrowly scoped and describe the verified user outcome.
-- Do not publish, push, or change private-site access unless the user explicitly requests it.
+- Do not publish, push, deploy, or change public-site access unless the user explicitly requests it.

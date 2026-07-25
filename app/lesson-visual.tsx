@@ -713,7 +713,7 @@ export function LessonVisual({
         role="group"
         aria-label={`${spec.topic}: ${state.label}`}
       >
-        <figure className="lesson-visual__figure formula-card">
+        <figure className="lesson-visual__figure formula-card" tabIndex={0}>
           <span className="lesson-visual__scroll-hint">Swipe the technical canvas horizontally on a small screen.</span>
           <svg
             className="lesson-visual__svg"

@@ -5,7 +5,7 @@ export const SITE_NAME = "Robot/Shift";
 export const HOME_TITLE = "Robot/Shift — 180-Day Robotics Field Manual";
 export const COURSE_TITLE = HOME_TITLE;
 export const SITE_DESCRIPTION =
-  "A practical 180-day robotics course and AI tutor for a software engineer moving into embodied AI.";
+  "A practical 180-day robotics course and AI tutor for programmers and technical learners moving into embodied AI.";
 export const SOCIAL_IMAGE = {
   url: "/og.png",
   width: 1200,

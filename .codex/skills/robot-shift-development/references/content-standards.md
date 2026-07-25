@@ -2,9 +2,9 @@
 
 ## Learner model
 
-Assume a capable 12-year-old who is an experienced software engineer but has no reliable foundation in vectors, matrices, algebra, trigonometry, coordinate frames, mechanics, control, or electronics theory.
+Assume a capable learner with some programming familiarity but no reliable foundation in vectors, matrices, algebra, trigonometry, coordinate frames, mechanics, control, or electronics theory.
 
-Introduce symbols only after the physical picture. Define every symbol, unit, frame, input, and output. Use the learner's Python, Java, Flutter, web, API, debugging, soldering, wiring, motor, and DIY experience as bridges without pretending software simulation proves physical success.
+Introduce symbols only after the physical picture. Define every symbol, unit, frame, input, and output. Offer several optional bridges—such as interfaces, typed contracts, event streams, data analysis, testing, electronics, fabrication, or repair—without assuming that any learner has one specific background or pretending software simulation proves physical success.
 
 ## Lesson order
 

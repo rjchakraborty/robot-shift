@@ -33,7 +33,7 @@ Treat the course as an integrated learning product. Preserve its teaching sequen
 - Add or update the executable contract that would have caught the bug or omission.
 - Keep secrets server-only and generated model output untrusted.
 - Preserve dormant legacy progress fields unless an explicit versioned migration removes them.
-- Do not copy protected source content into the private site merely because the site is private.
+- Do not copy protected source content into the site; public access makes rights and attribution boundaries especially important.
 
 ## Validate
 

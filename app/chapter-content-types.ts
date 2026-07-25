@@ -70,6 +70,7 @@ export type ChapterContent = {
   week: number;
   title: string;
   purpose: string;
+  teachingBoundary?: string;
   prerequisites: readonly string[];
   outcomes: readonly string[];
   jobTargets: readonly string[];

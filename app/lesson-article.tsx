@@ -1,17 +1,26 @@
 "use client";
 
 import type { ChapterContent, DailyLessonDeepDive } from "./chapter-content-types";
+import type { ChapterLearningGuide } from "./chapter-guide-types";
+import {
+  ChapterMissionOpening,
+  ChapterStarterPanel,
+  DailyMissionThread,
+} from "./chapter-learning-guide";
 import type { CurriculumDay } from "./curriculum";
 import { hasReviewedFoundationTopicMedia } from "./lesson-media-days";
 import { LessonMediaPanel } from "./lesson-media-panel";
 import { LessonVisual } from "./lesson-visual";
 import { allDayVisuals } from "./lesson-visuals";
 import type { DayLesson } from "./lessons";
+import { getMathRescue } from "./math-rescue";
+import { MathRescuePanel } from "./math-rescue-panel";
 import { RichText } from "./rich-text";
 import { shouldRenderLessonVisual } from "./validated-visuals";
 
 type LessonArticleProps = {
   chapter: ChapterContent;
+  guide: ChapterLearningGuide;
   day: CurriculumDay;
   deepDive: DailyLessonDeepDive;
   lesson: DayLesson;
@@ -49,17 +58,25 @@ function TeachingText({
 
 export function LessonArticle({
   chapter,
+  guide,
   day,
   deepDive,
   lesson,
 }: LessonArticleProps) {
   const visual = allDayVisuals[day.id - 1];
   const firstDayOfChapter = chapter.days[0]?.dayId === day.id;
+  const lastDayOfChapter = chapter.days.at(-1)?.dayId === day.id;
+  const dayThread = guide.dayThreads.find((item) => item.dayId === day.id);
+  const mathRescue = getMathRescue(chapter.week);
   const showVisual = shouldRenderLessonVisual(day.id, deepDive.visual.show);
   const showFoundationTopicMedia = (
     !firstDayOfChapter
     && hasReviewedFoundationTopicMedia(day.id)
   );
+
+  if (!dayThread) {
+    throw new Error(`Missing learning thread for curriculum day ${day.id}.`);
+  }
 
   return (
     <article
@@ -97,6 +114,12 @@ export function LessonArticle({
           Chapter {String(chapter.week).padStart(2, "0")} · {chapter.title}
         </p>
       )}
+
+      {firstDayOfChapter ? (
+        <ChapterMissionOpening guide={guide} dayId={day.id} />
+      ) : null}
+
+      <DailyMissionThread thread={dayThread} />
 
       <section className="lesson-article__section lesson-article__understand">
         <p className="lesson-article__eyebrow">Understand</p>
@@ -151,6 +174,7 @@ export function LessonArticle({
       <section className="lesson-article__section" aria-labelledby={`math-title-${day.id}`}>
         <p className="lesson-article__eyebrow">Math, one line at a time</p>
         <h2 id={`math-title-${day.id}`}>Work through today’s relationship</h2>
+        <MathRescuePanel rescue={mathRescue} />
         <RichText
           content={lesson.math.connectionMarkdown ?? `$$\n${lesson.math.latex}\n$$`}
           className="lesson-article__math-bridge"
@@ -280,6 +304,10 @@ export function LessonArticle({
           ))}
         </div>
       </section>
+
+      {lastDayOfChapter ? (
+        <ChapterStarterPanel guide={guide} dayId={day.id} />
+      ) : null}
 
       {firstDayOfChapter ? (
         <LessonMediaPanel

@@ -294,9 +294,9 @@ const weekPlans: WeekPlan[] = [
   },
   {
     phaseId: "ros",
-    title: "Mandatory Nav2 and SLAM",
-    focus: "Build the complete map→localize→plan→control→recover loop.",
-    lab: "Map a Gazebo world, localize with AMCL, navigate with Nav2, and survive cancellation, obstruction, stale localization, and recovery.",
+    title: "Mandatory Nav2 and SLAM first flight",
+    focus: "Operate the complete loop by contract now; preserve its evidence for estimator theory in Week 11.",
+    lab: "Launch one pinned Gazebo, SLAM Toolbox, AMCL, and Nav2 stack; survive cancellation, obstruction, stale localization, and bounded recovery; then freeze the world, seed, bag, map, graph, configuration, transform snapshot, scenarios, and raw results.",
     topics: [
       "map→odom→base frames, occupancy grids, SLAM, and AMCL",
       "Layered costmaps, robot footprint, inflation, and keepout zones",
@@ -349,9 +349,9 @@ const weekPlans: WeekPlan[] = [
   },
   {
     phaseId: "autonomy",
-    title: "State estimation, SLAM, and localization",
-    focus: "Know what the robot believes, how its map changes, and why.",
-    lab: "Fuse odometry and IMU, build an occupancy map, close a loop, localize with AMCL, visualize uncertainty, and recover from sensor dropout.",
+    title: "State estimation, SLAM, and localization diagnosis",
+    focus: "Reopen the Week 8 first flight to explain what the robot believed, why it changed, and whether the uncertainty was honest.",
+    lab: "Use the frozen Week 8 artifacts to fuse odometry and IMU, explain scan matching, loop closure, and AMCL, then rerun the unchanged scenarios and compare error, uncertainty coverage, transform age, dropout recovery, and navigation success.",
     topics: [
       "State, observation, process model, and uncertainty",
       "Probability distributions and covariance intuition",
@@ -597,7 +597,7 @@ const weekPlans: WeekPlan[] = [
   {
     phaseId: "ship",
     title: "Portfolio and job conversion",
-    focus: "Translate ten years of software experience into robotics evidence.",
+    focus: "Translate verified prior experience and new course artifacts into honest robotics evidence.",
     lab: "Publish a robotics portfolio, role-targeted résumé, architecture case study, and a 30-day application sprint.",
     topics: [
       "Portfolio homepage and three evidence-backed project stories",
@@ -647,7 +647,7 @@ const evidenceModes = [
     `DONE when the weekly ship note explains how “${topic}” changed the build, what still fails, and the first task for next week.`,
 ];
 
-const minutesByDay = [90, 105, 90, 120, 105, 150, 60];
+const minutesByDay = [90, 105, 90, 105, 105, 105, 120];
 
 const zeroPrerequisiteFoundationTasks = [
   "Draw a sense→think→act loop for a toy rover. Label its sensor, controller, actuator, links, power source, information flow, and physical action; then add the same diagram to the browser notebook.",

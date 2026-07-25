@@ -58,7 +58,14 @@ export type DayVisualSpec = {
     tone: "input" | "process" | "output" | "warning";
   }[];
   softwareBridge: {
-    skill: "Flutter" | "Web" | "Mobile" | "Java" | "Python";
+    skill:
+      | "2D graphics"
+      | "Typed interfaces"
+      | "Scheduled loops"
+      | "Realtime media"
+      | "Event systems"
+      | "Data analysis"
+      | "Test engineering";
     analogy: string;
     dangerousDifference: string;
   };
@@ -551,72 +558,72 @@ const profiles: Record<VisualKind, KindProfile> = {
 
 const bridges: Record<VisualKind, DayVisualSpec["softwareBridge"]> = {
   coordinate: {
-    skill: "Flutter",
-    analogy: "Flutter's Offset and canvas transforms are a useful mental model for points, vectors, and ordered transforms.",
+    skill: "2D graphics",
+    analogy: "Points and ordered canvas transforms are a useful programming model for coordinates, vectors, and frame composition.",
     dangerousDifference: "A wrong canvas transform moves pixels; a wrong robot frame can cause a collision. Physical units and calibration are mandatory.",
   },
   kinematics: {
-    skill: "Flutter",
-    analogy: "A widget transform tree resembles a robot link tree: each child pose is relative to its parent.",
+    skill: "2D graphics",
+    analogy: "A scene or layout transform tree resembles a robot link tree: each child pose is relative to its parent.",
     dangerousDifference: "Robot joints have mass, limits, backlash, singularities, and collision geometry; widgets do not.",
   },
   feedback: {
-    skill: "Java",
-    analogy: "A scheduled Java loop that reads state, computes, and writes output resembles a discrete controller cycle.",
+    skill: "Scheduled loops",
+    analogy: "A scheduled program loop that reads state, computes, and writes output resembles a discrete controller cycle.",
     dangerousDifference: "Garbage collection, blocking calls, or missed deadlines can create unsafe physical commands, not just slow UI.",
   },
   timing: {
-    skill: "Mobile",
-    analogy: "A mobile frame budget and timestamped camera/IMU pipeline make deadline and synchronization problems familiar.",
+    skill: "Realtime media",
+    analogy: "A frame budget and timestamped audio, video, or sensor pipeline make deadline and synchronization problems concrete.",
     dangerousDifference: "Dropping a UI frame is visible lag; stale robot state can move hardware toward where an object used to be.",
   },
   system: {
-    skill: "Web",
-    analogy: "ROS nodes, topics, services, and actions resemble typed services, event streams, requests, and cancellable jobs.",
+    skill: "Event systems",
+    analogy: "ROS nodes, topics, services, and actions resemble typed components, event streams, requests, and cancellable jobs.",
     dangerousDifference: "A distributed robot graph closes a loop through physical hardware, so retries, ordering, and timeouts have physical consequences.",
   },
   sensor: {
-    skill: "Mobile",
-    analogy: "Phone camera and IMU APIs already expose pixels, rates, timestamps, orientation, permissions, and noisy readings.",
+    skill: "Realtime media",
+    analogy: "Camera and sensor APIs expose samples, rates, timestamps, orientation, permissions, and noisy readings.",
     dangerousDifference: "Robot perception needs measured intrinsics, extrinsics, frames, and task tolerances; an attractive preview is not calibration.",
   },
   uncertainty: {
-    skill: "Python",
-    analogy: "Python data analysis makes distributions, residual plots, and confidence intervals approachable.",
+    skill: "Data analysis",
+    analogy: "Tables and plots make distributions, residuals, and confidence intervals visible before they become equations.",
     dangerousDifference: "Covariance is a model of uncertainty, not proof that the estimate matches the physical world.",
   },
   map: {
-    skill: "Flutter",
-    analogy: "Drawing layers on a canvas resembles occupancy, inflation, planned path, robot pose, and debug overlays.",
+    skill: "2D graphics",
+    analogy: "Drawing layered shapes resembles occupancy, inflation, planned path, robot pose, and debug overlays.",
     dangerousDifference: "Navigation layers use metric frames, footprint geometry, and live obstacles; z-order alone cannot make a route safe.",
   },
   tensor: {
-    skill: "Python",
-    analogy: "NumPy and Python ML pipelines transfer directly to explicit tensor shapes, preprocessing, metrics, and experiment scripts.",
+    skill: "Data analysis",
+    analogy: "Array and data-pipeline practice transfers to explicit tensor shapes, preprocessing, metrics, and reproducible experiments.",
     dangerousDifference: "A low validation loss can still fail physically because of leakage, latency, shift, or unsafe action decoding.",
   },
   episode: {
-    skill: "Mobile",
+    skill: "Realtime media",
     analogy: "A video recorder plus an event log is a good model for synchronized observation, state, command, and intervention streams.",
     dangerousDifference: "A few milliseconds of skew can label the wrong physical action, even when each file looks valid alone.",
   },
   policy: {
-    skill: "Java",
+    skill: "Typed interfaces",
     analogy: "Treat a robot skill like a typed interface with preconditions, result states, cancellation, timeout, and rollback.",
     dangerousDifference: "A learned implementation is probabilistic and distribution-dependent; the type signature does not guarantee safe behavior.",
   },
   safety: {
-    skill: "Web",
-    analogy: "Server-side validation, authorization, rate limits, and circuit breakers resemble independent robot command guardrails.",
+    skill: "Event systems",
+    analogy: "Input validation, authorization, rate limits, and circuit breakers resemble independent robot command guardrails.",
     dangerousDifference: "Software authorization protects data; robot safety must also account for momentum, stopping distance, force, and hardware failure.",
   },
   hardware: {
-    skill: "Java",
-    analogy: "A hardware interface can be designed like a strict Java driver contract with lifecycle and explicit error states.",
+    skill: "Typed interfaces",
+    analogy: "A hardware interface can be designed as a strict driver contract with lifecycle and explicit error states.",
     dangerousDifference: "Electrical and mechanical ratings remain true even when the software type-checks and the API call succeeds.",
   },
   evidence: {
-    skill: "Python",
+    skill: "Test engineering",
     analogy: "Automated tests, structured logs, reproducible environments, and CI are strong foundations for robotics evidence.",
     dangerousDifference: "A unit test or simulator pass does not prove physical task success; hardware trials and honest failure artifacts are required.",
   },
@@ -1232,8 +1239,8 @@ export function createDayVisualSpec(day: CurriculumDay): DayVisualSpec {
         ],
         physicalScenario: "A small wheeled robot sees a chair leg, decides to turn, powers its wheel motors, and checks the new view.",
         softwareBridge: {
-          skill: "Web" as const,
-          analogy: "A web app reads an event, runs decision logic, changes the screen, and reads the next event; a robot follows the same information loop.",
+          skill: "Event systems" as const,
+          analogy: "An event-driven program reads an input, runs decision logic, changes an output, and reads the next input; a robot follows the same information loop.",
           dangerousDifference: "A wrong screen update changes pixels; a wrong actuator command can move real mass, so limits and a stop control are required.",
         },
       }

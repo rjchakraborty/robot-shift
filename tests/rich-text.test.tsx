@@ -38,6 +38,10 @@ $$
   assert.match(html, /<ol>/);
   assert.match(html, /class="katex"/);
   assert.match(html, /class="katex-display"/);
+  assert.match(
+    html,
+    /class="katex-display" tabindex="0" role="region" aria-label="Scrollable equation"/,
+  );
   assert.match(html, /href="https:\/\/example\.com\/reference"/);
   assert.match(html, /target="_blank"/);
   assert.match(html, /rel="noopener noreferrer"/);

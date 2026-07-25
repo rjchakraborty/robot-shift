@@ -337,10 +337,10 @@ export const week01Content = {
       mentalModel:
         "Configuration space is a catalogue of every complete robot shape; workspace is the shadow those shapes cast through the tool's reachable positions.",
       explanation: [
-        "A configuration is one complete snapshot of the robot. For a two-hinge arm, write q = (θ₁, θ₂): the shoulder angle first and elbow angle second. The order is part of the definition. One hand position is not a complete arm configuration because an elbow-up and an elbow-down shape can place the hand at the same point. If a coordinate is missing, the snapshot is incomplete.",
-        "Configuration space, shortened to C-space, is the set of all allowed configurations. Its dimension equals the robot's DOF. Imagine one slider for every independent coordinate; every possible combination of slider values is one point in C-space. Joint limits, mechanical collisions, cable constraints, and chosen safety rules remove or mark parts of that set. Planning a motion means finding a continuous path through allowed configurations, not merely drawing a line for the tool.",
+        "A configuration is one complete snapshot of the robot. Before doing any algebra, give each cardboard shape an ordered two-slot record: shoulder reading first, elbow reading second. Roboticists often name the whole record q and an angle θ, pronounced “theta,” so q = (θ₁, θ₂) is only a compact label for those two slots today. Day 4 will teach signed coordinates and units; Day 8 will teach degrees and radians. One hand position is still incomplete because elbow-up and elbow-down shapes can place the hand at the same point.",
+        "Configuration space, shortened to C-space, is the catalogue of all allowed complete records. Imagine one paper slider for every independent joint: choosing one mark on each slider identifies one robot shape. Joint stops, self-collision, cable limits, and declared safety rules remove some combinations. Planning a motion means moving through a connected sequence of allowed complete shapes, not merely drawing a line for the tool. The formal coordinate and geometry language comes later; today you only need to distinguish the catalogue from the physical arm.",
         "Workspace describes what configurations or positions the end-effector can reach. For this beginner exercise, use the simpler position workspace traced by the cardboard hand. C-space and workspace answer different questions: “What is the whole robot shape?” versus “Where can the hand go?” Several C-space points can map to one workspace point, and a straight tool path can require a curved joint-space path.",
-        "Topology describes how a space connects and wraps, independently of how coordinates are drawn on paper. An unrestricted rotation returns to the same physical orientation after one full turn, so 0° and 360° touch like the same point on a clock. Two unrestricted revolute angles produce a torus-shaped C-space. Real joint limits may cut that wrapping into a bounded patch, so do not call every two-joint arm's allowed C-space a complete torus without stating the assumptions.",
+        "Topology is used here in one beginner sense: which shapes are neighbours, where motion is blocked, and whether an apparent paper edge joins back to another edge. A freely turning joint returns to the same physical orientation after one full turn, like a clock hand returning to twelve. You do not need torus equations or formal topology today. Mark only the wrap-around and the real joint-stop boundaries you can demonstrate on the cardboard arm.",
       ],
       keyTerms: [
         {
@@ -360,7 +360,7 @@ export const week01Content = {
         },
         {
           term: "Topology",
-          meaning: "The connection and wrap-around structure of a space, independent of one coordinate drawing.",
+          meaning: "Which configurations connect continuously, which boundaries block motion, and which drawn edges wrap back together.",
           physicalExample: "A full-turn angle behaves like a circle whose 0° and 360° locations meet.",
         },
         {
@@ -406,7 +406,7 @@ export const week01Content = {
         setup:
           "Use the Day 2 cardboard arm, a protractor or printed angle guide, squared paper, and a pen at the tip.",
         steps: [
-          "Choose one fixed zero direction and record the allowed range of each joint.",
+          "Choose one fixed zero direction and use a printed angle guide or evenly spaced paper marks; treat the readings as labels rather than an algebra exercise.",
           "Place the arm in six different shapes and write each ordered angle pair.",
           "Mark the pen-tip position for every pair on the same sheet.",
           "Search for two visibly different arm shapes whose tip marks are nearly equal.",

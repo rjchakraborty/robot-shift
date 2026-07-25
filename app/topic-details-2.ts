@@ -891,14 +891,14 @@ export const topicDetails2: Record<number, TopicDetail> = {
     "It lacks root-cause evidence, explains neither why retries are correct nor whether they hide failure, and provides no bounded verification.",
   ),
   178: detail(
-    "A robotics résumé translates ten years of software depth into platform, systems, integration, reliability, and ML evidence, while projects supply direct robotics proof and quantified outcomes.",
+    "A robotics résumé translates verified prior experience into relevant platform, systems, integration, reliability, hardware, research, or ML evidence, while projects supply direct robotics proof and quantified outcomes.",
     "Evidence ratio=claims with proof/robotics claims: 8/10=80%. Interview conversion I/A=3/20=15% measures response to targeted applications, not résumé truth or technical readiness.",
     "Evidence-backed claim ratio is $$r_{\\mathrm{evidence}}=\\frac{8}{10}=80\\%.$$ Application-to-interview conversion is $I/A=3/20=15\\%$. Conversion measures market response; it does not verify that an unsupported résumé claim is true.",
     "Claim-to-proof mapping",
     "Each résumé bullet card must point to code, a demo, metric, architecture decision, or production result.",
     "Rewrite three bullets as action+system+constraint+measured result, then remove any unsupported robotics claim.",
     "What should you say about lacking a robotics degree?",
-    "State the transition directly, emphasize ten years of transferable production engineering, and point to verified robotics systems and experiments rather than pretending credentials.",
+    "State your actual education and transition directly, name only transferable capabilities supported by evidence, and point to verified robotics systems and experiments rather than pretending credentials.",
   ),
   179: detail(
     "Interview drills should require explanation, implementation, debugging, and tradeoff reasoning across C++, ROS 2, systems, controls, and ML—not memorized definitions.",

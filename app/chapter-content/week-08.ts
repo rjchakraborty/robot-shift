@@ -10,7 +10,9 @@ export const week08Content = {
   week: 8,
   title: "Map, localize, navigate, and recover with Nav2",
   purpose:
-    "Turn the simulated mobile robot from Week 7 into an inspectable navigation system: build and save a map, estimate the robot pose, represent safe travel space, plan and follow paths, handle interruption and blockage, and prove the result with repeatable failure trials instead of one lucky video.",
+    "Give the simulated mobile robot from Week 7 its first bounded navigation flight: launch one pinned SLAM Toolbox, AMCL, and Nav2 stack; inspect every input, output, frame owner, lifecycle state, action result, cancellation, and recovery; then preserve the run for Week 11. This chapter teaches the operating contract and observable failure signals. It deliberately postpones estimator mathematics and parameter tuning until the learner has built the probability, covariance, and Bayes foundations needed to reason about them.",
+  teachingBoundary:
+    "Teach Week 8 as an integration-first preview. The learner may identify mapping versus localization mode, frame ownership, transform freshness, lifecycle and action status, costmaps, planning, control, cancellation, bounded recovery, and measured external error. Defer particle weighting and resampling, covariance interpretation or tuning, process and measurement models, scan-matching objectives, pose-graph optimization, loop-closure tuning, and estimator fusion to Week 11.",
   prerequisites: [
     "Run the Week 7 differential-drive robot in Gazebo with simulation time, wheel odometry, a correctly mounted lidar, and a connected map→odom→base_link→laser frame tree.",
     "Use ROS 2 topics, actions, parameters, lifecycle states, rosbag2, RViz, and timestamps at a beginner level.",
@@ -68,8 +70,8 @@ export const week08Content = {
       explanation: [
         "A robot cannot plan to “the far shelf” until it can answer two questions: what does the floor look like, and where am I on that floor? A two-dimensional occupancy map divides the floor into small square cells. Each cell records free space, occupied space, or unknown space. The map has a resolution such as 0.05 m per cell and an origin that connects cell indexes to coordinates in the map frame. A map is a measurement product, not permanent truth: glass, shiny surfaces, narrow chair legs, moved pallets, and missing lidar coverage can make cells wrong or unknown.",
         "The frame chain `map→odom→base_link` separates global correction from smooth local motion. Wheel odometry or a local state estimator normally publishes `odom→base_link`. It changes smoothly enough for control, but wheel slip and small calibration errors make it drift. SLAM or a localization system normally publishes `map→odom`. That transform corrects accumulated drift and can jump when a loop closure or new localization evidence changes the global estimate. Nav2 combines both transforms to learn the robot pose in `map` without forcing the controller to follow a jumping local signal.",
-        "SLAM means simultaneous localization and mapping: while the robot moves through an unknown space, it estimates both its path and the map. SLAM Toolbox pairs each lidar scan with an odometry-based pose, aligns scans, adds constraints to a pose graph, looks for revisited places, and optimizes the graph when it finds a loop closure. A loop closure can straighten a corridor that slowly bent in the draft map. That correction is useful, but it also changes `map→odom`, so logs and visualizations must keep the frame and timestamp attached to every pose.",
-        "After a map is approved and saved, AMCL can estimate the robot pose inside that static map. Imagine many tiny candidate robots, called particles, spread around the floor plan. Each candidate predicts what the lidar should see. Candidates that agree better with the real scan receive more weight; motion and resampling move the cloud toward likely poses. AMCL needs a reasonable motion model, scan model, initial-pose policy, and correct `map`, `odom`, `base_link`, and scan frames. A tight-looking particle cloud is not proof of truth if the map, transform, or sensor timestamps are wrong.",
+        "SLAM means simultaneous localization and mapping: while the robot moves through an unknown space, it estimates both its path and the map. In this first flight, treat scan matching, pose graphs, and loop closure as named internal stages whose inputs, outputs, timestamps, and visible corrections you can observe. Do not tune their mathematics yet. A loop closure can straighten a corridor that slowly bent in the draft map, and it can change `map→odom`; Week 11 will reopen the saved run to explain why that correction was justified.",
+        "After a map is approved and saved, AMCL can estimate the robot pose inside that static map. Its particle cloud is a visible collection of pose hypotheses, but this week the cloud is a health signal rather than a tuning target. Confirm the required map, scan, initial pose, frames, timestamps, and single `map→odom` owner; then record convergence, loss, and recovery from the outside. Week 11 will teach weighting, resampling, covariance, motion and measurement models before asking you to alter estimator parameters.",
         "Use one authoritative component for `map→odom`. For this chapter, use SLAM Toolbox while building the map, then stop that mapping instance and use AMCL with the saved map for normal navigation. SLAM Toolbox also has its own pose-graph localization mode, and Cartographer is another SLAM system with a similar frame contract, but mixing several active global-pose publishers creates conflicting transforms. Depth comes from making one stack observable and reliable before comparing alternatives.",
       ],
       keyTerms: [
@@ -157,7 +159,7 @@ export const week08Content = {
           "Launch SLAM Toolbox against the actual LaserScan topic, then drive the simulated robot slowly through the world while watching map cells, scan alignment, pose-graph growth, and transform age.",
           "Revisit one recognizable corridor or room to invite a loop closure; record a screenshot and the `map→odom` values before and after the correction.",
           "Save both the occupancy map metadata/image and the serialized pose graph, then record map resolution, origin, frame names, configuration version, and the bag used to create it.",
-          "Stop the mapping instance, launch the saved map with AMCL, provide a deliberately approximate initial pose, and watch the particle cloud respond to motion and scans.",
+          "Stop the mapping instance, launch the saved map with AMCL, provide a deliberately approximate initial pose, and record the particle cloud, transform age, scan agreement, and recovery without tuning estimator internals.",
           "Plant one fault at a time—wrong scan topic, stale transform, or a second `map→odom` publisher—and capture the observable symptom before repairing it.",
         ],
         observe:
@@ -1071,13 +1073,13 @@ export const week08Content = {
           "Run the saved-map navigation launch and add automated preflight checks for lifecycle active state, single transform authority, current localization, current costmaps, and command-publisher ownership.",
           "Execute the frozen suite with nominal, cancel, temporary block, permanent block, bad initial pose or localization loss, and one managed-server failure; retain every result row.",
           "Verify hard gates for collision, post-terminal commands, cancellation-to-stop time, retry budget, stale-data behavior, and correct structured terminal result.",
-          "Package the architecture/frame diagram, commands, configs, map provenance, scenario manifest, metrics, linked bags, uncut demos, failure taxonomy, and known limitations.",
+          "Freeze a hashable Week 11 handoff: source commit or container identity; Gazebo world and random seed; MCAP bag; map image/YAML and serialized pose graph; launch, parameter, and behavior-tree files; a timestamped TF snapshot; scenario manifest; raw result rows; architecture diagram; uncut demos; failure taxonomy; and known limitations.",
           "Ask another engineer or a clean environment to follow the README, reproduce one nominal and one failure case, and record any undocumented assumption as a defect.",
         ],
         observe:
           "The final state shown by the action, behavior tree, lifecycle nodes, command stream, odometry, localization, costmaps, and report should agree for every trial.",
         doneWhen:
-          "A clean reviewer can build or launch the project, reproduce the declared suite, verify calculations from raw rows, inspect at least one failure trace, and reach the same release verdict.",
+          "A clean reviewer can verify every handoff hash, build or launch the project, reproduce the declared suite, recalculate metrics from raw rows, inspect at least one failure trace, and reach the same release verdict.",
       },
       jobConnection: {
         roles: [ROLE_VALIDATION, ROLE_INTEGRATION, ROLE_SOFTWARE, ROLE_HMI, ROLE_FLEET],

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadChapterContent } from "../../chapter-content";
+import { loadChapterLearningGuide } from "../../chapter-guides";
 import { curriculumDays, phases, type CurriculumDay } from "../../curriculum";
 import { LessonArticle } from "../../lesson-article";
 import { lessonForDay } from "../../lessons";
@@ -137,7 +138,10 @@ function lessonStructuredData(day: CurriculumDay) {
 export default async function LessonPage({ params }: LessonPageProps) {
   const day = findLesson((await params).slug);
   const phase = phases.find((item) => item.id === day.phaseId);
-  const chapter = await loadChapterContent(day.week);
+  const [chapter, guide] = await Promise.all([
+    loadChapterContent(day.week),
+    loadChapterLearningGuide(day.week),
+  ]);
   const deepDive = chapter.days.find((item) => item.dayId === day.id);
   const lesson = lessonForDay(day);
   const previousDay = curriculumDays[day.id - 2];
@@ -179,6 +183,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         <main id="lesson-content">
           <LessonArticle
             chapter={chapter}
+            guide={guide}
             day={day}
             deepDive={deepDive}
             lesson={lesson}

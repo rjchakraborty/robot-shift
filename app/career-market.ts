@@ -202,7 +202,11 @@ export const jobEvidence: readonly JobEvidence[] = [
   },
 ];
 
-export type RoleTier = "apply-first" | "primary" | "next" | "stretch";
+export type RoleTier =
+  | "software-bridge"
+  | "integration"
+  | "robotics-core"
+  | "advanced-applied";
 
 export type TargetRole = {
   id: string;
@@ -221,14 +225,14 @@ export type TargetRole = {
 export const targetRoles: readonly TargetRole[] = [
   {
     id: "robot-hmi",
-    tier: "apply-first",
+    tier: "software-bridge",
     title: "Robot HMI / Control & Monitoring Engineer",
-    timing: "Apply after one robotics-facing UI proof, typically 4–8 focused weeks.",
-    fit: "Closest bridge: reuse shipped React, Flutter, Android, API, and real-time product skills at the robot/operator boundary.",
+    timing: "Evidence gate: one robotics-facing UI with command-state, stale-data, and recovery proof.",
+    fit: "A practical bridge for learners who can already demonstrate interface, accessibility, API, mobile, or real-time product work at the robot/operator boundary.",
     portfolioLeverage: [
-      "React and Next.js web products",
-      "Flutter and Android delivery",
-      "End-to-end UX, API, QA, and deployment ownership",
+      "Verified web, desktop, mobile, or embedded interface delivery",
+      "Accessible operator workflows and explicit state communication",
+      "API integration, UI testing, release, and production-debugging evidence",
     ],
     gaps: ["WebSocket/WebRTC failure handling", "3D robot/map visualization", "ROS 2 message and safety semantics"],
     proof: ["Live robot telemetry UI", "Dead-man teleoperation control", "Offline/reconnect and stale-data recovery demo"],
@@ -238,14 +242,14 @@ export const targetRoles: readonly TargetRole[] = [
   },
   {
     id: "fleet-platform",
-    tier: "apply-first",
+    tier: "software-bridge",
     title: "Robot Fleet Backend / Platform Engineer",
-    timing: "Apply after a fleet-service bridge project, typically 6–10 focused weeks.",
-    fit: "Strong bridge from Python/Node APIs, event workflows, PostgreSQL, Redis, Kafka, cloud concepts, and production debugging.",
+    timing: "Evidence gate: one fleet service with mission identity, telemetry, retries, and disconnect recovery.",
+    fit: "A practical bridge for learners with verified service, API, data, messaging, cloud, reliability, or distributed-systems experience.",
     portfolioLeverage: [
-      "Python and Node backend services",
-      "REST, background jobs, and event workflows",
-      "PostgreSQL, Redis, Kafka, Firebase, CI/CD, and cloud concepts",
+      "Verified backend services in any suitable production language",
+      "APIs, background work, event processing, and data consistency",
+      "Databases, messaging, CI/CD, observability, and cloud operations",
     ],
     gaps: ["AMR mission and traffic models", "Edge/cloud failure boundaries", "Robot lifecycle, fleet safety, and OTA rollback"],
     proof: ["Two-robot task allocator", "Idempotent mission API plus WebSocket telemetry", "Disconnect, retry, deadlock, and rollback report"],
@@ -255,14 +259,14 @@ export const targetRoles: readonly TargetRole[] = [
   },
   {
     id: "deployment-validation",
-    tier: "primary",
+    tier: "integration",
     title: "Robotics Deployment, Integration & Validation Engineer",
-    timing: "Primary target after ROS 2 core and FleetOps Gate, around Days 84–119.",
-    fit: "Production incident debugging, QA automation, release discipline, and hands-on electrical tinkering transfer directly.",
+    timing: "Evidence gate: ROS 2 core plus a risk-linked SIL/HIL, commissioning, or acceptance package.",
+    fit: "A strong path for learners who can demonstrate QA, release, incident diagnosis, systems integration, field support, or hands-on hardware work.",
     portfolioLeverage: [
-      "Cross-stack debugging and production QA",
-      "Release, CI/CD, observability, and incident ownership",
-      "DIY wiring, soldering, motors, servos, and basic electronics",
+      "Cross-stack diagnosis, production QA, or incident response",
+      "Release, CI/CD, observability, rollback, or support evidence",
+      "Verified wiring, electronics, controls, maintenance, or lab practice",
     ],
     gaps: ["C++/Linux robot runtime", "ROS 2 launch and lifecycle testing", "SIL/HIL, commissioning, and AMR safety evidence"],
     proof: ["Risk-based regression suite", "SIL/HIL fault-injection matrix", "FAT/SAT pack with a reproduced production failure"],
@@ -272,14 +276,14 @@ export const targetRoles: readonly TargetRole[] = [
   },
   {
     id: "ros-integration",
-    tier: "primary",
+    tier: "integration",
     title: "Robotics Application / ROS 2 Integration Engineer",
-    timing: "Primary target after a working ROS 2 navigation or manipulation integration, around Days 70–119.",
-    fit: "Good match for a systems generalist who enjoys connecting software, sensors, actuators, networks, and customer workflows.",
+    timing: "Evidence gate: a working ROS 2 navigation, manipulation, or hardware-interface integration.",
+    fit: "A strong path for systems generalists who can connect software, sensors, actuators, networks, and user or operator workflows.",
     portfolioLeverage: [
-      "Broad web, mobile, backend, and data integration experience",
-      "Practical hardware curiosity and repair mindset",
-      "Experience translating product needs into complete systems",
+      "Cross-system integration in software, data, embedded, or hardware domains",
+      "Verified troubleshooting, repair, lab, or field-support practice",
+      "Requirements translated into tested end-to-end behavior",
     ],
     gaps: ["ROS 2 graph, tf2, URDF, ros2_control", "Nav2/SLAM or MoveIt integration", "Industrial interfaces and commissioning"],
     proof: ["Sensor-to-actuator ROS 2 stack", "Navigation recovery or manipulation demo", "Documented wiring, calibration, and commissioning runbook"],
@@ -289,14 +293,14 @@ export const targetRoles: readonly TargetRole[] = [
   },
   {
     id: "robotics-software",
-    tier: "next",
+    tier: "robotics-core",
     title: "Robotics Software Engineer — ROS 2 / AMR",
-    timing: "Next target after two credible ROS 2/AMR builds and repeated real or HIL trials.",
-    fit: "Achievable specialization, but companies will expect robotics-native C++, math, debugging, and robot behavior evidence—not senior web tenure alone.",
+    timing: "Evidence gate: two credible ROS 2/AMR builds plus repeated real-robot or HIL trials.",
+    fit: "A robotics-core specialization that requires direct C++, mathematics, runtime diagnosis, and robot-behavior evidence; unrelated seniority alone does not satisfy it.",
     portfolioLeverage: [
-      "Ten years of production engineering habits",
-      "Python, algorithms, APIs, data, and distributed-system debugging",
-      "Ability to ship and operate complete products",
+      "Verified production engineering, reliability, or systems habits",
+      "Algorithms, services, data, concurrency, or distributed-system diagnosis",
+      "Evidence of shipping and operating complete products or devices",
     ],
     gaps: ["Production C++", "Kinematics, control, planning, and state estimation", "Long-running real-robot or HIL reliability evidence"],
     proof: ["ROS 2 AMR stack", "Planning/recovery behavior tree", "Fifty-trial reliability report with failure taxonomy"],
@@ -306,14 +310,14 @@ export const targetRoles: readonly TargetRole[] = [
   },
   {
     id: "physical-ai",
-    tier: "stretch",
+    tier: "advanced-applied",
     title: "Robot Learning Deployment / Physical AI Integration Engineer",
-    timing: "Stretch target after 9–18 months of robotics evidence; do not position as an ML research scientist.",
-    fit: "LLM, RAG, agent/tool workflow, Python, and product deployment experience help at the integration and evaluation layer.",
+    timing: "Evidence gate: robot-learning datasets, evaluation, guardrails, and a bounded real-robot or HIL rollout.",
+    fit: "An advanced applied path for learners with verified ML, data, agent, evaluation, or deployment work at the integration layer; it is not automatically a research-scientist claim.",
     portfolioLeverage: [
-      "LLM, RAG, agent, tool, and vector-search workflows",
-      "Python services and production deployment",
-      "End-to-end product and evaluation mindset",
+      "Verified ML, LLM, agent, retrieval, or multimodal workflows",
+      "Data pipelines, model services, evaluation, and deployment",
+      "End-to-end product, experiment, safety, or reliability evidence",
     ],
     gaps: ["PyTorch and robot datasets", "Behavior cloning, VLA evaluation, and sim-to-real", "Safe action grounding on physical systems"],
     proof: ["Language-to-safe-skill agent", "VLA/behavior-cloning evaluation harness", "Recovery, guardrail, and real/HIL rollout report"],

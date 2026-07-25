@@ -14,10 +14,10 @@ export const week26Content = {
   week: 26,
   title: "Convert verified engineering work into role-matched hiring evidence",
   purpose:
-    "Turn the completed program and senior production experience into a truthful, inspectable job-conversion system. This chapter builds a fast portfolio homepage and three evidence-backed project stories, a capstone architecture and incident case study, a role-matched résumé and target-company matrix, scored interview drills, respectful warm outreach, one maintainer-aligned open-source contribution, and a final readiness audit with a focused 30-day sprint. Every claim must point to work that actually exists; Web, Flutter, mobile, Python, and Java experience remains valuable transfer evidence, but it is never relabeled as unbuilt robotics experience.",
+    "Turn the completed program and each learner's real prior experience into a truthful, inspectable job-conversion system. This chapter builds a fast portfolio homepage and three evidence-backed project stories, a capstone architecture and incident case study, a role-matched résumé and target-company matrix, scored interview drills, respectful warm outreach, one maintainer-aligned open-source contribution, and a final readiness audit with a focused 30-day sprint. Every claim must point to work that actually exists; experience from software, data, design, operations, manufacturing, electronics, research, or another field may be valuable transfer evidence, but it is never relabeled as unbuilt robotics experience.",
   prerequisites: [
     "Bring the actual repositories, setup instructions, test reports, trial ledgers, architecture notes, incident evidence, demos, and limitations produced during the program. If a planned robotics project is not runnable or documented, mark it `planned`, `in progress`, or `not evidenced`; do not write about it as completed work.",
-    "Bring a factual inventory of senior Web, Flutter/mobile, Python, Java, API, database, release, QA, and production-debugging work. Redact employer secrets, customer data, credentials, internal URLs, proprietary source, and regulated information before using any artifact publicly.",
+    "Bring a factual inventory of your own education, work, community projects, and hands-on practice. Record the domain, scope, contribution, evidence, and limits instead of assuming any specific language, framework, degree, title, employer, or experience duration. Redact employer secrets, customer data, credentials, internal URLs, proprietary source, and regulated information before using any artifact publicly.",
     "Bring one current résumé, a list of target companies or postings captured with dates and links, and the exact six target-role definitions in the course market map. A posting is a time-bounded observation, not a permanent promise that the company or requirement remains available.",
     "Be able to run at least two candidate portfolio projects from clean instructions, explain their operating envelopes and failures, and distinguish simulation, software-in-the-loop, hardware-in-the-loop, restricted hardware, and production evidence without collapsing those levels.",
   ],
@@ -77,8 +77,8 @@ export const week26Content = {
       explanation: [
         "A portfolio is not a second résumé or a gallery of framework logos. It is an index that helps a busy reviewer answer four questions quickly: what role is targeted, what physical or operational problem was addressed, what the learner personally changed, and what evidence supports the result. Put the target statement and strongest verified project above the fold, then offer short paths to architecture, runnable setup, measurements, failures, source, and contact information. “Above the fold” means visible before the first long scroll; it does not mean hiding limitations below it.",
         "Create a claim ledger before writing prose. Each row can use `claim_id | wording | evidence_type | artifact_url | scope | status`. Acceptable evidence may include a reproducible command, source revision, test output, trial ledger, uncut demo, trace, architecture decision, or redacted production result. `status=verified` means the linked artifact supports the exact wording; it does not mean the system is safe, broadly general, or deployed. A screenshot proves only the visible state at that moment, and a passing build proves compilation rather than end-to-end behavior.",
-        "Choose three stories for complementary proof, not three copies of the same technology. For this background, one can show an operator-facing Web or Flutter interface with observable stale-state and cancellation behavior, one can show a Python or Java service with idempotency, telemetry, and failure recovery, and one can show an actual robotics integration, validation, or policy experiment if it was built. Each story follows `problem → constraints → contribution → evidence → failure → limit`. If only two robotics projects are real, use a verified production-software story as transfer evidence instead of inventing a third robotics build.",
-        "Keep experience labels exact. Senior Web, mobile, Flutter, Python, Java, database, release, and incident work demonstrates production judgment that transfers to robot interfaces and platforms. Direct robotics evidence begins only where an artifact exercises a robotics-specific contract such as ROS 2 communication, transforms, navigation, hardware interfaces, command freshness, commissioning, fault injection, or a measured policy evaluation. The homepage may say “transitioning production systems experience into robotics” and link both evidence types; it must not imply years of robot deployment that the artifacts do not establish.",
+        "Choose three stories for complementary proof, not three copies of the same technology. Depending on the learner's actual history, one story might show an operator interface with stale-state and cancellation behavior, a service or embedded system with idempotency and recovery, a test or field-support investigation, or a hardware build. At least one story should show direct robotics integration, validation, or policy evidence if that work was completed. Each story follows `problem → constraints → contribution → evidence → failure → limit`. If only two robotics projects are real, use a verified project from another domain as explicitly labeled transfer evidence instead of inventing a third robotics build.",
+        "Keep experience labels exact. Prior work demonstrates only the capabilities its artifacts support: interface design, service reliability, data analysis, release discipline, electronics, field diagnosis, or another verified skill. Direct robotics evidence begins only where an artifact exercises a robotics-specific contract such as ROS 2 communication, transforms, navigation, hardware interfaces, command freshness, commissioning, fault injection, or a measured policy evaluation. The homepage may say “transitioning verified experience into robotics” and link both evidence types; it must not imply years of robot deployment that the artifacts do not establish.",
       ],
       keyTerms: [
         {
@@ -100,7 +100,7 @@ export const week26Content = {
           meaning:
             "Verified experience from another domain that demonstrates a relevant engineering capability without pretending it was performed on a robot.",
           physicalExample:
-            "A Java payment idempotency repair supports distributed-systems reasoning, while a separate simulated fleet artifact supplies the robotics context.",
+            "An idempotency repair in an online service supports distributed-systems reasoning, while a separate simulated fleet artifact supplies the robotics context.",
         },
         {
           term: "Operating envelope",
@@ -136,9 +136,9 @@ export const week26Content = {
       workedExample: {
         title: "Turn three mixed-background projects into one honest homepage",
         setup:
-          "A hypothetical learner has a verified senior mobile incident repair, a runnable simulated two-robot mission service, and a tabletop policy report. The policy ran only on recorded data and simulation; no real-robot rollout exists.",
+          "A hypothetical learner has a verified accessibility repair from a prior product, a runnable simulated two-robot mission service, and a tabletop policy report. The policy ran only on recorded data and simulation; no real-robot rollout exists.",
         steps: [
-          "Write the target line as `Target roles: Robot HMI / Control & Monitoring Engineer and Robot Fleet Backend / Platform Engineer; background: senior Web, Flutter/mobile, Python, and Java delivery`, then link role-specific pages rather than claiming a current robotics title.",
+          "Write the target line as `Target roles: Robot HMI / Control & Monitoring Engineer and Robot Fleet Backend / Platform Engineer; prior evidence: accessible interface delivery and reliable services`, then link role-specific pages rather than claiming a current robotics title.",
           "Inventory the strongest artifact for each project: a redacted incident timeline and regression test, a mission-service README plus retry and deadlock cases, and a policy evaluation manifest with latency and failure categories.",
           "Label the first story `transfer evidence`, the second `simulated robotics evidence`, and the third `offline and simulated policy evidence`; state `real-robot validation: not performed` where it belongs.",
           "Write each 45-word card in the order `problem → personal contribution → measured result → limitation`, removing any number that cannot be traced to a retained source.",
@@ -194,7 +194,7 @@ export const week26Content = {
         {
           question: "What is the difference between transfer evidence and direct robotics evidence?",
           answer:
-            "Transfer evidence proves a relevant capability in another domain, such as production Java recovery or Flutter state handling; direct robotics evidence exercises a robotics-specific contract in a clearly labeled simulator, HIL, hardware, or field context.",
+            "Transfer evidence proves a relevant capability in another domain, such as service recovery or interface state handling; direct robotics evidence exercises a robotics-specific contract in a clearly labeled simulator, HIL, hardware, or field context.",
         },
         {
           question: "What does a passing build prove about a portfolio project?",
@@ -373,8 +373,8 @@ export const week26Content = {
         "A target-company matrix prevents tailoring from becoming word replacement. Create one row per dated posting and columns for company, exact target role, required capability, frequency, evidence level, best artifact, résumé bullet, interview story, gap, next action, and status. Normalize synonyms only when the underlying work is genuinely equivalent; `C++` is not interchangeable with Java, and a WebSocket dashboard is not automatically a ROS 2 integration. The matrix should preserve the posting URL and capture date because roles, wording, and availability can change.",
         "Use four evidence levels: `strong` means a reviewer can inspect work matching the requirement and scope; `partial` means a relevant component or transfer exists but an important context is missing; `gap` means no defensible evidence; `not required` means the posting does not ask for it. Compute coverage only over core requirements and retain the category counts. Seven strong rows out of ten gives `7/10`, not “a perfect match” after partial evidence is silently promoted. Frequency across several postings helps prioritize gaps, but demand alone does not prove personal readiness.",
         "Applicant tracking system, abbreviated ATS, means software employers may use to store, search, and route applications. A simple, readable document with ordinary headings and the posting’s truthful terminology is safer than columns, hidden keywords, or graphics that may parse badly. Tailoring means selecting and ordering the most relevant verified experience, not copying every noun from the advertisement. Use the target role exactly, spell out an unfamiliar acronym at first use, preserve real employment dates and titles, and never add a skill only to satisfy a keyword search.",
-        "Translate the existing senior background at the correct level. Shipped Web and Flutter/mobile interfaces can support operator-workflow, state-visibility, accessibility, and release evidence; Python and Java services can support APIs, data consistency, background jobs, observability, and incident recovery; QA and deployment work can support traceability and rollback. Attach direct robotics project proof separately. A bullet template such as `action + system + constraint + measured result + proof` is useful only when every placeholder comes from an actual record; write `N` during drafting rather than inventing a number.",
-        "Maintain a base résumé and a small role-specific evidence section for each application family. For Robot HMI / Control & Monitoring Engineer, lead with verified interface and command-state work. For Robot Fleet Backend / Platform Engineer, lead with service reliability and mission-workflow proof. For Robotics Deployment, Integration & Validation Engineer, lead with regression, observability, and incident evidence. More specialized targets require their direct ROS 2, AMR, or policy artifacts; senior software tenure alone does not satisfy those robotics-native requirements.",
+        "Translate each learner's actual background at the correct level. Interface work may support operator workflow, state visibility, accessibility, and release evidence; service or embedded work may support APIs, data consistency, timing, observability, and incident recovery; QA, operations, research, manufacturing, or field work may support traceability, measurement, commissioning, and rollback. These are examples rather than assumed credentials. Attach direct robotics project proof separately. A bullet template such as `action + system + constraint + measured result + proof` is useful only when every placeholder comes from an actual record; write `N` during drafting rather than inventing a number.",
+        "Maintain a base résumé and a small role-specific evidence section for each application family. For Robot HMI / Control & Monitoring Engineer, lead with verified interface and command-state work. For Robot Fleet Backend / Platform Engineer, lead with service reliability and mission-workflow proof. For Robotics Deployment, Integration & Validation Engineer, lead with regression, observability, commissioning, and incident evidence. More specialized targets require direct ROS 2, AMR, hardware, or policy artifacts; unrelated tenure or education alone does not satisfy robotics-native requirements.",
       ],
       keyTerms: [
         {
@@ -417,14 +417,14 @@ export const week26Content = {
         {
           title: "Strong software transfer with an explicit robotics gap",
           scenario:
-            "A candidate has shipped Java services with idempotent requests and incident replay, while the selected fleet project exercises two simulated robots but no customer-site AMR deployment.",
+            "A candidate has shipped services with idempotent requests and incident replay, while the selected fleet project exercises two simulated robots but no customer-site AMR deployment.",
           lookFor:
             "Mark distributed reliability strong, simulated mission orchestration direct but bounded, and customer-site commissioning as a gap. The combination is credible because its boundaries remain visible.",
         },
         {
           title: "Résumé keyword pile without a proof path",
           scenario:
-            "A skills section lists C++, ROS 2, Nav2, SLAM, PyTorch, Flutter, Python, and Java, but only a Flutter app and Python notebook are linked.",
+            "A skills section lists many robotics, navigation, AI, interface, and service technologies, but only a UI prototype and an analysis notebook are linked.",
           lookFor:
             "Remove or downgrade unsupported terms, add evidence for work actually performed, and let the matrix keep the remaining capabilities as learning gaps rather than résumé claims.",
         },
@@ -432,17 +432,17 @@ export const week26Content = {
       workedExample: {
         title: "Build three role rows and one evidence-first résumé bullet",
         setup:
-          "A hypothetical candidate has verified senior Web, Flutter/mobile, Python, and Java artifacts plus a simulated mission service and a ROS 2 lab. No real-robot field deployment or learned-policy rollout exists.",
+          "A hypothetical candidate has verified interface, backend-service, and test-automation artifacts plus a simulated mission service and a ROS 2 lab. No real-robot field deployment or learned-policy rollout exists.",
         steps: [
           "Create rows for Company A with Robot HMI / Control & Monitoring Engineer, Company B with Robot Fleet Backend / Platform Engineer, and Company C with Robotics Deployment, Integration & Validation Engineer; attach the dated source posting to each.",
-          "Extract ten core requirements across the rows and normalize only true equivalents, keeping C++, Java, ROS 2, WebSocket, simulation, HIL, and field commissioning separate.",
-          "Attach evidence: interface state recovery and Flutter delivery are strong transfer for Company A, Python mission idempotency is direct simulated proof for Company B, and fault-matrix automation is direct simulated proof for Company C.",
+          "Extract ten core requirements across the rows and normalize only true equivalents, keeping robotics-native C++, a different production language, ROS 2, realtime networking, simulation, HIL, and field commissioning separate.",
+          "Attach evidence: interface state recovery is strong transfer for Company A, mission idempotency is direct simulated proof for Company B, and fault-matrix automation is direct simulated proof for Company C.",
           "Score seven requirements `strong`, two `partial`, and one `gap`, yielding `strong_coverage = 7 / 10 = 70%`; keep the partial and missing rows visible instead of converting them into points.",
-          "Draft `Implemented idempotent mission acceptance in a Python simulator service; replayed N timeout cases with zero duplicate accepted missions after the fix; evidence: <link>`, then replace `N` only from the retained result.",
+          "Draft `Implemented idempotent mission acceptance in a simulator service; replayed N timeout cases with zero duplicate accepted missions after the fix; evidence: <link>`, then replace `N` only from the retained result.",
           "Generate one readable résumé version per selected family, verify every noun and number against the ledger, and remove the direct real-robot implication because no such rollout occurred.",
         ],
         result:
-          "The matrix shows where senior software evidence transfers, where course projects provide direct but bounded robotics proof, and where an application still carries an explicit gap.",
+          "The matrix shows where prior evidence transfers, where course projects provide direct but bounded robotics proof, and where an application still carries an explicit gap.",
         takeaway:
           "Tailoring changes relevance and order; it never changes the historical facts, evidence level, or environment in which the work occurred.",
       },
@@ -472,9 +472,9 @@ export const week26Content = {
           ROLE_PHYSICAL_AI,
         ],
         workExample:
-          "Use the matrix to decide whether verified Web and Flutter state handling best supports Robot HMI / Control & Monitoring Engineer, whether Python and Java service evidence best supports Robot Fleet Backend / Platform Engineer, or whether QA and incident work plus actual robotics tests supports Robotics Deployment, Integration & Validation Engineer. Require direct integration, AMR, or policy proof before elevating the three more specialized roles, and retain every uncovered requirement as an owned gap.",
+          "Use the matrix to decide whether verified interface and state-handling evidence supports Robot HMI / Control & Monitoring Engineer, whether service and distributed-systems evidence supports Robot Fleet Backend / Platform Engineer, or whether QA, commissioning, and incident work plus actual robotics tests supports Robotics Deployment, Integration & Validation Engineer. Require direct integration, AMR, hardware, or policy proof for the more robotics-specific roles, and retain every uncovered requirement as an owned gap.",
         interviewPrompt:
-          "Choose one résumé bullet and map every phrase to evidence. Which part is senior production transfer, which part is direct robotics work, what simulator or hardware level ran, what was the denominator, why is the bullet relevant to this exact role, and which attractive keyword did you deliberately omit because you could not prove it?",
+          "Choose one résumé bullet and map every phrase to evidence. Which part is transfer from prior work, which part is direct robotics work, what simulator or hardware level ran, what was the denominator, why is the bullet relevant to this exact role, and which attractive keyword did you deliberately omit because you could not prove it?",
       },
       commonMistakes: [
         {
@@ -505,7 +505,7 @@ export const week26Content = {
             "Tailoring selects, orders, and explains truthful evidence for one role; substitution changes wording without equivalent work and can create unsupported skill or experience claims.",
         },
         {
-          question: "May senior Java messaging experience be listed as ROS 2 experience?",
+          question: "May messaging-system experience from another domain be listed as ROS 2 experience?",
           answer:
             "No. It can support transferable distributed-systems reasoning, while ROS 2 must be backed by actual ROS 2 artifacts with the relevant graph, QoS, lifecycle, timing, and integration scope.",
         },
@@ -682,10 +682,10 @@ export const week26Content = {
         "Readiness is a preflight board, not a confidence gauge: mandatory lights must be green, optional faults need owners, and the next flight has a dated route.",
       explanation: [
         "Audit readiness against one exact target role and real evidence. Build gates for role fit, software foundations, robotics fundamentals, relevant integration, two runnable projects, code quality, setup reproducibility, measured outcomes, failure analysis, safety boundaries, communication, and interview performance. Score each capability `0=no evidence`, `1=guided fragment`, `2=independent bounded evidence`, or `3=repeated or externally reviewed evidence`. The total is descriptive only. A zero in a mandatory safety, runnable-project, or core-role gate blocks that claim even when easier categories raise the average.",
-        "Run a retrospective as an engineering review of the learning system. Ask which prior senior skills transferred cleanly, which robotics assumptions repeatedly failed, where reproduction depended on the original machine, which project generated the strongest interview evidence, and which weeks produced activity without durable proof. Separate outcome from effort: many hours do not compensate for a missing artifact, while one well-instrumented failure may teach more than several polished demos. Preserve concrete decisions to stop, continue, or change instead of writing a motivational diary.",
-        "Choose one specialization by evidence, fit, market observations, and the cost of closing its core gaps. For a senior Web, Flutter/mobile, Python, and Java background, first compare Robot HMI / Control & Monitoring Engineer and Robot Fleet Backend / Platform Engineer against actual artifacts. Select Robotics Deployment, Integration & Validation Engineer when the fault, release, integration, and acceptance evidence is stronger. The three more specialized targets remain legitimate paths, but they need direct ROS 2, AMR, real or HIL, or policy evidence rather than senior-software seniority by itself.",
+        "Run a retrospective as an engineering review of the learning system. Ask which prior skills transferred cleanly, which robotics assumptions repeatedly failed, where reproduction depended on the original machine, which project generated the strongest interview evidence, and which weeks produced activity without durable proof. Separate outcome from effort: many hours do not compensate for a missing artifact, while one well-instrumented failure may teach more than several polished demos. Preserve concrete decisions to stop, continue, or change instead of writing a motivational diary.",
+        "Choose one specialization by evidence, fit, market observations, and the cost of closing its core gaps. Interface and command-state proof may support Robot HMI / Control & Monitoring Engineer; service reliability and mission-workflow proof may support Robot Fleet Backend / Platform Engineer; fault, release, integration, and acceptance evidence may support Robotics Deployment, Integration & Validation Engineer. Robotics-core and physical-AI paths remain legitimate, but they require direct ROS 2, C++, mathematics, AMR, real-robot or HIL, dataset, or policy evidence rather than prestige or unrelated seniority.",
         "A 30-day sprint is a time-boxed execution plan with artifacts and review dates, not a promise to receive interviews. Divide it into four weekly loops: repair one evidence blocker, submit a small batch of role-matched applications, practice weak interview domains, conduct respectful outreach, and review responses. Track `applications`, `interviews`, `I/A`, rejection or silence categories, artifact defects found, drills improved, and next changes. Application-to-interview conversion is market feedback; it cannot identify one résumé change as causal without a controlled comparison.",
-        "Begin applying when the role’s core software and robotics claims are honest, at least two relevant projects are runnable or inspectable, safety boundaries are responsible, and the learner can explain and debug the work under follow-up. Learning does not need to be finished. Apply-first roles can coexist with continued specialization, while a blocking gap changes the role or claim rather than requiring a permanent delay. At day thirty, continue, revise, or narrow using recorded evidence—not a target percentage rewritten after the outcome.",
+        "Begin applying when the role’s core software and robotics claims are honest, at least two relevant projects are runnable or inspectable, safety boundaries are responsible, and the learner can explain and debug the work under follow-up. Learning does not need to be finished. Software-bridge roles can coexist with continued specialization, while a blocking gap changes the role or claim rather than requiring a permanent delay. At day thirty, continue, revise, or narrow using recorded evidence—not a target percentage rewritten after the outcome.",
       ],
       keyTerms: [
         {
@@ -755,7 +755,7 @@ export const week26Content = {
           "Record `18/20 = 90%` passed gates, then keep both failed gates visible; do not describe the candidate as ninety-percent ready when either missing gate blocks the strongest project claim.",
           "Classify clean installation as a portfolio blocker because reviewers cannot reproduce the project, and disconnect recovery as a core-role blocker because intermittent networks are central to fleet-platform reasoning.",
           "Trace the installation failure to an unpinned service dependency and the recovery failure to a queue item that survives reconnect without freshness validation; define one acceptance test for each.",
-          "Choose Robot Fleet Backend / Platform Engineer as the primary specialization because verified Python and Java services, mission identity, observability, and retry evidence are stronger than the current direct ROS 2 or policy evidence.",
+          "Choose Robot Fleet Backend / Platform Engineer for this hypothetical case because its verified service, mission-identity, observability, and retry evidence is stronger than its current direct ROS 2 or policy evidence; a different evidence inventory must produce its own comparison.",
           "Schedule days 1–7 for the two blocker repairs and clean reproduction, days 8–14 for five matrix-backed applications and four weak-domain retests, days 15–21 for a second application batch, outreach, and contribution review, and days 22–30 for interviews, feedback, and one portfolio revision.",
           "Track actual `I/A` with counts; if the batch produces four interviews from twenty-five applications, report `4/25 = 16%` without assigning the change to one résumé element.",
           "On day thirty, retain the specialization if evidence and response quality support it, revise the matrix or portfolio if recurring feedback identifies a repairable mismatch, or narrow the target if a core gap remains too large.",
@@ -794,7 +794,7 @@ export const week26Content = {
         workExample:
           "The final audit prevents one generic “robotics” claim from obscuring different gates: Robot HMI / Control & Monitoring Engineer needs operator-state and command-safety proof; Robot Fleet Backend / Platform Engineer needs mission and intermittent-network proof; Robotics Deployment, Integration & Validation Engineer needs risk-linked acceptance and incident proof; Robotics Application / ROS 2 Integration Engineer needs real integration contracts; Robotics Software Engineer — ROS 2 / AMR needs robotics-native runtime and behavior evidence; Robot Learning Deployment / Physical AI Integration Engineer needs dataset, evaluation, guardrail, and rollout evidence.",
         interviewPrompt:
-          "Defend your readiness for one exact target role. Which two artifacts are independently runnable, which claims are direct robotics evidence versus senior software transfer, which mandatory gate is weakest, what safety and operating boundaries remain, why did you choose this specialization, and what observable decision will your first thirty-day sprint produce if applications or interviews underperform?",
+          "Defend your readiness for one exact target role. Which two artifacts are independently runnable, which claims are direct robotics evidence versus transfer from prior work, which mandatory gate is weakest, what safety and operating boundaries remain, why did you choose this specialization, and what observable decision will your first thirty-day sprint produce if applications or interviews underperform?",
       },
       commonMistakes: [
         {
@@ -820,9 +820,9 @@ export const week26Content = {
             "The affected role claim remains blocked or must be narrowed. The aggregate score is descriptive and cannot replace evidence for a mandatory gate.",
         },
         {
-          question: "Why are apply-first targets compared before the more specialized targets for this background?",
+          question: "Why should a learner compare bridge roles with more specialized targets?",
           answer:
-            "Verified Web, Flutter/mobile, Python, Java, platform, and QA experience transfers most directly there; the more specialized targets require additional direct ROS 2, AMR, HIL or real-robot, or policy evidence.",
+            "The comparison reveals which requirements are supported by verified prior evidence and which require additional direct ROS 2, C++, mathematics, AMR, HIL or real-robot, hardware-integration, dataset, or policy evidence.",
         },
         {
           question: "What does `I/A = 4/25 = 16%` establish?",

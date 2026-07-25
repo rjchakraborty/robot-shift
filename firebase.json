@@ -7,6 +7,9 @@
   },
   "hosting": {
     "public": "out",
+    "predeploy": [
+      "npm run verify"
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -90,8 +93,7 @@
     "providers": {
       "emailPassword": true,
       "googleSignIn": {
-        "oAuthBrandDisplayName": "RobotShift",
-        "supportEmail": "rjchakraborty21@gmail.com"
+        "oAuthBrandDisplayName": "RobotShift"
       }
     }
   },

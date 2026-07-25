@@ -71,14 +71,19 @@ test("market skill counts are derived from evidence rather than copied totals", 
   );
 });
 
-test("the role ladder has four honest tiers grounded in the verified portfolio", () => {
+test("the role map has four neutral evidence families without a presumed learner profile", () => {
   assert.equal(targetRoles.length, 6);
   assert.deepEqual(
     targetRoles.reduce((counts, { tier }) => {
       counts[tier] = (counts[tier] ?? 0) + 1;
       return counts;
     }, {}),
-    { "apply-first": 2, primary: 2, next: 1, stretch: 1 },
+    {
+      "software-bridge": 2,
+      integration: 2,
+      "robotics-core": 1,
+      "advanced-applied": 1,
+    },
   );
 
   for (const role of targetRoles) {
@@ -95,12 +100,12 @@ test("the role ladder has four honest tiers grounded in the verified portfolio",
   const leverage = targetRoles
     .flatMap(({ portfolioLeverage }) => portfolioLeverage)
     .join("\n");
-  assert.match(leverage, /React.*Next\.js/i);
-  assert.match(leverage, /Flutter.*Android/i);
-  assert.match(leverage, /Python.*Node/i);
-  assert.match(leverage, /PostgreSQL.*Redis.*Kafka/i);
-  assert.match(leverage, /wiring.*soldering.*motors.*servos/i);
-  assert.match(leverage, /LLM.*RAG.*agent.*tool.*vector-search/i);
+  assert.match(leverage, /interface|operator|accessib/i);
+  assert.match(leverage, /backend|service|API/i);
+  assert.match(leverage, /database|messaging|data consistency/i);
+  assert.match(leverage, /QA|incident|release|rollback/i);
+  assert.match(leverage, /wiring|electronics|hardware|lab/i);
+  assert.match(leverage, /ML|agent|retrieval|multimodal/i);
 
   const roleText = targetRoles
     .map((role) => [
@@ -112,10 +117,12 @@ test("the role ladder has four honest tiers grounded in the verified portfolio",
       ...role.proof,
     ].join(" "))
     .join("\n");
-  assert.match(roleText, /production engineering habits/i);
-  assert.match(roleText, /not.*ML research scientist/i);
+  assert.match(roleText, /verified production engineering/i);
+  assert.match(roleText, /not automatically a research-scientist claim/i);
   assert.match(roleText, /C\+\+.*ROS 2|ROS 2.*C\+\+/i);
   assert.match(roleText, /robot.*HIL/i);
+  assert.doesNotMatch(roleText, /\b(?:ten|10\+?) years?\b/i);
+  assert.doesNotMatch(roleText, /React.*Flutter.*Android/i);
 });
 
 test("the local JD matcher maps job language to concrete curriculum work", () => {
