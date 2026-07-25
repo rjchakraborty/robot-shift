@@ -209,6 +209,9 @@ test("protects account-action codes and requires Firestore consent for performan
     packageSource,
     preflightSource,
     postflightSource,
+    releaseSource,
+    releaseVerifySource,
+    workflowSource,
     privacyHtml,
     telemetrySource,
   ] = await Promise.all([
@@ -233,6 +236,21 @@ test("protects account-action codes and requires Firestore consent for performan
       new URL("../scripts/firebase-release-postflight.sh", import.meta.url),
       "utf8",
     ),
+    readFile(
+      new URL("../scripts/firebase-release.sh", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../scripts/firebase-release-verify.sh", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL(
+        "../.github/workflows/firebase-release.yml",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
     readFile(new URL("../out/privacy/index.html", import.meta.url), "utf8"),
     readFile(new URL("../app/telemetry-control.tsx", import.meta.url), "utf8"),
   ]);
@@ -252,18 +270,13 @@ test("protects account-action codes and requires Firestore consent for performan
   const packageConfig = JSON.parse(packageSource);
   assert.deepEqual(
     config.hosting.predeploy,
-    ["npm run verify"],
-    "Firebase Hosting deploys must rebuild and verify the exact static export",
+    ["npm run release:verify"],
+    "Firebase Hosting deploys must prove the exact static export was verified",
   );
   assert.equal(
     packageConfig.scripts["release:firebase"],
-    'npm run release:preflight && npm run release:artifacts && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account "$FIREBASE_RELEASE_ACCOUNT" && npm run release:postflight',
-    "the release command must use the validated CLI and deploy all coupled surfaces",
-  );
-  assert.equal(
-    packageConfig.scripts["release:artifacts"],
-    'npx --yes firebase-tools@15.24.0 functions:artifacts:setpolicy --location asia-south1 --days 7 --force --project robotshift --account "$FIREBASE_RELEASE_ACCOUNT"',
-    "the release command must keep Functions build artifacts under a bounded cleanup policy",
+    "bash scripts/firebase-release.sh",
+    "the release command must use the guarded local-or-CI release driver",
   );
   assert.equal(
     packageConfig.scripts["release:postflight"],
@@ -283,6 +296,32 @@ test("protects account-action codes and requires Firestore consent for performan
       `the postflight must require ${callableName}`,
     );
   }
+  assert.match(
+    releaseSource,
+    /--only auth,firestore:rules,firestore:indexes,functions,hosting/,
+  );
+  assert.match(releaseSource, /functions:artifacts:setpolicy/);
+  assert.match(releaseSource, /--days 7/);
+  assert.match(releaseVerifySource, /ROBOTSHIFT_VERIFIED_SHA/);
+  assert.match(
+    releaseVerifySource,
+    /git rev-parse HEAD.*ROBOTSHIFT_VERIFIED_SHA/s,
+  );
+  assert.match(preflightSource, /GOOGLE_APPLICATION_CREDENTIALS/);
+  assert.match(preflightSource, /FIREBASE_RELEASE_SERVICE_ACCOUNT/);
+  assert.match(workflowSource, /pull_request:/);
+  assert.match(workflowSource, /branches:\s*\n\s*- main/);
+  assert.match(workflowSource, /needs: verify/);
+  assert.match(workflowSource, /id-token: write/);
+  assert.match(workflowSource, /workload_identity_provider:/);
+  assert.match(workflowSource, /npm run verify/);
+  assert.match(workflowSource, /npm run test:e2e/);
+  assert.match(workflowSource, /npm audit --omit=dev --audit-level=high/);
+  assert.match(workflowSource, /npm run release:firebase/);
+  assert.doesNotMatch(
+    workflowSource,
+    /FIREBASE_TOKEN|service_account_key|credentials_json/,
+  );
   assert.match(postflightSource, /content-security-policy-report-only/);
   assert.match(postflightSource, /referrer-policy/);
   assert.match(
@@ -292,7 +331,7 @@ test("protects account-action codes and requires Firestore consent for performan
   );
   assert.match(
     preflightSource,
-    /gcloud\s+\\\n\s+--configuration=.*\s+\\\n\s+beta billing projects describe/,
+    /gcloud[\s\S]*"\$\{gcloud_args\[@\]\}"[\s\S]*beta billing projects describe/,
     "the release preflight must verify Functions billing before deployment",
   );
   assert.match(

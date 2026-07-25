@@ -11,6 +11,14 @@ npm run verify
 
 `npm run verify` checks the Node version, lint, production build, all tests, and whitespace.
 
+Run the browser gate against that export:
+
+```bash
+npm run test:e2e
+```
+
+GitHub runs both commands before any production deployment.
+
 ## Browser verification
 
 Start the app:
@@ -59,8 +67,8 @@ npm run release:firebase
 ```
 
 This command uses the repository-pinned Firebase CLI version. Hosting's
-predeploy gate reruns the complete verification suite and rebuilds `out/`
-before Firebase uploads it.
+predeploy gate runs complete local verification, or in CI proves that `HEAD`
+is the exact commit already accepted by the required verification job.
 
 Do not deploy Hosting alone: the shipped client depends on matching Auth policy,
 Firestore Rules, indexes, callable Functions, App Check registration, and

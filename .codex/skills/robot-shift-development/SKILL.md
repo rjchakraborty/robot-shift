@@ -14,7 +14,9 @@ Treat the course as an integrated learning product. Preserve its teaching sequen
 3. Inspect `git status`, then read the affected source, tests, and runtime output.
 4. Read [architecture.md](references/architecture.md) for source ownership and invariants.
 5. For teaching or visual work, also read [content-standards.md](references/content-standards.md).
-6. For validation or deployment, also read [qa-release.md](references/qa-release.md).
+6. For validation or deployment, also read
+   [qa-release.md](references/qa-release.md) and
+   [ci-cd.md](references/ci-cd.md).
 
 ## Choose the change lane
 
@@ -55,4 +57,9 @@ Do not treat a build, HTTP 200, screenshot, or provider request as end-to-end pr
 
 ## Release
 
-Release only when explicitly requested. Follow [qa-release.md](references/qa-release.md), push the exact verified source state, confirm the intended Google account and Firebase project, deploy every security-dependent Firebase surface together, and verify the live Auth, Firestore, callable Tutor, App Check, Hosting, and telemetry boundaries.
+Release only when explicitly requested. Follow
+[qa-release.md](references/qa-release.md) and
+[ci-cd.md](references/ci-cd.md), push the exact verified source state, confirm
+the intended Google account and Firebase project, deploy every
+security-dependent Firebase surface together, and verify the live Auth,
+Firestore, callable Tutor, App Check, Hosting, and telemetry boundaries.

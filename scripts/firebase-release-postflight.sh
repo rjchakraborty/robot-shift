@@ -7,7 +7,9 @@ cd "$robot_shift_root"
 firebase_project="robotshift"
 firebase_region="asia-south1"
 gcloud_configuration="${FIREBASE_GCLOUD_CONFIGURATION:-robotshift-release}"
+release_mode="${FIREBASE_RELEASE_MODE:-local}"
 production_url="https://robotshift.web.app"
+gcloud_args=(--project="$firebase_project")
 expected_functions=(
   askTutor
   bootstrapUserData
@@ -21,9 +23,13 @@ fail() {
   exit 1
 }
 
+if [[ "$release_mode" != "ci" ]]; then
+  gcloud_args=(--configuration="$gcloud_configuration")
+fi
+
 function_states="$(
   env -u CLOUDSDK_CORE_PROJECT CLOUDSDK_CORE_DISABLE_PROMPTS=1 gcloud \
-    --configuration="$gcloud_configuration" \
+    "${gcloud_args[@]}" \
     functions list \
     --v2 \
     --project="$firebase_project" \

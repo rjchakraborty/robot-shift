@@ -8,7 +8,7 @@
   "hosting": {
     "public": "out",
     "predeploy": [
-      "npm run verify"
+      "npm run release:verify"
     ],
     "ignore": [
       "firebase.json",
