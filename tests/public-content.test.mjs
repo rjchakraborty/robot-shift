@@ -126,6 +126,9 @@ test("career guidance stays neutral and Firebase Auth uses only the approved ope
     {
       oAuthBrandDisplayName: "RobotShift",
       supportEmail: "rjchakraborty21@gmail.com",
+      authorizedRedirectUris: [
+        "https://robotshift.web.app/__/auth/handler",
+      ],
     },
   );
 });

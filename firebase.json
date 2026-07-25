@@ -94,7 +94,10 @@
       "emailPassword": true,
       "googleSignIn": {
         "oAuthBrandDisplayName": "RobotShift",
-        "supportEmail": "rjchakraborty21@gmail.com"
+        "supportEmail": "rjchakraborty21@gmail.com",
+        "authorizedRedirectUris": [
+          "https://robotshift.web.app/__/auth/handler"
+        ]
       }
     }
   },
