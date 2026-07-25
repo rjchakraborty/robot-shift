@@ -38,6 +38,12 @@ Repository variables are public identifiers, not credentials:
 - `GCP_WORKLOAD_IDENTITY_PROVIDER`
 - `GCP_DEPLOY_SERVICE_ACCOUNT`
 
+`FIREBASE_APPCHECK_DEBUG_TOKEN` is the only encrypted repository secret. It is
+a Firebase-registered CI debug token injected into Playwright before the page
+loads because reCAPTCHA Enterprise does not attest headless GitHub runners.
+Never expose it to pull requests, build output, logs, artifacts, or the
+production bundle. Revoke and replace it through App Check if compromised.
+
 The Workload Identity provider must restrict tokens to
 `rjchakraborty/robot-shift`. The service account receives only deployment roles
 needed by Firebase CLI and can impersonate only project runtime service

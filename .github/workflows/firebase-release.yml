@@ -144,6 +144,7 @@ jobs:
       - name: Exercise the live responsive browser flows
         env:
           E2E_BASE_URL: https://robotshift.web.app
+          FIREBASE_APPCHECK_DEBUG_TOKEN: ${{ secrets.FIREBASE_APPCHECK_DEBUG_TOKEN }}
         run: npm run test:e2e
 
       - name: Retain deployment failure evidence for three days

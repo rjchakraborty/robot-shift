@@ -1,4 +1,17 @@
-import { expect, type Page, type TestInfo } from "@playwright/test";
+import { expect, test, type Page, type TestInfo } from "@playwright/test";
+
+test.beforeEach(async ({ page }) => {
+  const debugToken = process.env.FIREBASE_APPCHECK_DEBUG_TOKEN;
+  if (!debugToken) return;
+
+  await page.addInitScript((token) => {
+    (
+      globalThis as typeof globalThis & {
+        FIREBASE_APPCHECK_DEBUG_TOKEN?: string;
+      }
+    ).FIREBASE_APPCHECK_DEBUG_TOKEN = token;
+  }, debugToken);
+});
 
 export function collectBrowserFailures(page: Page) {
   const consoleErrors: string[] = [];
