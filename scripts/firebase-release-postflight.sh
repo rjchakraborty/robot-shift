@@ -43,23 +43,33 @@ for function_name in "${expected_functions[@]}"; do
 done
 
 release_commit="$(git rev-parse HEAD)"
-production_headers="$(
-  curl \
-    --fail \
-    --silent \
-    --show-error \
-    --location \
-    --head \
-    --retry 5 \
-    --retry-all-errors \
-    --header 'Cache-Control: no-cache' \
-    "${production_url}/?release=${release_commit}"
-)" || fail "the production Hosting URL did not return a successful response."
+production_headers=""
+for attempt in {1..12}; do
+  production_headers="$(
+    curl \
+      --fail \
+      --silent \
+      --show-error \
+      --location \
+      --head \
+      --header 'Cache-Control: no-cache' \
+      "${production_url}/?release=${release_commit}&attempt=${attempt}"
+  )" || production_headers=""
+
+  if grep -Eqi '^content-security-policy-report-only:' <<<"$production_headers" \
+    && grep -Eqi '^referrer-policy:[[:space:]]*no-referrer\r?$' <<<"$production_headers"; then
+    break
+  fi
+
+  if [[ "$attempt" -lt 12 ]]; then
+    sleep 5
+  fi
+done
 
 grep -Eqi '^content-security-policy-report-only:' <<<"$production_headers" \
-  || fail "production Hosting is not serving the verified security headers."
+  || fail "production Hosting is not serving the verified security headers after 60 seconds."
 grep -Eqi '^referrer-policy:[[:space:]]*no-referrer\r?$' <<<"$production_headers" \
-  || fail "production Hosting is not serving the verified referrer policy."
+  || fail "production Hosting is not serving the verified referrer policy after 60 seconds."
 
 printf 'Firebase release postflight passed for %s at commit %s.\n' \
   "$firebase_project" "$(git rev-parse --short=12 HEAD)"

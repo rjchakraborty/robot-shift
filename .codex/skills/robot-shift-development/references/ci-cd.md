@@ -42,3 +42,16 @@ The Workload Identity provider must restrict tokens to
 `rjchakraborty/robot-shift`. The service account receives only deployment roles
 needed by Firebase CLI and can impersonate only project runtime service
 accounts required by Cloud Functions.
+
+Current least-privilege additions:
+
+- `roles/iam.serviceAccountUser` is granted on the two exact runtime identities:
+  `847716289197-compute@developer.gserviceaccount.com` and
+  `robotshift@appspot.gserviceaccount.com`.
+- Project custom role `robotshiftFirebaseAuthProvisioner` contains only
+  `clientauthconfig.clients.create`, `firebase.projects.update`, and
+  `serviceusage.services.enable`. Firebase CLI's declarative Auth deployment
+  requires these provisioning permissions in addition to
+  `roles/firebase.developAdmin`.
+- Do not replace the custom role with Owner, Editor, or the broader
+  `roles/firebase.admin`.
