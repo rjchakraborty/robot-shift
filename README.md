@@ -153,7 +153,8 @@ is supplied through the shell and is never stored in repository configuration.
 After deployment, the postflight requires all five callable Functions to be
 ACTIVE in `asia-south1` and verifies that the live Hosting site serves the
 release security headers. A partial cloud rollout therefore cannot report as a
-successful release.
+successful release. The pipeline also maintains a seven-day Artifact Registry
+cleanup policy so obsolete Functions images do not accumulate indefinitely.
 
 The Firebase production target is
 [https://robotshift.web.app](https://robotshift.web.app). A successful HTTP

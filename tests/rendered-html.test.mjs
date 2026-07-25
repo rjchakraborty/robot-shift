@@ -257,8 +257,13 @@ test("protects account-action codes and requires Firestore consent for performan
   );
   assert.equal(
     packageConfig.scripts["release:firebase"],
-    'npm run release:preflight && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account "$FIREBASE_RELEASE_ACCOUNT" && npm run release:postflight',
+    'npm run release:preflight && npm run release:artifacts && npx --yes firebase-tools@15.24.0 deploy --non-interactive --only auth,firestore:rules,firestore:indexes,functions,hosting --project robotshift --account "$FIREBASE_RELEASE_ACCOUNT" && npm run release:postflight',
     "the release command must use the validated CLI and deploy all coupled surfaces",
+  );
+  assert.equal(
+    packageConfig.scripts["release:artifacts"],
+    'npx --yes firebase-tools@15.24.0 functions:artifacts:setpolicy --location asia-south1 --days 7 --force --project robotshift --account "$FIREBASE_RELEASE_ACCOUNT"',
+    "the release command must keep Functions build artifacts under a bounded cleanup policy",
   );
   assert.equal(
     packageConfig.scripts["release:postflight"],
