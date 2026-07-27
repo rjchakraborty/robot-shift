@@ -2,16 +2,19 @@
   "name": "robot-shift-field-manual",
   "version": "0.1.0",
   "description": "A practical 180-day robotics curriculum and AI tutor.",
+  "license": "MIT",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
     "dev": "next dev",
+    "dev:emulators": "NEXT_PUBLIC_FIREBASE_EMULATORS=true next dev",
     "build": "next build",
     "start": "serve out",
+    "emulators:start": "bash scripts/start-firebase-emulators.sh",
     "audit:curriculum-sources": "node --import tsx scripts/audit-curriculum-sources.mts",
-    "test": "npm run build && npm --prefix functions run generate:context && node --test tests/rendered-html.test.mjs && node --import tsx --test tests/public-content.test.mjs tests/chapter-content.test.mjs tests/chapter-learning-guides.test.mjs tests/curriculum-content.test.mjs tests/career-market.test.mjs tests/visual-content.test.mjs tests/mission-progress.test.mjs tests/interactive-math.test.mjs tests/theme.test.mjs tests/rich-text.test.tsx tests/lesson-media.test.ts tests/storage-migrations.test.ts tests/firebase-auth.test.ts tests/cloud-persistence.test.ts",
+    "test": "npm run build && npm --prefix functions run generate:context && node --test tests/rendered-html.test.mjs && node --import tsx --test tests/public-content.test.mjs tests/chapter-content.test.mjs tests/chapter-learning-guides.test.mjs tests/curriculum-content.test.mjs tests/career-market.test.mjs tests/visual-content.test.mjs tests/mission-progress.test.mjs tests/interactive-math.test.mjs tests/theme.test.mjs tests/rich-text.test.tsx tests/lesson-media.test.ts tests/storage-migrations.test.ts tests/firebase-auth.test.ts tests/firebase-client-config.test.ts tests/cloud-persistence.test.ts",
     "test:auth-emulator:inside": "node --import tsx --test --test-concurrency=1 tests/firebase/auth.emulator.test.ts",
     "test:auth-emulator": "env -i PATH=\"$PATH\" TMPDIR=\"${TMPDIR:-/tmp}\" LANG=\"${LANG:-C.UTF-8}\" npm_config_cache=\"${npm_config_cache:-$HOME/.npm}\" GOOGLE_APPLICATION_CREDENTIALS=/nonexistent/robotshift-emulator-no-credentials.json NO_COLOR=1 CI=1 npx --yes firebase-tools@15.24.0 emulators:exec --project demo-robotshift --only auth \"npm run test:auth-emulator:inside\"",
     "test:firestore-rules:inside": "node --import tsx --test --test-concurrency=1 tests/firebase/firestore.rules.test.ts",

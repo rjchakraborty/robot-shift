@@ -1,58 +1,132 @@
 # Robot/Shift
 
-Robot/Shift is a practical 180-day robotics curriculum for programmers, developers, and technical learners moving into robotics, ROS 2 integration, deployment, validation, and embodied AI. It does not assume a particular résumé, employer, degree, technology stack, or experience duration.
+[![Firebase CI and release](https://github.com/rjchakraborty/robot-shift/actions/workflows/firebase-release.yml/badge.svg?branch=main)](https://github.com/rjchakraborty/robot-shift/actions/workflows/firebase-release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-0f172a.svg)](LICENSE)
+[![Node.js 22](https://img.shields.io/badge/Node.js-22-0f172a.svg)](package.json)
 
-The course is designed as a single reader-first learning system:
+**A public, reader-first 180-day robotics field manual with deterministic
+visuals, interactive maths, portfolio projects, cloud progress, and a
+security-bounded AI tutor.**
 
-- zero-prerequisite mathematics with checked equations;
-- deterministic SVG explanations and interactive maths;
-- daily practical work and six portfolio projects;
-- evidence-led role guidance, a local job-description matcher, and a clearly dated India market example;
-- an optional Gemini tutor grounded in the displayed lesson;
-- Firebase email/password and Google account access for the tutor;
-- Cloud Firestore notes, evidence, bookmarks, preferences, and tutor history;
-- light and dark slate themes;
-- static deployment through Firebase Hosting.
+[Open the live course](https://robotshift.web.app) ·
+[Browse the curriculum](app/curriculum.ts) ·
+[Read the architecture](docs/firebase-data-architecture.md) ·
+[Contribute](CONTRIBUTING.md)
 
-## Requirements
+Robot/Shift helps programmers and technical learners move into practical
+robotics, ROS 2 integration, validation, deployment, and embodied AI. It does
+not assume a particular degree, employer, résumé, technology stack, experience
+duration, or mathematics background.
+
+## What makes it useful
+
+- 180 concrete days with prerequisite-aware lessons and practical evidence;
+- book-style chapter and day navigation across desktop and mobile;
+- zero-prerequisite mathematics with checked equations and bounded controls;
+- deterministic, accessible SVG diagrams backed by verified numeric models;
+- six portfolio projects and country-neutral role-family guidance;
+- Firebase Authentication and owner-scoped Firestore course persistence;
+- a grounded Gemini tutor behind Auth, App Check, replay protection, quotas,
+  one-in-flight enforcement, and a shared server-side cost reservation;
+- versioned import, export, migration, reset, and legacy-data preservation;
+- production CI covering lint, static export, tests, Firebase emulators, and
+  real Chrome desktop/mobile flows.
+
+## Technical architecture
+
+| Surface | Implementation |
+|---|---|
+| Web application | Next.js 16, React 19, TypeScript, static export |
+| Curriculum | `app/curriculum.ts`, `app/lessons.ts`, `app/topic-detail-*.ts` |
+| Teaching visuals | Deterministic SVG plus verified interactive maths |
+| Identity and data | Firebase Auth, Firestore Rules, callable Functions |
+| Tutor | Server-grounded Gemini request with private quota and cost ledgers |
+| Rendering safety | Sanitised React Markdown and strict KaTeX; no raw model HTML |
+| Delivery | Firebase Hosting and GitHub Actions with short-lived OIDC |
+| Validation | Node test runner, Firebase Emulator Suite, Playwright on Chrome |
+
+The browser never contains a Gemini key, service-account credential, App Check
+debug token, or deployment credential. Firebase web configuration and the
+reCAPTCHA Enterprise site key are public app identifiers; authorization remains
+server-side.
+
+## Quick start
+
+### Prerequisites
 
 - Node.js `>=22.13.0`
 - npm
-- Firebase CLI for deployment
 
-## Local development
+### Run the public curriculum
 
 ```bash
+git clone https://github.com/rjchakraborty/robot-shift.git
+cd robot-shift
 npm ci
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The curriculum works locally without credentials. The isolated Auth, Firestore,
-and Functions emulators support the complete authenticated data flow when the
-app starts with `NEXT_PUBLIC_FIREBASE_EMULATORS=true`; the local App Check
-provider is enabled only for that explicit localhost emulator mode. Production
-always uses reCAPTCHA Enterprise App Check. Never add an App Check debug token,
-password, OAuth token, or Google service-account credential to Git.
+This mode needs no credential. It is sufficient for the complete public
+curriculum, lessons, diagrams, maths, navigation, themes, and local browser QA.
+Do not add a Gemini key, service-account JSON, OAuth token, App Check debug
+token, or password to this repository or any `NEXT_PUBLIC_*` variable.
 
-Firebase Authentication uses tab-scoped session persistence. Closing the browser
-session signs the account out; course, profile, preference, and Tutor records are
-never persisted as application data in browser storage.
+### Run the isolated Firebase stack
+
+Install Java 21 and the Functions dependencies, then use two terminals:
+
+```bash
+npm --prefix functions ci
+npm run emulators:start
+```
+
+```bash
+npm run dev:emulators
+```
+
+The emulator mode uses the local-only `demo-robotshift` project and never needs
+production credentials. It supports email/password Auth, Firestore, and
+callable data flows. Google OAuth and a real Gemini response require your own
+configured Firebase/Gemini project; the Tutor fails closed when its server-only
+provider secret is absent.
+
+## Configure a fork
+
+Copy the public configuration contract:
+
+```bash
+cp .env.example .env.local
+```
+
+For ordinary local curriculum work, leave the optional Firebase fields empty.
+For a separately owned Firebase project, fill every required
+`NEXT_PUBLIC_FIREBASE_*` field and the public reCAPTCHA Enterprise site key.
+Partial overrides are rejected so a fork cannot accidentally mix two Firebase
+projects.
+
+The maintainer release scripts are deliberately pinned to the production
+`robotshift` project. Follow [Self-hosting](docs/self-hosting.md) before adapting
+them to another project. Never copy the maintainer's cloud identifiers,
+credentials, secrets, billing setup, or CI token.
 
 ## Verification
 
 ```bash
+npm ci
+npm --prefix functions ci
 npm run verify
+npm run test:e2e
 ```
 
-This runs lint, the production build, curriculum/content/visual/storage/theme
-tests, Functions contracts, isolated Firebase Auth/Firestore/Functions emulator
-tests, and whitespace validation.
+`npm run verify` checks the Node version, lint, production build, curriculum and
+visual contracts, persistence and migration behavior, Functions tests,
+isolated Auth/Firestore/Functions emulator boundaries, and whitespace.
+`npm run test:e2e` exercises the exported application in real Chrome at desktop
+and mobile sizes.
 
-For an interactive or visual change, also exercise the real browser flow, inspect console errors, and check desktop and mobile layouts.
-
-## Architecture
+## Project map
 
 | Area | Primary files |
 |---|---|
@@ -61,108 +135,35 @@ For an interactive or visual change, also exercise the real browser flow, inspec
 | Vector teaching visuals | `app/lesson-visual.tsx`, `app/lesson-visuals.ts` |
 | Interactive maths | `app/interactive-math-playground.tsx`, `app/interactive-math.ts` |
 | Lesson and tutor UI | `app/learning-studio.tsx`, `app/rich-text.tsx` |
-| Callable Tutor client | `app/firestore-data.ts`, `app/learning-studio.tsx` |
-| Tutor context, provider, and quota | `functions/src/tutor-context.ts`, `functions/src/tutor-provider.ts`, `functions/src/tutor-quota.ts` |
 | Authentication and profile | `app/auth/`, `app/firebase-client.ts` |
-| Analytics and performance | `app/firebase-observability.ts`, `app/error.tsx`, `app/global-error.tsx` |
-| Analytics KPI and privacy contract | `docs/analytics-measurement-plan.md` |
-| Search pages and metadata | `app/seo.ts`, `app/lessons/[slug]/page.tsx`, `app/sitemap.ts`, `app/robots.ts` |
-| Firestore data and legacy migration | `app/data/course-data-context.tsx`, `app/firestore-data.ts`, `app/storage-migrations.ts` |
-| Career targeting | `app/career-market.ts`, `app/career-view.tsx` |
-| Theme and shell | `app/page.tsx`, `app/globals.css`, `app/theme.ts` |
-| Executable contracts | `tests/` |
-| Firebase deployment | `firebase.json`, `.firebaserc`, `firestore.rules` |
-| Firebase data and security contract | `docs/firebase-data-architecture.md` |
-| Previous Sites identity | `.openai/hosting.json` |
+| Firestore data and migration | `app/data/`, `app/firestore-data.ts`, `app/storage-migrations.ts` |
+| Tutor provider and quota | `functions/src/tutor-*.ts` |
+| Firestore security | `firestore.rules`, `firestore.indexes.json` |
+| Executable contracts | `tests/`, `functions/test/` |
+| Release boundary | `.github/workflows/firebase-release.yml`, `scripts/firebase-release-*.sh` |
 
-Detailed development context lives in the project-local skill:
+## Security and privacy
 
-- `.codex/skills/robot-shift-development/SKILL.md`
-- `.codex/skills/robot-shift-development/references/architecture.md`
-- `.codex/skills/robot-shift-development/references/content-standards.md`
-- `.codex/skills/robot-shift-development/references/qa-release.md`
+- Report vulnerabilities privately through
+  [GitHub Security Advisories](https://github.com/rjchakraborty/robot-shift/security/advisories/new).
+- Do not include credentials, private user data, Tutor prompts/answers, learner
+  notes, raw logs, or production screenshots in an issue or pull request.
+- Generated tutor content is untrusted Markdown and is never rendered as raw
+  HTML.
+- Firestore client access is limited to the verified owner and active dataset;
+  quota, entitlement, replay, migration archive, and budget records are
+  server-owned.
 
-Root-level agent constraints are in `AGENTS.md`.
+See [SECURITY.md](SECURITY.md) for the disclosure policy and
+[docs/firebase-data-architecture.md](docs/firebase-data-architecture.md) for
+the complete trust boundary.
 
-## Tutor and observability
+## Contributing
 
-The browser sends only a bounded day ID, teaching mode, question, and replay-safe
-request ID through the `askCloudTutor` callable client. The Cloud Function builds
-the trusted lesson context, then calls Gemini from the server. The browser ships
-neither a Gemini credential nor a direct model-provider SDK path.
+Contributions that improve correctness, accessibility, beginner explanations,
+verified diagrams, practical projects, and local setup are welcome. Read
+[CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
-Every secure callable requires a current Firebase Authentication account with a
-verified email plus the registered App Check app identity. The default server
-policy allows 10 attempts per account per day and one in-flight request. An atomic
-Firestore transaction reserves estimated cost before the model call, stops new
-admission at the shared $0.80 daily authorization ceiling, and trips the
-no-more-requests circuit breaker if settled usage breaches the $1.00 absolute
-daily limit. Request IDs and input hashes make retries replay-aware. These limits
-are server-owned; changing browser code cannot raise them.
+## License
 
-Google Analytics records bounded lesson/tutor/error signals. Firebase
-Performance Monitoring records web-vitals/network performance only after a
-verified learner explicitly enables the Firestore-backed preference. Firebase
-Crashlytics does not provide a Web SDK, so sanitized Analytics `exception`
-events and the React error boundaries provide the basic browser failure signal.
-Never send learner notes, evidence, prompts, tutor answers, URLs, or raw stacks
-to telemetry.
-
-## Persistence
-
-For a verified account, notes, evidence, bookmarks, selected day, project
-records, tutor chats, and theme use the account's active Cloud Firestore dataset.
-Versioned complete backups carry the active course, Tutor, and preference state.
-
-Do not rename storage keys or alter schemas without adding migration and round-trip tests.
-
-Legacy browser keys remain a read-only, one-time bridge only when they exist on
-the current origin. Browsers correctly prevent `robotshift.web.app` from reading
-storage owned by the previous ChatGPT Sites origin, so that data must be exported
-on the old site and imported here. New runtime state is never written to browser
-storage, and a consumed legacy key is removed only after the server confirms the
-matching Firestore migration.
-
-Firestore rules limit client access to the verified owner and current active
-dataset, with field and size validation. Tutor transcripts, quota accounting,
-entitlements, global budget state, migration archives, dataset pointers, and
-replay records are written only by callable Functions through the Admin SDK.
-
-## Firebase deployment
-
-```bash
-npm run verify
-export FIREBASE_RELEASE_ACCOUNT="<approved-project-member>"
-# Optional only when using a different isolated gcloud configuration:
-# export FIREBASE_GCLOUD_CONFIGURATION="robotshift-release"
-npm run release:firebase
-```
-
-The release script pins Firebase CLI `15.24.0`, targets only `robotshift`, and
-deploys Auth, Firestore Rules/indexes, Functions, and Hosting together. Hosting's
-predeploy gate reruns `npm run verify`, rebuilding `out/` before upload rather
-than trusting an older ignored export.
-
-The preflight fails before deployment unless the worktree is clean, the current
-commit is synchronized with its upstream branch, Firebase CLI and gcloud use the
-same explicitly approved project member, gcloud targets exactly `robotshift`,
-Blaze billing and the required deployment APIs are enabled, the newest
-`GEMINI_API_KEY` Secret Manager version is active, and a Gemini-only
-authorization key is bound to the dedicated Tutor service account. The account
-is supplied through the shell and is never stored in repository configuration.
-After deployment, the postflight requires all five callable Functions to be
-ACTIVE in `asia-south1` and verifies that the live Hosting site serves the
-release security headers. A partial cloud rollout therefore cannot report as a
-successful release. The pipeline also maintains a seven-day Artifact Registry
-cleanup policy so obsolete Functions images do not accumulate indefinitely.
-
-The Firebase production target is
-[https://robotshift.web.app](https://robotshift.web.app). A successful HTTP
-response is not proof that it contains this repository state; verify the deployed
-build identity and callable Functions after every release. Keep the previous
-Sites deployment available until every required browser profile has exported
-there and imported its complete backup on Firebase.
-
-Functions deployment requires the Blaze plan and a dedicated, rotated
-`GEMINI_API_KEY` stored through Firebase Secret Manager. Never reuse a key that
-has appeared in a terminal, log, browser capture, or source file.
+Robot/Shift is available under the [MIT License](LICENSE).

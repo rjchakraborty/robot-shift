@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose a focused improvement to the learning or contributor experience.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Learner or contributor problem
+      description: Describe the concrete problem before proposing implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What should a learner or contributor be able to do?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or examples
+      description: Link authoritative sources or comparable public examples when useful.
+  - type: textarea
+    id: scope
+    attributes:
+      label: Suggested scope
+      description: Name affected days, routes, data shapes, or tests if known.
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Project constraints
+      options:
+        - label: This preserves beginner prerequisites and reader-first flow.
+          required: true
+        - label: This does not require exposing a credential or private learner data.
+          required: true
