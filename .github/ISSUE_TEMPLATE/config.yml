@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/rjchakraborty/robot-shift/security/advisories/new
+    about: Report vulnerabilities without exposing details publicly.
+  - name: Live Robot/Shift course
+    url: https://robotshift.web.app
+    about: Confirm the behavior on the current public deployment.

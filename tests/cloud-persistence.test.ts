@@ -67,8 +67,13 @@ test("application runtime state has no browser-storage write path", async () => 
     /persistentLocalCache|persistentMultipleTabManager/,
   );
   assert.match(firebaseClient, /new CustomProvider/);
-  assert.match(firebaseClient, /sub:\s*firebaseConfig\.appId/);
-  assert.match(firebaseClient, /aud:\s*\[firebaseConfig\.projectId\]/);
+  assert.match(firebaseClient, /projectId:\s*"demo-robotshift"/);
+  assert.match(firebaseClient, /sub:\s*options\.appId/);
+  assert.match(firebaseClient, /aud:\s*\[options\.projectId\]/);
+  assert.match(
+    firebaseClient,
+    /isUsingLocalFirebaseEmulators\(\)\s*\?\s*localFirebaseConfig/,
+  );
   assert.match(firebaseClient, /isUsingLocalFirebaseEmulators\(\)/);
 });
 

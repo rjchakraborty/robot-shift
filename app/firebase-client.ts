@@ -5,7 +5,32 @@ import type { Auth } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
 import type { Functions } from "firebase/functions";
 
-const firebaseConfig: FirebaseOptions = {
+export class FirebaseClientConfigurationError extends Error {
+  readonly code = "firebase_configuration";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "FirebaseClientConfigurationError";
+  }
+}
+
+type FirebasePublicEnvironment = {
+  NEXT_PUBLIC_FIREBASE_API_KEY?: string;
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?: string;
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID?: string;
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?: string;
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?: string;
+  NEXT_PUBLIC_FIREBASE_APP_ID?: string;
+  NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID?: string;
+  NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY?: string;
+};
+
+type FirebaseBrowserConfiguration = {
+  options: FirebaseOptions;
+  recaptchaEnterpriseSiteKey: string;
+};
+
+const defaultFirebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyAk1zXFhBnPAOUpCLrnFAZpcg2cE8tYaHY",
   authDomain: "robotshift.web.app",
   projectId: "robotshift",
@@ -15,23 +40,110 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: "G-364ND39JDX",
 };
 
-const recaptchaEnterpriseSiteKey =
+const defaultRecaptchaEnterpriseSiteKey =
   "6LevLWItAAAAAKbMowvVT9dSA1Y7vyuUtwU8t-y5";
+
+const localFirebaseConfig: FirebaseOptions = {
+  apiKey: "demo-api-key",
+  authDomain: "localhost",
+  projectId: "demo-robotshift",
+  storageBucket: "demo-robotshift.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:local-robotshift",
+};
+
+export function resolveFirebaseBrowserConfiguration(
+  environment: FirebasePublicEnvironment,
+): FirebaseBrowserConfiguration {
+  const publicValues = {
+    apiKey: environment.NEXT_PUBLIC_FIREBASE_API_KEY?.trim() ?? "",
+    authDomain: environment.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim() ?? "",
+    projectId: environment.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim() ?? "",
+    storageBucket:
+      environment.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim() ?? "",
+    messagingSenderId:
+      environment.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?.trim() ?? "",
+    appId: environment.NEXT_PUBLIC_FIREBASE_APP_ID?.trim() ?? "",
+    measurementId:
+      environment.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID?.trim() ?? "",
+    recaptchaEnterpriseSiteKey:
+      environment.NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY?.trim() ?? "",
+  };
+  const requiredEntries = [
+    ["NEXT_PUBLIC_FIREBASE_API_KEY", publicValues.apiKey],
+    ["NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN", publicValues.authDomain],
+    ["NEXT_PUBLIC_FIREBASE_PROJECT_ID", publicValues.projectId],
+    ["NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET", publicValues.storageBucket],
+    [
+      "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+      publicValues.messagingSenderId,
+    ],
+    ["NEXT_PUBLIC_FIREBASE_APP_ID", publicValues.appId],
+    [
+      "NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY",
+      publicValues.recaptchaEnterpriseSiteKey,
+    ],
+  ] as const;
+  const hasCustomValue = Object.values(publicValues).some(Boolean);
+  if (!hasCustomValue) {
+    return {
+      options: { ...defaultFirebaseConfig },
+      recaptchaEnterpriseSiteKey: defaultRecaptchaEnterpriseSiteKey,
+    };
+  }
+
+  const missingVariables = requiredEntries
+    .filter(([, value]) => !value)
+    .map(([name]) => name);
+  if (missingVariables.length > 0) {
+    throw new FirebaseClientConfigurationError(
+      `Custom Firebase configuration is incomplete: ${missingVariables.join(", ")}.`,
+    );
+  }
+
+  return {
+    options: {
+      apiKey: publicValues.apiKey,
+      authDomain: publicValues.authDomain,
+      projectId: publicValues.projectId,
+      storageBucket: publicValues.storageBucket,
+      messagingSenderId: publicValues.messagingSenderId,
+      appId: publicValues.appId,
+      ...(publicValues.measurementId
+        ? { measurementId: publicValues.measurementId }
+        : {}),
+    },
+    recaptchaEnterpriseSiteKey: publicValues.recaptchaEnterpriseSiteKey,
+  };
+}
+
+const browserConfiguration = resolveFirebaseBrowserConfiguration({
+  NEXT_PUBLIC_FIREBASE_API_KEY:
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID:
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  NEXT_PUBLIC_FIREBASE_APP_ID:
+    process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID:
+    process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY:
+    process.env.NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY,
+});
+const firebaseConfig = browserConfiguration.options;
+const recaptchaEnterpriseSiteKey =
+  browserConfiguration.recaptchaEnterpriseSiteKey;
 
 let firebaseAppPromise: Promise<FirebaseApp> | null = null;
 let appCheckPromise: Promise<void> | null = null;
 let firebaseAuthPromise: Promise<Auth> | null = null;
 let firestorePromise: Promise<Firestore> | null = null;
 let functionsPromise: Promise<Functions> | null = null;
-
-export class FirebaseClientConfigurationError extends Error {
-  readonly code = "firebase_configuration";
-
-  constructor(message: string) {
-    super(message);
-    this.name = "FirebaseClientConfigurationError";
-  }
-}
 
 export function hasFirebaseMeasurementId(): boolean {
   return Boolean(firebaseConfig.measurementId?.trim());
@@ -50,7 +162,11 @@ export function getFirebaseApp(): Promise<FirebaseApp> {
     ({ getApp, getApps, initializeApp }) => {
       if (getApps().length > 0) return getApp();
 
-      return initializeApp(firebaseConfig);
+      return initializeApp(
+        isUsingLocalFirebaseEmulators()
+          ? localFirebaseConfig
+          : firebaseConfig,
+      );
     },
   );
 
@@ -131,7 +247,7 @@ async function initializeFirebaseAppCheck(app: FirebaseApp): Promise<void> {
   if (isUsingLocalFirebaseEmulators()) {
     initializeAppCheck(app, {
       provider: new CustomProvider({
-        getToken: async () => createLocalEmulatorAppCheckToken(),
+        getToken: async () => createLocalEmulatorAppCheckToken(app.options),
       }),
       isTokenAutoRefreshEnabled: false,
     });
@@ -155,17 +271,24 @@ export function isUsingLocalFirebaseEmulators(): boolean {
   );
 }
 
-function createLocalEmulatorAppCheckToken(): {
+function createLocalEmulatorAppCheckToken(
+  options: FirebaseOptions,
+): {
   token: string;
   expireTimeMillis: number;
 } {
+  if (!options.appId || !options.projectId) {
+    throw new FirebaseClientConfigurationError(
+      "The local Firebase emulator configuration is incomplete.",
+    );
+  }
   const issuedAtSeconds = Math.floor(Date.now() / 1_000);
   const expiresAtSeconds = issuedAtSeconds + 60 * 60;
   const token = [
     encodeEmulatorJwtSegment({ alg: "none", typ: "JWT" }),
     encodeEmulatorJwtSegment({
-      sub: firebaseConfig.appId,
-      aud: [firebaseConfig.projectId],
+      sub: options.appId,
+      aud: [options.projectId],
       jti: globalThis.crypto.randomUUID(),
       iat: issuedAtSeconds,
       exp: expiresAtSeconds,
